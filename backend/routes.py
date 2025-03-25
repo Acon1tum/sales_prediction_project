@@ -1,15 +1,22 @@
+import os
 from flask import Flask, render_template, redirect, url_for, request, session, flash
-from supabase import create_client, Client
+from supabase import create_client, Client  # Ensure this is from the installed package
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize Flask
 app = Flask(__name__)
-app.secret_key = 'dev-key-123'  # Change this for production
+app.secret_key = os.getenv("SECRET_KEY")
 
 # Supabase configuration
-SUPABASE_URL = "https://driauwkawifyigenjvga.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyaWF1d2thd2lmeWlnZW5qdmdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4ODUzODAsImV4cCI6MjA1ODQ2MTM4MH0.97L1KTIH0P_wjwogM_Z4r4ydYZOeYZTCiWg5IiiIkfc"
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
 
 @app.route("/")
 def home():
