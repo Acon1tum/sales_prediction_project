@@ -165,9 +165,10 @@ def upload_csv():
     session["uploaded_file"] = filepath
     return jsonify({"message": "File uploaded successfully!"})
 
+
 @app.route("/generate_forecast", methods=["POST"])
 def generate_forecast():
-    """ Generates sales forecast and dynamic decisions """
+    """ Generates sales forecast based on available data size with dynamic recommendations """
     if model is None or scaler_X is None or scaler_y is None:
         return jsonify({"error": "Model not loaded properly"}), 500
 
@@ -180,6 +181,21 @@ def generate_forecast():
         df = pd.read_csv(file_path)
         df_numeric = df.drop(columns=["Date", "Product Name"], errors="ignore").fillna(0)
 
+        # Determine the number of entries
+        num_entries = len(df)
+        
+        # Set prediction window
+        if num_entries < 30:
+            forecast_type = "weekly"
+            forecast_days = 7
+        elif num_entries < 90:
+            forecast_type = "monthly"
+            forecast_days = 30
+        else:
+            forecast_type = "quarterly"
+            forecast_days = 90
+
+        # Prepare data for prediction
         X = df_numeric[feature_names] if all(f in df_numeric.columns for f in feature_names) else df_numeric
         X_scaled = scaler_X.transform(X)
 
@@ -188,24 +204,36 @@ def generate_forecast():
         y_pred = scaler_y.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
 
         # Retrieve user-defined threshold (default to 0 if not set)
-        threshold = session.get("threshold", 0)
-        threshold = float(threshold) if threshold else 0
+        threshold = session.get("threshold", 100)  # Default to 100 if not set
+        threshold = float(threshold)
 
-        # Generate dynamic decisions based on threshold
+        # Generate dynamic decisions based on trends
         decisions = []
-        for i, predicted_sales in enumerate(y_pred):
-            if predicted_sales >= threshold * 1.2:  # If sales exceed threshold by 20%
-                decisions.append({"icon": "📈", "text": f"Increase production for Day {i+1}, sales expected: {predicted_sales:.2f}"})
-            elif predicted_sales <= threshold * 0.8:  # If sales fall below 80% of threshold
-                decisions.append({"icon": "📉", "text": f"Reduce stock for Day {i+1}, sales expected: {predicted_sales:.2f}"})
-            else:
-                decisions.append({"icon": "🔄", "text": f"Monitor trends for Day {i+1}, sales expected: {predicted_sales:.2f}"})
+        for i in range(min(len(y_pred), forecast_days)):  # Limit predictions to forecast window
+            predicted_sales = y_pred[i]
+            percentage_change = (predicted_sales - threshold) / threshold * 100
 
-        return jsonify({"predictions": y_pred.tolist(), "decisions": decisions})
+            if percentage_change >= 50:
+                decisions.append({"icon": "🚀", "text": f"Major increase expected on Day {i+1}, sales: {predicted_sales:.2f}. Consider expanding stock and promotions!"})
+            elif 20 <= percentage_change < 50:
+                decisions.append({"icon": "📈", "text": f"Moderate growth expected on Day {i+1}, sales: {predicted_sales:.2f}. Increase production cautiously."})
+            elif 5 <= percentage_change < 20:
+                decisions.append({"icon": "🔼", "text": f"Small sales increase on Day {i+1}, sales: {predicted_sales:.2f}. Keep an eye on trends."})
+            elif -5 <= percentage_change < 5:
+                decisions.append({"icon": "🔄", "text": f"Stable sales on Day {i+1}, sales: {predicted_sales:.2f}. No immediate action needed."})
+            elif -20 <= percentage_change < -5:
+                decisions.append({"icon": "📉", "text": f"Small decline in sales on Day {i+1}, sales: {predicted_sales:.2f}. Consider minor stock adjustments."})
+            elif -50 <= percentage_change < -20:
+                decisions.append({"icon": "⚠️", "text": f"Moderate drop in sales on Day {i+1}, sales: {predicted_sales:.2f}. Reduce stock and evaluate promotions."})
+            else:
+                decisions.append({"icon": "🆘", "text": f"Major sales drop on Day {i+1}, sales: {predicted_sales:.2f}. Immediate action required!"})
+
+        return jsonify({"forecast_type": forecast_type, "predictions": y_pred[:forecast_days].tolist(), "decisions": decisions})
 
     except Exception as e:
         logging.error(f"❌ Error generating forecast: {e}")
         return jsonify({"error": "Failed to generate forecast"}), 500
+
 
 
 @app.route("/logout")
