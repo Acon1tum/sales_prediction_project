@@ -7,6 +7,13 @@
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+    :root {
+        --primary: #6C5CE7;
+        --primary-hover: #5a4bc2;
+        --card-bg: #FFFFFF;
+        --shadow: rgba(0, 0, 0, 0.05);
+    }
+
     .actions {
         display: flex;
         gap: 15px;
@@ -28,15 +35,39 @@
     }
 
     .actions button:hover {
-        background-color: #5a4bc2;
+        background-color: var(--primary-hover);
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+        box-shadow: 0 5px 15px var(--shadow);
+    }
+
+    .bento-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .bento-box {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px var(--shadow);
+        transition: transform 0.2s ease;
+    }
+
+    .bento-box:hover {
+        transform: translateY(-5px);
+    }
+
+    .full-width {
+        grid-column: span 2;
     }
 
     .decision-content {
         display: flex;
         flex-direction: column;
         gap: 15px;
+        min-height: 200px;
     }
 
     .decision-item {
@@ -52,10 +83,48 @@
         font-size: 1.2rem;
     }
 
+    .decision-pagination {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+
+    .pagination-btn {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 8px;
+        background-color: var(--primary);
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .pagination-btn:disabled {
+        background-color: #ddd;
+        cursor: not-allowed;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        background-color: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px var(--shadow);
+    }
+
     canvas {
         width: 100% !important;
         height: 250px !important;
         margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .bento-container {
+            grid-template-columns: 1fr;
+        }
+
+        .full-width {
+            grid-column: span 1;
+        }
     }
 </style>
 {% endblock %}
@@ -63,33 +132,31 @@
 {% block content %}
 <section class="forecast-section">
     <div class="actions">
-        <button id="threshold-btn">
-            <span>📊</span> Enter Desired Threshold
-        </button>
+        <button id="threshold-btn"><span>📊</span> Enter Threshold</button>
         <input type="file" id="upload-btn" accept=".csv" style="display: none;">
-        <button onclick="document.getElementById('upload-btn').click()">
-            <span>📁</span> Upload CSV File
-        </button>
-        <button id="generate-btn">
-            <span>✨</span> Generate Graph & Decisions
-        </button>
+        <button onclick="document.getElementById('upload-btn').click()"><span>📁</span> Upload CSV</button>
+        <button id="generate-btn"><span>✨</span> Generate Forecast</button>
     </div>
 
-    <div class="grid">
-        <div class="card">
+    <div class="bento-container">
+        <div class="bento-box">
             <h3>Sales Forecast Graph</h3>
             <canvas id="forecastChart"></canvas>
         </div>
 
-        <div class="card">
+        <div class="bento-box">
             <h3>Predictions Analysis</h3>
             <canvas id="predictionsChart"></canvas>
         </div>
 
-        <div class="card full-width">
+        <div class="bento-box full-width">
             <h3>Recommended Decisions</h3>
             <div id="decision-section" class="decision-content">
                 <p>No forecast data yet. Upload a file and generate a forecast.</p>
+            </div>
+            <div class="decision-pagination">
+                <button id="prev-btn" class="pagination-btn" disabled>← Previous</button>
+                <button id="next-btn" class="pagination-btn" disabled>Next →</button>
             </div>
         </div>
     </div>
@@ -100,6 +167,9 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     let predictions = [];
+    let decisions = [];
+    let currentPage = 0;
+    const itemsPerPage = 3;
 
     // Set Threshold
     document.getElementById("threshold-btn").addEventListener("click", () => {
@@ -143,9 +213,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             predictions = data.predictions;
+            decisions = data.decisions;
             updateChart(predictions);
             updatePredictionsChart(predictions);
-            updateDecisions(data.decisions);
+            updateDecisions();
         })
         .catch(error => console.error(error));
     });
@@ -165,13 +236,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     tension: 0.3,
                     fill: true
                 }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: "top" }
-                },
-                scales: { y: { beginAtZero: true } }
             }
         });
     }
@@ -189,27 +253,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     backgroundColor: "rgba(108, 92, 231, 0.7)",
                     borderRadius: 6
                 }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: { y: { beginAtZero: true } }
             }
         });
     }
 
-    // Update Business Decisions
-    function updateDecisions(decisions) {
+    // Paginated Decisions
+    function updateDecisions() {
         const decisionSection = document.getElementById("decision-section");
-        decisionSection.innerHTML = decisions.map(d => `
-            <div class="decision-item">
-                <span class="decision-icon">${d.icon}</span>
-                <p>${d.text}</p>
-            </div>
-        `).join("");
+        decisionSection.innerHTML = decisions.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
+            .map(d => `<div class="decision-item"><span class="decision-icon">${d.icon}</span><p>${d.text}</p></div>`)
+            .join("");
+
+        document.getElementById("prev-btn").disabled = currentPage === 0;
+        document.getElementById("next-btn").disabled = (currentPage + 1) * itemsPerPage >= decisions.length;
     }
+
+    document.getElementById("prev-btn").addEventListener("click", () => { currentPage--; updateDecisions(); });
+    document.getElementById("next-btn").addEventListener("click", () => { currentPage++; updateDecisions(); });
 });
 </script>
 {% endblock %}

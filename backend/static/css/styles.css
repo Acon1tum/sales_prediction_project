@@ -498,3 +498,46 @@ body {
 .logo-text span {
     color: #00ff00; /* Green color */
 }
+
+.bento-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    grid-template-rows: auto;
+    gap: 20px;
+    padding: 20px;
+    background: var(--main-bg);
+}
+
+.bento-box {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+}
+
+.bento-box:hover {
+    transform: translateY(-5px);
+}
+
+/* Make Forecast Graph take full width */
+.forecast-graph {
+    grid-column: span 2; /* Make it full width */
+}
+
+.bento-box h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .bento-container {
+        grid-template-columns: 1fr; /* Stack elements */
+    }
+
+    .forecast-graph {
+        grid-column: span 1; /* No full width */
+    }
+}
