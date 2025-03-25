@@ -98,6 +98,7 @@
             font-size: 1.8rem;
             margin-bottom: 1.5rem;
             color: var(--dark);
+            text-align: center; /* Add this line */
         }
 
         .login-form {
@@ -257,6 +258,14 @@
                 max-width: 100%;
             }
         }
+
+        .signin-title {
+        text-align: center;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        color: var(--dark);
+    }
+
     </style>
 </head>
 <body>
@@ -265,18 +274,15 @@
             <div class="login-left-content">
                 <div class="logo">
                     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ForecastIt Logo">
-                    <h1>ForecastIt</h1>
+                    <h1 class="logo-text">Forecas<span style="color: #00ff00;">trix</span></h1>
                 </div>
                 <h2>Welcome back!</h2>
                 <p>Log in to access your sales forecasting dashboard, view historical data, and generate accurate predictions for your business growth.</p>
-                <div style="margin-top: 2rem;">
-                    <img src="{{ url_for('static', filename='images/login-illustration.png') }}" alt="Login Illustration" style="max-width: 300px; width: 100%;">
-                </div>
             </div>
         </div>
         <div class="login-right">
             <div class="login-form-container">
-                <h2>Sign In</h2>
+                <h2 class="signin-title">Sign In</h2>
                 <form class="login-form" method="POST" action="{{ url_for('login') }}">
                     <div class="form-group">
                         <label for="email">Email Address</label>

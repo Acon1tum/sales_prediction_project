@@ -1,4 +1,3 @@
-<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +6,8 @@
     <title>{% block title %}ForecastIt{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Add Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -19,11 +20,31 @@
             </div>            
             <nav>
                 <ul>
-                    <li class="{% if active_page == 'dashboard' %}active{% endif %}"><a href="{{ url_for('dashboard') }}"><i class="icon">🏠</i> Dashboard</a></li>
-                    <li class="{% if active_page == 'forecast' %}active{% endif %}"><a href="{{ url_for('forecast') }}"><i class="icon">📊</i> Forecast</a></li>
-                    <li class="{% if active_page == 'history' %}active{% endif %}"><a href="#"><i class="icon">📜</i> History</a></li>
-                    <li class="{% if active_page == 'settings' %}active{% endif %}"><a href="#"><i class="icon">⚙️</i> Settings</a></li>
-                    <li class="logout"><a href="{{ url_for('logout') }}"><i class="icon">🚪</i> Log out</a></li>
+                    <li class="{% if active_page == 'dashboard' %}active{% endif %}">
+                        <a href="{{ url_for('dashboard') }}">
+                            <i class="fa-solid fa-house icon"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="{% if active_page == 'forecast' %}active{% endif %}">
+                        <a href="{{ url_for('forecast') }}">
+                            <i class="fa-solid fa-chart-simple icon"></i> Forecast
+                        </a>
+                    </li>
+                    <li class="{% if active_page == 'history' %}active{% endif %}">
+                        <a href="#">
+                            <i class="fa-solid fa-list-ul icon"></i> History
+                        </a>
+                    </li>
+                    <li class="{% if active_page == 'settings' %}active{% endif %}">
+                        <a href="#">
+                            <i class="fa-solid fa-gears icon"></i> Settings
+                        </a>
+                    </li>
+                    <li class="logout">
+                        <a href="{{ url_for('logout') }}">
+                            <i class="fa-solid fa-right-from-bracket icon"></i> Log out
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -48,11 +69,11 @@
                 <div class="header-actions">
                     <div class="search-bar">
                         <input type="text" placeholder="Search...">
-                        <span class="search-icon">🔍</span>
+                        <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
                     </div>
                     <div class="notifications">
                         <span class="notification-badge">3</span>
-                        <span class="notification-icon">🔔</span>
+                        <span class="notification-icon"><i class="fa-solid fa-bell"></i></span>
                     </div>
                 </div>
             </header>
