@@ -40,7 +40,14 @@ body {
     display: flex;
     flex-direction: column;
     padding: 25px 20px;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+    /* Add box shadow for better separation */
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
+
 
 .sidebar .logo {
     display: flex;
@@ -100,6 +107,7 @@ body {
     margin-top: 30px;
 }
 
+
 .sidebar-footer {
     margin-top: auto;
     padding-top: 20px;
@@ -143,6 +151,27 @@ body {
     flex-grow: 1;
     padding: 30px;
     background-color: var(--main-bg);
+    margin-left: 280px; /* Same as sidebar width */
+    min-height: 100vh;
+}
+
+/* For mobile responsiveness */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        padding: 15px;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
 }
 
 /* Header */

@@ -1,453 +1,208 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForecastIt | Forecast</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary: #6C5CE7;
-            --secondary: #A29BFE;
-            --dark: #2D3436;
-            --light: #F5F6FA;
-            --success: #00B894;
-            --warning: #FDCB6E;
-            --danger: #D63031;
-            --text-dark: #2D3436;
-            --text-light: #636E72;
-            --sidebar-bg: linear-gradient(to bottom, #3B1D7A, #5A3AA8);
-            --card-bg: #FFFFFF;
-        }
+<!-- templates/forecast.html -->
+{% extends "base.html" %}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+{% block title %}ForecastIt | Forecast{% endblock %}
+{% block header_subtitle %}Generate and analyze your sales forecasts{% endblock %}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--light);
-            color: var(--text-dark);
-        }
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    /* Additional forecast-specific styles */
+    .actions {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
 
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
+    .actions button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        background-color: var(--primary);
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background: var(--sidebar-bg);
-            color: white;
-            padding: 25px 20px;
-        }
+    .actions button:hover {
+        background-color: #5a4bc2;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+    }
 
-        .sidebar .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 30px;
-            padding: 0 10px;
-            display: flex;
-            align-items: center;
-        }
+    .decision-content {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
 
-        .sidebar .logo img {
-            width: 36px;
-            margin-right: 12px;
-        }
+    .decision-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: rgba(108, 92, 231, 0.05);
+        border-radius: 8px;
+    }
 
-        .sidebar nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+    .decision-icon {
+        font-size: 1.2rem;
+    }
 
-        .sidebar nav ul li {
-            margin: 5px 0;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
+    canvas {
+        width: 100% !important;
+        height: 250px !important;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
 
-        .sidebar nav ul li a {
-            text-decoration: none;
-            color: white;
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .sidebar nav ul li.active {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .sidebar nav ul li:hover:not(.active) {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Main Content */
-        .content {
-            flex-grow: 1;
-            padding: 30px;
-            background-color: var(--light);
-        }
-
-        /* Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-        }
-
-        .header-text h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin: 0 0 5px 0;
-            color: var(--dark);
-        }
-
-        .header-text p {
-            margin: 0;
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .search-bar {
-            position: relative;
-        }
-
-        .search-bar input {
-            padding: 10px 15px 10px 40px;
-            border-radius: 8px;
-            border: 1px solid #DFE6E9;
-            background-color: white;
-            font-size: 0.9rem;
-            width: 220px;
-            transition: all 0.2s ease;
-        }
-
-        .search-bar input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2);
-        }
-
-        .user-profile img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        /* Forecast Section */
-        .forecast-section {
-            margin-top: 20px;
-        }
-
-        .actions {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .actions button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--primary);
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .actions button:hover {
-            background-color: #5a4bc2;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .full-width {
-            grid-column: span 2;
-        }
-
-        canvas {
-            width: 100% !important;
-            height: 250px !important;
-            margin-bottom: 15px;
-        }
-
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin-top: 15px;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-        }
-
-        .indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .indicator.purple {
-            background-color: #9C27B0;
-        }
-
-        .indicator.green {
-            background-color: var(--success);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .full-width {
-                grid-column: span 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-            }
-            
-            .actions {
-                flex-direction: column;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <aside class="sidebar">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ForecastIt Logo">
-                ForecastIt
-            </div>
-            <nav>
-                <ul>
-                    <li><a href="dashboard.html">🏠 Dashboard</a></li>
-                    <li class="active"><a href="#">📊 Forecast</a></li>
-                    <li><a href="history.html">📜 History</a></li>
-                    <li><a href="settings.html">⚙️ Settings</a></li>
-                    <li><a href="{{ url_for('logout') }}">🚪 Log out</a></li>
-                </ul>
-            </nav>
-        </aside>
-        <main class="content">
-            <header>
-                <div class="header-text">
-                    <h1>Welcome back, Jess!</h1>
-                    <p>Generate and analyze your sales forecasts</p>
-                </div>
-                <div class="header-actions">
-                    <div class="search-bar">
-                        <input type="text" placeholder="Search forecasts...">
-                        <span class="search-icon">🔍</span>
-                    </div>
-                    <div class="user-profile">
-                        <img src="{{ url_for('static', filename='images/user.png') }}" alt="User">
-                    </div>
-                </div>
-            </header>
-            <section class="forecast-section">
-                <div class="actions">
-                    <button>
-                        <span>📊</span> Enter Desired Threshold
-                    </button>
-                    <button>
-                        <span>📁</span> Upload CSV File
-                    </button>
-                    <button>
-                        <span>✨</span> Generate Graph & Decisions
-                    </button>
-                </div>
-                <div class="grid">
-                    <div class="card">
-                        <h3>Recent Forecast</h3>
-                        <canvas id="forecastChart"></canvas>
-                        <div class="stats">
-                            <div class="stat-item">
-                                <span class="indicator purple"></span>
-                                <p>Forecast: <strong>3,000 sales</strong></p>
-                            </div>
-                            <div class="stat-item">
-                                <span class="indicator green"></span>
-                                <p>Produced: <strong>4,000</strong></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>Predictions Analysis</h3>
-                        <canvas id="predictionsChart"></canvas>
-                        <div class="stats">
-                            <div class="stat-item">
-                                <span class="indicator purple"></span>
-                                <p>Next Month: <strong>+12%</strong></p>
-                            </div>
-                            <div class="stat-item">
-                                <span class="indicator green"></span>
-                                <p>Confidence: <strong>85%</strong></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card full-width">
-                        <h3>Recommended Decisions</h3>
-                        <div class="decision-content">
-                            <div class="decision-item">
-                                <span class="decision-icon">📈</span>
-                                <p>Increase production by <strong>15%</strong> for next quarter</p>
-                            </div>
-                            <div class="decision-item">
-                                <span class="decision-icon">📉</span>
-                                <p>Reduce inventory for Product X by <strong>20%</strong></p>
-                            </div>
-                            <div class="decision-item">
-                                <span class="decision-icon">🔄</span>
-                                <p>Reallocate <strong>30%</strong> of marketing budget to top-performing regions</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
+{% block content %}
+<section class="forecast-section">
+    <div class="actions">
+        <button>
+            <span>📊</span> Enter Desired Threshold
+        </button>
+        <button>
+            <span>📁</span> Upload CSV File
+        </button>
+        <button>
+            <span>✨</span> Generate Graph & Decisions
+        </button>
     </div>
+    <div class="grid">
+        <div class="card">
+            <h3>Recent Forecast</h3>
+            <canvas id="forecastChart"></canvas>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="indicator purple"></span>
+                    <p>Forecast: <strong>3,000 sales</strong></p>
+                </div>
+                <div class="stat-item">
+                    <span class="indicator green"></span>
+                    <p>Produced: <strong>4,000</strong></p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Predictions Analysis</h3>
+            <canvas id="predictionsChart"></canvas>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="indicator purple"></span>
+                    <p>Next Month: <strong>+12%</strong></p>
+                </div>
+                <div class="stat-item">
+                    <span class="indicator green"></span>
+                    <p>Confidence: <strong>85%</strong></p>
+                </div>
+            </div>
+        </div>
+        <div class="card full-width">
+            <h3>Recommended Decisions</h3>
+            <div class="decision-content">
+                <div class="decision-item">
+                    <span class="decision-icon">📈</span>
+                    <p>Increase production by <strong>15%</strong> for next quarter</p>
+                </div>
+                <div class="decision-item">
+                    <span class="decision-icon">📉</span>
+                    <p>Reduce inventory for Product X by <strong>20%</strong></p>
+                </div>
+                <div class="decision-item">
+                    <span class="decision-icon">🔄</span>
+                    <p>Reallocate <strong>30%</strong> of marketing budget to top-performing regions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Forecast Chart
-            const forecastCtx = document.getElementById('forecastChart').getContext('2d');
-            const forecastChart = new Chart(forecastCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [
-                        {
-                            label: 'Forecast',
-                            data: [2000, 2200, 2500, 2800, 3000, 3200],
-                            borderColor: '#9C27B0',
-                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                            tension: 0.3,
-                            fill: true
-                        },
-                        {
-                            label: 'Actual',
-                            data: [1900, 2100, 2400, 2700, 3000, 4000],
-                            borderColor: '#00B894',
-                            backgroundColor: 'rgba(0, 184, 148, 0.1)',
-                            tension: 0.3,
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        }
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Forecast Chart
+        const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+        const forecastChart = new Chart(forecastCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [
+                    {
+                        label: 'Forecast',
+                        data: [2000, 2200, 2500, 2800, 3000, 3200],
+                        borderColor: '#9C27B0',
+                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                        tension: 0.3,
+                        fill: true
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
+                    {
+                        label: 'Actual',
+                        data: [1900, 2100, 2400, 2700, 3000, 4000],
+                        borderColor: '#00B894',
+                        backgroundColor: 'rgba(0, 184, 148, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
                     }
                 }
-            });
+            }
+        });
 
-            // Predictions Chart
-            const predictionsCtx = document.getElementById('predictionsChart').getContext('2d');
-            const predictionsChart = new Chart(predictionsCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                    datasets: [
-                        {
-                            label: 'Predicted Sales',
-                            data: [8500, 9200, 10500, 12000],
-                            backgroundColor: 'rgba(108, 92, 231, 0.7)',
-                            borderRadius: 6
-                        }
-                    ]
+        // Predictions Chart
+        const predictionsCtx = document.getElementById('predictionsChart').getContext('2d');
+        const predictionsChart = new Chart(predictionsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                datasets: [
+                    {
+                        label: 'Predicted Sales',
+                        data: [8500, 9200, 10500, 12000],
+                        backgroundColor: 'rgba(108, 92, 231, 0.7)',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
+                scales: {
+                    y: {
+                        beginAtZero: true
                     }
                 }
-            });
+            }
+        });
 
-            // Button functionality
-            document.querySelectorAll('.actions button').forEach(button => {
-                button.addEventListener('click', () => {
-                    alert(`"${button.textContent.trim()}" functionality would be implemented here`);
-                });
+        // Button functionality
+        document.querySelectorAll('.actions button').forEach(button => {
+            button.addEventListener('click', () => {
+                alert(`"${button.textContent.trim()}" functionality would be implemented here`);
             });
         });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

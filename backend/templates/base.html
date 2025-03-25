@@ -1,0 +1,66 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ForecastIt{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ForecastIt Logo">
+                <h2>ForecastIt</h2>
+            </div>
+            <nav>
+                <ul>
+                    <li class="{% if active_page == 'dashboard' %}active{% endif %}"><a href="{{ url_for('dashboard') }}"><i class="icon">🏠</i> Dashboard</a></li>
+                    <li class="{% if active_page == 'forecast' %}active{% endif %}"><a href="{{ url_for('forecast') }}"><i class="icon">📊</i> Forecast</a></li>
+                    <li class="{% if active_page == 'history' %}active{% endif %}"><a href="#"><i class="icon">📜</i> History</a></li>
+                    <li class="{% if active_page == 'settings' %}active{% endif %}"><a href="#"><i class="icon">⚙️</i> Settings</a></li>
+                    <li class="logout"><a href="{{ url_for('logout') }}"><i class="icon">🚪</i> Log out</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="{{ url_for('static', filename='images/user.png') }}" alt="User">
+                    <div>
+                        <p class="username">{{ session.get('email', 'Guest').split('@')[0] }}</p>
+                        <p class="user-email">{{ session.get('email', 'guest@forecastit.com') }}</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-text">
+                    <h1>{% block header_title %}Welcome back, {{ session.get('email', 'Guest').split('@')[0] }}!{% endblock %}</h1>
+                    <p>{% block header_subtitle %}{% endblock %}</p>
+                </div>
+                <div class="header-actions">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search...">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    <div class="notifications">
+                        <span class="notification-badge">3</span>
+                        <span class="notification-icon">🔔</span>
+                    </div>
+                </div>
+            </header>
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
