@@ -1,0 +1,3 @@
+# Ignore virtual environment and history
+venv/
+.history/
