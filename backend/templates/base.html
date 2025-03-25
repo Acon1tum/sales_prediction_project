@@ -14,9 +14,9 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ForecastIt Logo">
-                <h2>ForecastIt</h2>
-            </div>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ForecastIt Logo" class="logo-img">
+                <h2 class="logo-text">Forecas<span style="color: #00ff00;">trix</span></h2>
+            </div>            
             <nav>
                 <ul>
                     <li class="{% if active_page == 'dashboard' %}active{% endif %}"><a href="{{ url_for('dashboard') }}"><i class="icon">🏠</i> Dashboard</a></li>

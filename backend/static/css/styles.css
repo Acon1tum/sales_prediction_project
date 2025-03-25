@@ -39,7 +39,7 @@ body {
     color: white;
     display: flex;
     flex-direction: column;
-    padding: 25px 20px;
+    padding: 1px 5px; /* Reduce top padding */
     position: fixed;
     height: 100vh;
     overflow-y: auto;
@@ -52,13 +52,18 @@ body {
 .sidebar .logo {
     display: flex;
     align-items: center;
-    margin-bottom: 30px;
-    padding: 0 10px;
+    justify-content: center;
+    width: 100%; /* Ensure full width */
+    margin-bottom: 20px; /* Adjust as needed */
 }
 
+
 .sidebar .logo img {
-    width: 36px;
-    margin-right: 12px;
+    display: block; /* Removes any extra inline spacing */
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    padding: 0; /* Ensure no extra padding */
 }
 
 .sidebar .logo h2 {
@@ -459,4 +464,37 @@ body {
     .pinned-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Center and enlarge logo */
+.logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Make logo bigger and remove background */
+.logo-img {
+    width: 100px; /* Increase size */
+    height: auto;
+    
+    /* Ensure transparency */
+    background: none;
+    border-radius: 0; /* Remove any rounded effect */
+    box-shadow: none; /* Remove any shadow */
+}
+
+/* Style logo text */
+.logo-text {
+    font-size: 28px; /* Bigger text */
+    font-weight: bold;
+    color: white;
+    margin-top: 10px;
+}
+
+/* Highlight 'trix' in green */
+.logo-text span {
+    color: #00ff00; /* Green color */
 }
