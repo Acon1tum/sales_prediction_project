@@ -277,14 +277,14 @@
         <div class="login-right">
             <div class="login-form-container">
                 <h2>Sign In</h2>
-                <form class="login-form">
+                <form class="login-form" method="POST" action="{{ url_for('login') }}">
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
                     </div>
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
                     </div>
                     <div class="login-options">
                         <div class="remember-me">
@@ -316,7 +316,7 @@
         </div>
     </div>
 
-    <script>
+    <!-- <script>
         document.addEventListener("DOMContentLoaded", () => {
             const loginForm = document.querySelector('.login-form');
             
@@ -338,6 +338,6 @@
                 // window.location.href = '/dashboard';
             });
         });
-    </script>
+    </script> -->
 </body>
 </html>
