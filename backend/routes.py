@@ -167,7 +167,7 @@ def upload_csv():
 
 @app.route("/generate_forecast", methods=["POST"])
 def generate_forecast():
-    """ Generates sales forecast and decisions """
+    """ Generates sales forecast and dynamic decisions """
     if model is None or scaler_X is None or scaler_y is None:
         return jsonify({"error": "Model not loaded properly"}), 500
 
@@ -187,18 +187,26 @@ def generate_forecast():
         y_pred_scaled = model.predict(X_scaled).flatten()
         y_pred = scaler_y.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
 
-        # Generate decisions
-        decisions = [
-            {"icon": "📈", "text": "Increase production by 10% for high-demand products"},
-            {"icon": "📉", "text": "Reduce stock for slow-moving items"},
-            {"icon": "🔄", "text": "Reallocate budget for top-performing products"}
-        ]
+        # Retrieve user-defined threshold (default to 0 if not set)
+        threshold = session.get("threshold", 0)
+        threshold = float(threshold) if threshold else 0
+
+        # Generate dynamic decisions based on threshold
+        decisions = []
+        for i, predicted_sales in enumerate(y_pred):
+            if predicted_sales >= threshold * 1.2:  # If sales exceed threshold by 20%
+                decisions.append({"icon": "📈", "text": f"Increase production for Day {i+1}, sales expected: {predicted_sales:.2f}"})
+            elif predicted_sales <= threshold * 0.8:  # If sales fall below 80% of threshold
+                decisions.append({"icon": "📉", "text": f"Reduce stock for Day {i+1}, sales expected: {predicted_sales:.2f}"})
+            else:
+                decisions.append({"icon": "🔄", "text": f"Monitor trends for Day {i+1}, sales expected: {predicted_sales:.2f}"})
 
         return jsonify({"predictions": y_pred.tolist(), "decisions": decisions})
 
     except Exception as e:
         logging.error(f"❌ Error generating forecast: {e}")
         return jsonify({"error": "Failed to generate forecast"}), 500
+
 
 @app.route("/logout")
 def logout():
