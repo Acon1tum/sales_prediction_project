@@ -7,7 +7,6 @@
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    /* Additional forecast-specific styles */
     .actions {
         display: flex;
         gap: 15px;
@@ -64,60 +63,33 @@
 {% block content %}
 <section class="forecast-section">
     <div class="actions">
-        <button>
+        <button id="threshold-btn">
             <span>📊</span> Enter Desired Threshold
         </button>
-        <button>
+        <input type="file" id="upload-btn" accept=".csv" style="display: none;">
+        <button onclick="document.getElementById('upload-btn').click()">
             <span>📁</span> Upload CSV File
         </button>
-        <button>
+        <button id="generate-btn">
             <span>✨</span> Generate Graph & Decisions
         </button>
     </div>
+
     <div class="grid">
         <div class="card">
-            <h3>Recent Forecast</h3>
+            <h3>Sales Forecast Graph</h3>
             <canvas id="forecastChart"></canvas>
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="indicator purple"></span>
-                    <p>Forecast: <strong>3,000 sales</strong></p>
-                </div>
-                <div class="stat-item">
-                    <span class="indicator green"></span>
-                    <p>Produced: <strong>4,000</strong></p>
-                </div>
-            </div>
         </div>
+
         <div class="card">
             <h3>Predictions Analysis</h3>
             <canvas id="predictionsChart"></canvas>
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="indicator purple"></span>
-                    <p>Next Month: <strong>+12%</strong></p>
-                </div>
-                <div class="stat-item">
-                    <span class="indicator green"></span>
-                    <p>Confidence: <strong>85%</strong></p>
-                </div>
-            </div>
         </div>
+
         <div class="card full-width">
             <h3>Recommended Decisions</h3>
-            <div class="decision-content">
-                <div class="decision-item">
-                    <span class="decision-icon">📈</span>
-                    <p>Increase production by <strong>15%</strong> for next quarter</p>
-                </div>
-                <div class="decision-item">
-                    <span class="decision-icon">📉</span>
-                    <p>Reduce inventory for Product X by <strong>20%</strong></p>
-                </div>
-                <div class="decision-item">
-                    <span class="decision-icon">🔄</span>
-                    <p>Reallocate <strong>30%</strong> of marketing budget to top-performing regions</p>
-                </div>
+            <div id="decision-section" class="decision-content">
+                <p>No forecast data yet. Upload a file and generate a forecast.</p>
             </div>
         </div>
     </div>
@@ -126,83 +98,118 @@
 
 {% block scripts %}
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        // Forecast Chart
-        const forecastCtx = document.getElementById('forecastChart').getContext('2d');
-        const forecastChart = new Chart(forecastCtx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [
-                    {
-                        label: 'Forecast',
-                        data: [2000, 2200, 2500, 2800, 3000, 3200],
-                        borderColor: '#9C27B0',
-                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                        tension: 0.3,
-                        fill: true
-                    },
-                    {
-                        label: 'Actual',
-                        data: [1900, 2100, 2400, 2700, 3000, 4000],
-                        borderColor: '#00B894',
-                        backgroundColor: 'rgba(0, 184, 148, 0.1)',
-                        tension: 0.3,
-                        fill: true
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+document.addEventListener("DOMContentLoaded", () => {
+    let predictions = [];
 
-        // Predictions Chart
-        const predictionsCtx = document.getElementById('predictionsChart').getContext('2d');
-        const predictionsChart = new Chart(predictionsCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                datasets: [
-                    {
-                        label: 'Predicted Sales',
-                        data: [8500, 9200, 10500, 12000],
-                        backgroundColor: 'rgba(108, 92, 231, 0.7)',
-                        borderRadius: 6
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        // Button functionality
-        document.querySelectorAll('.actions button').forEach(button => {
-            button.addEventListener('click', () => {
-                alert(`"${button.textContent.trim()}" functionality would be implemented here`);
-            });
-        });
+    // Set Threshold
+    document.getElementById("threshold-btn").addEventListener("click", () => {
+        let threshold = prompt("Enter Desired Threshold:");
+        if (threshold !== null && !isNaN(threshold) && threshold.trim() !== "") {
+            fetch("/set_threshold", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ threshold: threshold.trim() })
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message))
+            .catch(error => console.error(error));
+        } else {
+            alert("Invalid threshold value. Please enter a number.");
+        }
     });
+
+    // Upload CSV File
+    document.getElementById("upload-btn").addEventListener("change", function() {
+        let formData = new FormData();
+        formData.append("file", this.files[0]);
+
+        fetch("/upload_csv", { method: "POST", body: formData })
+            .then(response => response.json())
+            .then(data => alert(data.message))
+            .catch(error => console.error(error));
+    });
+
+    // Generate Forecast
+    document.getElementById("generate-btn").addEventListener("click", () => {
+        fetch("/generate_forecast", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            predictions = data.predictions;
+            updateChart(predictions);
+            updatePredictionsChart(predictions);
+            updateDecisions(data.decisions);
+        })
+        .catch(error => console.error(error));
+    });
+
+    // Update Sales Forecast Chart
+    function updateChart(predictions) {
+        const ctx = document.getElementById("forecastChart").getContext("2d");
+        new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: Array.from({length: predictions.length}, (_, i) => `Day ${i + 1}`),
+                datasets: [{
+                    label: "Predicted Sales",
+                    data: predictions,
+                    borderColor: "#9C27B0",
+                    backgroundColor: "rgba(156, 39, 176, 0.1)",
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: "top" }
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Update Predictions Analysis Chart
+    function updatePredictionsChart(predictions) {
+        const ctx = document.getElementById("predictionsChart").getContext("2d");
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: Array.from({length: predictions.length}, (_, i) => `Day ${i + 1}`),
+                datasets: [{
+                    label: "Predicted Sales",
+                    data: predictions,
+                    backgroundColor: "rgba(108, 92, 231, 0.7)",
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Update Business Decisions
+    function updateDecisions(decisions) {
+        const decisionSection = document.getElementById("decision-section");
+        decisionSection.innerHTML = decisions.map(d => `
+            <div class="decision-item">
+                <span class="decision-icon">${d.icon}</span>
+                <p>${d.text}</p>
+            </div>
+        `).join("");
+    }
+});
 </script>
 {% endblock %}

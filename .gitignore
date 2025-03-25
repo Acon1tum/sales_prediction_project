@@ -1,3 +1,20 @@
-# Ignore virtual environment and history
+# Ignore virtual environment
 venv/
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Jupyter Notebook checkpoints (if used)
+.ipynb_checkpoints/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore uploaded files and temporary data
+backend/uploads/
 .history/
+logs/
