@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Forecast Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ForecastIt Logo">
+                <h2>ForecastIt</h2>
+            </div>
+            <nav>
+                <ul>
+                    <li class="active"><a href="#"><i class="icon">🏠</i> Dashboard</a></li>
+                    <li><a href="#"><i class="icon">📊</i> Forecast</a></li>
+                    <li><a href="#"><i class="icon">📜</i> History</a></li>
+                    <li><a href="#"><i class="icon">⚙️</i> Settings</a></li>
+                    <li class="logout"><a href="#"><i class="icon">🚪</i> Log out</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="{{ url_for('static', filename='images/user.png') }}" alt="User">
+                    <div>
+                        <p class="username">Jess Johnson</p>
+                        <p class="user-email">jess@forecastit.com</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-text">
+                    <h1>Welcome back, Jess!</h1>
+                    <p>Here's your sales forecast overview</p>
+                </div>
+                <div class="header-actions">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search history...">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    <div class="notifications">
+                        <span class="notification-badge">3</span>
+                        <span class="notification-icon">🔔</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <section class="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <h3>Total Graphs Made</h3>
+                        <p class="stat-value">56</p>
+                        <p class="stat-change">+12% from last month</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="card-header">
+                            <h3>Recent Forecast</h3>
+                            <select class="date-selector">
+                                <option>Nov 24, 2024</option>
+                                <option>Nov 23, 2024</option>
+                                <option>Nov 22, 2024</option>
+                            </select>
+                        </div>
+                        <img src="{{ url_for('static', filename='images/graph1.png') }}" alt="Forecast Graph" class="graph-img">
+                        <div class="graph-stats">
+                            <div class="stat-item">
+                                <span class="indicator purple"></span>
+                                <p>Earned: <strong>3,000</strong> sales</p>
+                            </div>
+                            <div class="stat-item">
+                                <span class="indicator green"></span>
+                                <p>Forecasted: <strong>4,000</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="card-header">
+                            <h3>Recent Forecast</h3>
+                            <select class="date-selector">
+                                <option>Nov 24, 2024</option>
+                                <option>Nov 23, 2024</option>
+                                <option>Nov 22, 2024</option>
+                            </select>
+                        </div>
+                        <img src="{{ url_for('static', filename='images/graph2.png') }}" alt="Forecast Graph" class="graph-img">
+                        <div class="graph-stats">
+                            <div class="stat-item">
+                                <span class="indicator purple"></span>
+                                <p>Earned: <strong>2,895</strong> sales</p>
+                            </div>
+                            <div class="stat-item">
+                                <span class="indicator green"></span>
+                                <p>Forecasted: <strong>6,000</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pinned-section">
+                    <div class="section-header">
+                        <h2>Pinned Forecasts</h2>
+                        <button class="view-all">View All</button>
+                    </div>
+                    <div class="pinned-grid">
+                        <div class="pinned-card">
+                            <img src="{{ url_for('static', filename='images/graph3.png') }}" alt="Graph">
+                            <p>Q3 Product Launch</p>
+                        </div>
+                        <div class="pinned-card">
+                            <img src="{{ url_for('static', filename='images/graph4.png') }}" alt="Graph">
+                            <p>Holiday Season Forecast</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
