@@ -10,8 +10,20 @@
     :root {
         --primary: #6C5CE7;
         --primary-hover: #5a4bc2;
+        --secondary: #00CEFF;
         --card-bg: #FFFFFF;
-        --shadow: rgba(0, 0, 0, 0.05);
+        --text-dark: #2D3436;
+        --text-light: #636E72;
+        --shadow: rgba(0, 0, 0, 0.08);
+        --success: #00B894;
+        --warning: #FDCB6E;
+        --error: #D63031;
+    }
+
+    .forecast-section {
+        padding: 0 20px;
+        max-width: 1400px;
+        margin: 0 auto;
     }
 
     .actions {
@@ -19,6 +31,10 @@
         gap: 15px;
         margin-bottom: 30px;
         flex-wrap: wrap;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px var(--shadow);
     }
 
     .actions button, .actions select {
@@ -33,6 +49,8 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        font-size: 0.95rem;
+        box-shadow: 0 2px 5px rgba(108, 92, 231, 0.2);
     }
 
     .actions select {
@@ -41,6 +59,7 @@
         background-repeat: no-repeat;
         background-position: right 15px center;
         padding-right: 40px;
+        min-width: 180px;
     }
 
     .actions button:hover, .actions select:hover {
@@ -49,23 +68,29 @@
         box-shadow: 0 5px 15px var(--shadow);
     }
 
+    .actions button:active {
+        transform: translateY(0);
+    }
+
     .bento-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
-        padding: 20px;
+        margin-bottom: 30px;
     }
 
     .bento-box {
         background: var(--card-bg);
         border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 12px var(--shadow);
-        transition: transform 0.2s ease;
+        padding: 25px;
+        box-shadow: 0 4px 15px var(--shadow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     .bento-box:hover {
         transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     }
 
     .full-width {
@@ -81,25 +106,41 @@
 
     .decision-item {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 15px;
-        padding: 15px;
+        padding: 18px;
         background: rgba(108, 92, 231, 0.05);
         border-radius: 8px;
+        border-left: 4px solid var(--primary);
+        transition: transform 0.2s ease;
+    }
+
+    .decision-item:hover {
+        transform: translateX(5px);
     }
 
     .decision-icon {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
+        margin-top: 2px;
+        color: var(--primary);
+    }
+
+    .decision-text {
+        flex: 1;
+        color: var(--text-dark);
+        line-height: 1.5;
     }
 
     .decision-pagination {
         display: flex;
         justify-content: space-between;
-        margin-top: 15px;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .pagination-btn {
-        padding: 8px 15px;
+        padding: 10px 20px;
         border: none;
         border-radius: 8px;
         background-color: var(--primary);
@@ -107,29 +148,31 @@
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
+        font-size: 0.9rem;
     }
 
     .pagination-btn:disabled {
-        background-color: #ddd;
+        background-color: #E0E0E0;
+        color: #9E9E9E;
         cursor: not-allowed;
     }
 
     .pagination-btn:hover:not(:disabled) {
         background-color: var(--primary-hover);
         transform: translateY(-2px);
-        box-shadow: 0 5px 10px var(--shadow);
+        box-shadow: 0 3px 8px rgba(108, 92, 231, 0.3);
     }
 
     canvas {
         width: 100% !important;
         height: 250px !important;
-        margin-bottom: 15px;
+        margin: 15px 0;
     }
 
     .product-selector {
         position: relative;
         flex-grow: 1;
-        max-width: 300px;
+        max-width: 250px;
     }
 
     .product-selector::before {
@@ -143,55 +186,110 @@
 
     .product-selector select {
         width: 100%;
-        padding-left: 40px;
+        padding-left: 45px;
     }
 
     .chart-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .chart-title h3 {
+        font-size: 1.2rem;
+        color: var(--text-dark);
+        margin: 0;
     }
     
     .product-badge {
         background-color: rgba(108, 92, 231, 0.1);
         color: var(--primary);
         border-radius: 20px;
-        padding: 4px 12px;
-        font-size: 0.9rem;
-        font-weight: 500;
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        font-weight: 600;
     }
 
     .sales-summary {
         margin-top: 20px;
-        background-color: rgba(108, 92, 231, 0.05);
+        background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(0, 206, 255, 0.1) 100%);
         border-radius: 8px;
-        padding: 15px;
+        padding: 18px;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        border: 1px solid rgba(108, 92, 231, 0.2);
     }
 
     .total-sales {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .total-sales-value {
         color: var(--primary);
+        font-weight: 700;
     }
 
     .sales-badge {
         display: inline-flex;
         align-items: center;
-        background-color: var(--primary);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
         color: white;
         border-radius: 20px;
-        padding: 6px 12px;
-        font-weight: 500;
+        padding: 8px 16px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: 0 3px 8px rgba(108, 92, 231, 0.3);
     }
 
     .sales-badge span {
         margin-right: 8px;
+        font-size: 1.1rem;
     }
 
-    @media (max-width: 768px) {
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-light);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    .empty-state-text {
+        font-size: 1.1rem;
+    }
+
+    /* File upload button styling */
+    .file-upload-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .file-upload-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .file-upload-input {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
         .bento-container {
             grid-template-columns: 1fr;
         }
@@ -199,7 +297,9 @@
         .full-width {
             grid-column: span 1;
         }
-        
+    }
+
+    @media (max-width: 768px) {
         .actions {
             flex-direction: column;
         }
@@ -207,6 +307,24 @@
         .product-selector {
             max-width: 100%;
         }
+
+        .bento-box {
+            padding: 20px;
+        }
+    }
+
+    /* Animation for loading state */
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+
+    .loading {
+        animation: pulse 1.5s infinite;
+        color: var(--text-light);
+        text-align: center;
+        padding: 20px;
     }
 </style>
 {% endblock %}
@@ -214,27 +332,46 @@
 {% block content %}
 <section class="forecast-section">
     <div class="actions">
-        <button id="threshold-btn"><span>📊</span> Enter Threshold</button>
-        <input type="file" id="upload-btn" accept=".csv" style="display: none;">
-        <button onclick="document.getElementById('upload-btn').click()"><span>📁</span> Upload CSV</button>
+        <button id="threshold-btn" class="action-btn">
+            <span>📊</span> Set Threshold
+        </button>
+        
+        <div class="file-upload-wrapper">
+            <button class="file-upload-button">
+                <span>📁</span> Upload CSV
+            </button>
+            <input type="file" id="upload-btn" class="file-upload-input" accept=".csv">
+        </div>
+        
         <div class="product-selector">
             <select id="product-select" disabled>
                 <option value="all">All Products</option>
             </select>
         </div>
-        <button id="generate-btn"><span>✨</span> Generate Forecast</button>
+        
+        <button id="generate-btn" class="action-btn" disabled>
+            <span>✨</span> Generate Forecast
+        </button>
+        
+        <button id="reset-btn" class="action-btn">
+            <span>🔄</span> Reset
+        </button>
     </div>
 
     <div class="bento-container">
         <div class="bento-box">
             <div class="chart-title">
-                <h3>Sales Forecast Graph</h3>
+                <h3>Sales Forecast</h3>
                 <span id="product-badge-1" class="product-badge">All Products</span>
             </div>
             <canvas id="forecastChart"></canvas>
             <div id="sales-summary" class="sales-summary" style="display: none;">
-                <div class="total-sales">Total Forecasted Sales: <span id="total-sales-value">0</span></div>
-                <div class="sales-badge"><span>💰</span>Sales Prediction</div>
+                <div class="total-sales">
+                    Total Forecasted Sales: <span id="total-sales-value" class="total-sales-value">0</span>
+                </div>
+                <div class="sales-badge">
+                    <span>💰</span>Sales Prediction
+                </div>
             </div>
         </div>
 
@@ -248,14 +385,18 @@
 
         <div class="bento-box full-width">
             <div class="chart-title">
-                <h3>Recommended Decisions</h3>
+                <h3>Recommended Actions</h3>
                 <span id="product-badge-3" class="product-badge">All Products</span>
             </div>
             <div id="decision-section" class="decision-content">
-                <p>No forecast data yet. Upload a file and generate a forecast.</p>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <p class="empty-state-text">Upload your data and generate a forecast to see recommendations</p>
+                </div>
             </div>
             <div class="decision-pagination">
                 <button id="prev-btn" class="pagination-btn" disabled>← Previous</button>
+                <span id="page-indicator">Page 1 of 1</span>
                 <button id="next-btn" class="pagination-btn" disabled>Next →</button>
             </div>
         </div>
@@ -266,7 +407,6 @@
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    // Your existing code...
     let predictions = [];
     let decisions = [];
     let currentPage = 0;
@@ -276,179 +416,225 @@ document.addEventListener("DOMContentLoaded", () => {
     let forecastChart = null;
     let predictionsChart = null;
 
-    // Add reset button to the actions div in your HTML
-    const actionsDiv = document.querySelector('.actions');
-    const resetButton = document.createElement('button');
-    resetButton.innerHTML = '<span>🔄</span> Reset';
-    resetButton.id = 'reset-btn';
-    actionsDiv.appendChild(resetButton);
+    // UI Elements
+    const uploadBtn = document.getElementById("upload-btn");
+    const generateBtn = document.getElementById("generate-btn");
+    const productSelect = document.getElementById("product-select");
+    const decisionSection = document.getElementById("decision-section");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const pageIndicator = document.getElementById("page-indicator");
 
-    // Reset functionality
-    document.getElementById("reset-btn").addEventListener("click", () => {
-    // Call the server reset endpoint
-    fetch("/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Server reset:", data.message);
-        
-        // Reset file input
-        document.getElementById("upload-btn").value = "";
-
-        // Reset product dropdown
-        const productSelect = document.getElementById("product-select");
-        productSelect.innerHTML = '<option value="all">All Products</option>';
-        productSelect.disabled = true;
-        selectedProduct = "all";
-
-        // Clear charts
-        if (forecastChart) {
-            forecastChart.destroy();
-            forecastChart = null;
-        }
-        if (predictionsChart) {
-            predictionsChart.destroy();
-            predictionsChart = null;
-        }
-
-        // Reset decisions
-        predictions = [];
-        decisions = [];
-        currentPage = 0;
-        const decisionSection = document.getElementById("decision-section");
-        decisionSection.innerHTML = "<p>No forecast data yet. Upload a file and generate a forecast.</p>";
-        
-        // Disable pagination buttons
-        document.getElementById("prev-btn").disabled = true;
-        document.getElementById("next-btn").disabled = true;
-        
-        // Update product badges
-        updateProductBadges("all");
-        
-        // Hide total sales
-        document.getElementById("sales-summary").style.display = "none";
-        
-        // Alert user
-        alert("All data has been reset. You can start fresh.");
-    })
-    .catch(error => {
-        console.error("Error resetting data:", error);
-        alert("Error resetting data. Please try again.");
-    });
-});
+    // Initialize with empty state
+    showEmptyState();
 
     // Set Threshold
     document.getElementById("threshold-btn").addEventListener("click", () => {
-        let threshold = prompt("Enter Desired Threshold:");
-        if (threshold !== null && !isNaN(threshold) && threshold.trim() !== "") {
-            fetch("/set_threshold", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ threshold: threshold.trim() })
-            })
-            .then(response => response.json())
-            .then(data => alert(data.message))
-            .catch(error => console.error(error));
-        } else {
-            alert("Invalid threshold value. Please enter a number.");
+        const currentThreshold = localStorage.getItem('forecastThreshold') || '';
+        const threshold = prompt("Enter your desired sales threshold (e.g., 1000):", currentThreshold);
+        
+        if (threshold !== null && threshold.trim() !== "") {
+            if (!isNaN(threshold)) {
+                fetch("/set_threshold", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ threshold: threshold.trim() })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.setItem('forecastThreshold', threshold.trim());
+                    showToast(data.message, 'success');
+                })
+                .catch(error => {
+                    console.error(error);
+                    showToast("Failed to set threshold", 'error');
+                });
+            } else {
+                showToast("Please enter a valid number", 'error');
+            }
         }
     });
 
     // Upload CSV File
-    document.getElementById("upload-btn").addEventListener("change", function() {
-        let formData = new FormData();
+    uploadBtn.addEventListener("change", function() {
+        if (!this.files.length) return;
+
+        const formData = new FormData();
         formData.append("file", this.files[0]);
-
-        fetch("/upload_csv", { method: "POST", body: formData })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                // Enable generate button
-                document.getElementById("generate-btn").disabled = false;
-            })
-            .catch(error => console.error(error));
-    });
-
-    // Product Select Change
-    document.getElementById("product-select").addEventListener("change", function() {
-        selectedProduct = this.value;
-        // Update product badges
-        updateProductBadges(selectedProduct);
-    });
-
-    // Generate Forecast
-    document.getElementById("generate-btn").addEventListener("click", () => {
-        fetch("/generate_forecast", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                product: selectedProduct
-            })
+        
+        showLoading("Uploading and processing data...");
+        
+        fetch("/upload_csv", { 
+            method: "POST", 
+            body: formData 
         })
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                alert(data.error);
+                showToast(data.error, 'error');
+                return;
+            }
+            
+            showToast(data.message, 'success');
+            generateBtn.disabled = false;
+            
+            // If the response includes product list, update the dropdown
+            if (data.product_list) {
+                productList = ["all", ...data.product_list];
+                updateProductDropdown();
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            showToast("Failed to upload file", 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    });
+
+    // Product Select Change
+    productSelect.addEventListener("change", function() {
+        selectedProduct = this.value;
+        updateProductBadges();
+    });
+
+    // Generate Forecast
+    generateBtn.addEventListener("click", () => {
+        if (!uploadBtn.files.length && productList.length <= 1) {
+            showToast("Please upload a CSV file first", 'warning');
+            return;
+        }
+        
+        showLoading("Generating forecast...");
+        
+        fetch("/generate_forecast", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ product: selectedProduct })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
                 return;
             }
 
-            predictions = data.predictions;
-            decisions = data.decisions;
-            productList = data.product_list;
-            selectedProduct = data.selected_product;
+            predictions = data.predictions || [];
+            decisions = data.decisions || [];
             
-            // Update product dropdown
-            updateProductDropdown(productList, selectedProduct);
+            if (data.product_list) {
+                productList = ["all", ...data.product_list];
+                updateProductDropdown();
+            }
             
-            // Update charts and decisions
-            updateChart(predictions, selectedProduct);
-            updatePredictionsChart(predictions, selectedProduct);
+            updateCharts();
             updateDecisions();
+            updateTotalSales();
+            updateProductBadges();
             
-            // Update product badges
-            updateProductBadges(selectedProduct);
-            
-            // Update total sales
-            updateTotalSales(predictions);
+            showToast("Forecast generated successfully!", 'success');
         })
-        .catch(error => console.error(error));
+        .catch(error => {
+            console.error(error);
+            showToast("Failed to generate forecast", 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
     });
 
-    // Update Product Dropdown
-    function updateProductDropdown(products, selected) {
-        const productSelect = document.getElementById("product-select");
-        productSelect.disabled = false;
+    // Reset Functionality
+    document.getElementById("reset-btn").addEventListener("click", () => {
+        if (confirm("Are you sure you want to reset all data? This cannot be undone.")) {
+            showLoading("Resetting data...");
+            
+            fetch("/reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Reset all local state
+                predictions = [];
+                decisions = [];
+                currentPage = 0;
+                productList = ["all"];
+                selectedProduct = "all";
+                
+                // Reset UI elements
+                uploadBtn.value = "";
+                generateBtn.disabled = true;
+                updateProductDropdown();
+                
+                // Clear charts
+                if (forecastChart) forecastChart.destroy();
+                if (predictionsChart) predictionsChart.destroy();
+                forecastChart = null;
+                predictionsChart = null;
+                
+                // Reset decisions display
+                showEmptyState();
+                updateTotalSales();
+                updateProductBadges();
+                
+                // Disable pagination
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                updatePageIndicator();
+                
+                showToast(data.message, 'success');
+            })
+            .catch(error => {
+                console.error(error);
+                showToast("Failed to reset data", 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+        }
+    });
+
+    // Pagination
+    prevBtn.addEventListener("click", () => {
+        if (currentPage > 0) {
+            currentPage--;
+            updateDecisions();
+        }
+    });
+
+    nextBtn.addEventListener("click", () => {
+        if ((currentPage + 1) * itemsPerPage < decisions.length) {
+            currentPage++;
+            updateDecisions();
+        }
+    });
+
+    // Helper Functions
+    function updateProductDropdown() {
         productSelect.innerHTML = '';
+        productSelect.disabled = productList.length <= 1;
         
-        products.forEach(product => {
+        productList.forEach(product => {
             const option = document.createElement("option");
             option.value = product;
             option.textContent = product === "all" ? "All Products" : product;
             productSelect.appendChild(option);
         });
         
-        productSelect.value = selected;
+        productSelect.value = selectedProduct;
     }
     
-    // Update Product Badges
-    function updateProductBadges(product) {
-        const badges = [
-            document.getElementById("product-badge-1"),
-            document.getElementById("product-badge-2"),
-            document.getElementById("product-badge-3")
-        ];
-        
-        const displayName = product === "all" ? "All Products" : product;
+    function updateProductBadges() {
+        const badges = document.querySelectorAll(".product-badge");
+        const displayName = selectedProduct === "all" ? "All Products" : selectedProduct;
         
         badges.forEach(badge => {
             badge.textContent = displayName;
         });
     }
     
-    // Update Total Sales
-    function updateTotalSales(predictions) {
+    function updateTotalSales() {
         const salesSummary = document.getElementById("sales-summary");
         const totalSalesValue = document.getElementById("total-sales-value");
         
@@ -461,85 +647,169 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Update Sales Forecast Chart
-    function updateChart(predictions, product) {
+    function updateCharts() {
+        updateForecastChart();
+        updatePredictionsChart();
+    }
+
+    function updateForecastChart() {
         const ctx = document.getElementById("forecastChart").getContext("2d");
         
-        // Destroy previous chart if it exists
-        if (forecastChart) {
-            forecastChart.destroy();
-        }
+        if (forecastChart) forecastChart.destroy();
+        
+        if (predictions.length === 0) return;
         
         forecastChart = new Chart(ctx, {
             type: "line",
             data: {
-                labels: Array.from({length: predictions.length}, (_, i) => `Day ${i + 1}`),
+                labels: predictions.map((_, i) => `Day ${i + 1}`),
                 datasets: [{
-                    label: product === "all" ? "All Products" : product,
+                    label: selectedProduct === "all" ? "All Products" : selectedProduct,
                     data: predictions,
-                    borderColor: "#9C27B0",
-                    backgroundColor: "rgba(156, 39, 176, 0.1)",
+                    borderColor: "#6C5CE7",
+                    backgroundColor: "rgba(108, 92, 231, 0.1)",
                     tension: 0.3,
-                    fill: true
+                    fill: true,
+                    borderWidth: 2,
+                    pointBackgroundColor: "#6C5CE7",
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    title: {
-                        display: false,
-                        text: product === "all" ? "All Products Forecast" : `${product} Forecast`
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
                     }
                 }
             }
         });
     }
 
-    // Update Predictions Analysis Chart
-    function updatePredictionsChart(predictions, product) {
+    function updatePredictionsChart() {
         const ctx = document.getElementById("predictionsChart").getContext("2d");
         
-        // Destroy previous chart if it exists
-        if (predictionsChart) {
-            predictionsChart.destroy();
-        }
+        if (predictionsChart) predictionsChart.destroy();
+        
+        if (predictions.length === 0) return;
         
         predictionsChart = new Chart(ctx, {
             type: "bar",
             data: {
-                labels: Array.from({length: predictions.length}, (_, i) => `Day ${i + 1}`),
+                labels: predictions.map((_, i) => `Day ${i + 1}`),
                 datasets: [{
-                    label: product === "all" ? "All Products" : product,
+                    label: selectedProduct === "all" ? "All Products" : selectedProduct,
                     data: predictions,
                     backgroundColor: "rgba(108, 92, 231, 0.7)",
-                    borderRadius: 6
+                    borderRadius: 6,
+                    borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    title: {
-                        display: false,
-                        text: product === "all" ? "All Products Analysis" : `${product} Analysis`
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
                     }
                 }
             }
         });
     }
 
-    // Paginated Decisions
     function updateDecisions() {
-        const decisionSection = document.getElementById("decision-section");
-        decisionSection.innerHTML = decisions.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
-            .map(d => `<div class="decision-item"><span class="decision-icon">${d.icon}</span><p>${d.text}</p></div>`)
-            .join("");
-
-        document.getElementById("prev-btn").disabled = currentPage === 0;
-        document.getElementById("next-btn").disabled = (currentPage + 1) * itemsPerPage >= decisions.length;
+        if (decisions.length === 0) {
+            showEmptyState();
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            return;
+        }
+        
+        const start = currentPage * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginatedDecisions = decisions.slice(start, end);
+        
+        decisionSection.innerHTML = paginatedDecisions.map(d => `
+            <div class="decision-item">
+                <span class="decision-icon">${d.icon || '💡'}</span>
+                <div class="decision-text">${d.text}</div>
+            </div>
+        `).join("");
+        
+        prevBtn.disabled = currentPage === 0;
+        nextBtn.disabled = end >= decisions.length;
+        updatePageIndicator();
+    }
+    
+    function updatePageIndicator() {
+        const totalPages = Math.ceil(decisions.length / itemsPerPage);
+        pageIndicator.textContent = `Page ${currentPage + 1} of ${totalPages}`;
     }
 
-    document.getElementById("prev-btn").addEventListener("click", () => { currentPage--; updateDecisions(); });
-    document.getElementById("next-btn").addEventListener("click", () => { currentPage++; updateDecisions(); });
+    function showEmptyState() {
+        decisionSection.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <p class="empty-state-text">${predictions.length === 0 
+                    ? "Upload your data and generate a forecast to see recommendations" 
+                    : "No recommendations available for this data"}</p>
+            </div>
+        `;
+    }
+    
+    function showLoading(message) {
+        decisionSection.innerHTML = `
+            <div class="loading">
+                <div>⏳</div>
+                <p>${message}</p>
+            </div>
+        `;
+    }
+    
+    function hideLoading() {
+        if (decisions.length > 0) {
+            updateDecisions();
+        } else {
+            showEmptyState();
+        }
+    }
+    
+    function showToast(message, type = 'info') {
+        // In a real implementation, you'd want a proper toast notification system
+        alert(`${type.toUpperCase()}: ${message}`);
+    }
 });
 </script>
 {% endblock %}
