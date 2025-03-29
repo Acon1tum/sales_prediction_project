@@ -141,6 +141,25 @@ def forecast():
 
     return render_template("forecast.html", user={"email": session["email"]})
 
+@app.route("/history")
+def history():
+    """ Renders the history page if logged in, otherwise redirects to login """
+    if "email" not in session:
+        flash("Please login first", "warning")
+        return redirect(url_for("login"))
+
+    return render_template("history.html", user={"email": session["email"]})
+
+@app.route("/settings")
+def settings():
+    """ Renders the settings page if logged in, otherwise redirects to login """
+    if "email" not in session:
+        flash("Please login first", "warning")
+        return redirect(url_for("login"))
+
+    return render_template("settings.html", user={"email": session["email"]}, active_page="settings")
+
+
 @app.route("/set_threshold", methods=["POST"])
 def set_threshold():
     """ Stores the threshold value in session """
