@@ -18,9 +18,10 @@
         display: flex;
         gap: 15px;
         margin-bottom: 30px;
+        flex-wrap: wrap;
     }
 
-    .actions button {
+    .actions button, .actions select {
         padding: 12px 20px;
         border: none;
         border-radius: 8px;
@@ -34,7 +35,15 @@
         gap: 8px;
     }
 
-    .actions button:hover {
+    .actions select {
+        appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        padding-right: 40px;
+    }
+
+    .actions button:hover, .actions select:hover {
         background-color: var(--primary-hover);
         transform: translateY(-2px);
         box-shadow: 0 5px 15px var(--shadow);
@@ -117,6 +126,41 @@
         margin-bottom: 15px;
     }
 
+    .product-selector {
+        position: relative;
+        flex-grow: 1;
+        max-width: 300px;
+    }
+
+    .product-selector::before {
+        content: "🏷️";
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+
+    .product-selector select {
+        width: 100%;
+        padding-left: 40px;
+    }
+
+    .chart-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .product-badge {
+        background-color: rgba(108, 92, 231, 0.1);
+        color: var(--primary);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
     @media (max-width: 768px) {
         .bento-container {
             grid-template-columns: 1fr;
@@ -124,6 +168,14 @@
 
         .full-width {
             grid-column: span 1;
+        }
+        
+        .actions {
+            flex-direction: column;
+        }
+        
+        .product-selector {
+            max-width: 100%;
         }
     }
 </style>
@@ -135,22 +187,36 @@
         <button id="threshold-btn"><span>📊</span> Enter Threshold</button>
         <input type="file" id="upload-btn" accept=".csv" style="display: none;">
         <button onclick="document.getElementById('upload-btn').click()"><span>📁</span> Upload CSV</button>
+        <div class="product-selector">
+            <select id="product-select" disabled>
+                <option value="all">All Products</option>
+            </select>
+        </div>
         <button id="generate-btn"><span>✨</span> Generate Forecast</button>
     </div>
 
     <div class="bento-container">
         <div class="bento-box">
-            <h3>Sales Forecast Graph</h3>
+            <div class="chart-title">
+                <h3>Sales Forecast Graph</h3>
+                <span id="product-badge-1" class="product-badge">All Products</span>
+            </div>
             <canvas id="forecastChart"></canvas>
         </div>
 
         <div class="bento-box">
-            <h3>Predictions Analysis</h3>
+            <div class="chart-title">
+                <h3>Predictions Analysis</h3>
+                <span id="product-badge-2" class="product-badge">All Products</span>
+            </div>
             <canvas id="predictionsChart"></canvas>
         </div>
 
         <div class="bento-box full-width">
-            <h3>Recommended Decisions</h3>
+            <div class="chart-title">
+                <h3>Recommended Decisions</h3>
+                <span id="product-badge-3" class="product-badge">All Products</span>
+            </div>
             <div id="decision-section" class="decision-content">
                 <p>No forecast data yet. Upload a file and generate a forecast.</p>
             </div>
@@ -170,6 +236,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let decisions = [];
     let currentPage = 0;
     const itemsPerPage = 3;
+    let productList = ["all"];
+    let selectedProduct = "all";
+    let forecastChart = null;
+    let predictionsChart = null;
 
     // Set Threshold
     document.getElementById("threshold-btn").addEventListener("click", () => {
@@ -195,15 +265,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
         fetch("/upload_csv", { method: "POST", body: formData })
             .then(response => response.json())
-            .then(data => alert(data.message))
+            .then(data => {
+                alert(data.message);
+                // Enable generate button
+                document.getElementById("generate-btn").disabled = false;
+            })
             .catch(error => console.error(error));
+    });
+
+    // Product Select Change
+    document.getElementById("product-select").addEventListener("change", function() {
+        selectedProduct = this.value;
+        // Update product badges
+        updateProductBadges(selectedProduct);
     });
 
     // Generate Forecast
     document.getElementById("generate-btn").addEventListener("click", () => {
         fetch("/generate_forecast", {
             method: "POST",
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                product: selectedProduct
+            })
         })
         .then(response => response.json())
         .then(data => {
@@ -214,45 +298,116 @@ document.addEventListener("DOMContentLoaded", () => {
 
             predictions = data.predictions;
             decisions = data.decisions;
-            updateChart(predictions);
-            updatePredictionsChart(predictions);
+            productList = data.product_list;
+            selectedProduct = data.selected_product;
+            
+            // Update product dropdown
+            updateProductDropdown(productList, selectedProduct);
+            
+            // Update charts and decisions
+            updateChart(predictions, selectedProduct);
+            updatePredictionsChart(predictions, selectedProduct);
             updateDecisions();
+            
+            // Update product badges
+            updateProductBadges(selectedProduct);
         })
         .catch(error => console.error(error));
     });
 
+    // Update Product Dropdown
+    function updateProductDropdown(products, selected) {
+        const productSelect = document.getElementById("product-select");
+        productSelect.disabled = false;
+        productSelect.innerHTML = '';
+        
+        products.forEach(product => {
+            const option = document.createElement("option");
+            option.value = product;
+            option.textContent = product === "all" ? "All Products" : product;
+            productSelect.appendChild(option);
+        });
+        
+        productSelect.value = selected;
+    }
+    
+    // Update Product Badges
+    function updateProductBadges(product) {
+        const badges = [
+            document.getElementById("product-badge-1"),
+            document.getElementById("product-badge-2"),
+            document.getElementById("product-badge-3")
+        ];
+        
+        const displayName = product === "all" ? "All Products" : product;
+        
+        badges.forEach(badge => {
+            badge.textContent = displayName;
+        });
+    }
+
     // Update Sales Forecast Chart
-    function updateChart(predictions) {
+    function updateChart(predictions, product) {
         const ctx = document.getElementById("forecastChart").getContext("2d");
-        new Chart(ctx, {
+        
+        // Destroy previous chart if it exists
+        if (forecastChart) {
+            forecastChart.destroy();
+        }
+        
+        forecastChart = new Chart(ctx, {
             type: "line",
             data: {
                 labels: Array.from({length: predictions.length}, (_, i) => `Day ${i + 1}`),
                 datasets: [{
-                    label: "Predicted Sales",
+                    label: product === "all" ? "All Products" : product,
                     data: predictions,
                     borderColor: "#9C27B0",
                     backgroundColor: "rgba(156, 39, 176, 0.1)",
                     tension: 0.3,
                     fill: true
                 }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false,
+                        text: product === "all" ? "All Products Forecast" : `${product} Forecast`
+                    }
+                }
             }
         });
     }
 
     // Update Predictions Analysis Chart
-    function updatePredictionsChart(predictions) {
+    function updatePredictionsChart(predictions, product) {
         const ctx = document.getElementById("predictionsChart").getContext("2d");
-        new Chart(ctx, {
+        
+        // Destroy previous chart if it exists
+        if (predictionsChart) {
+            predictionsChart.destroy();
+        }
+        
+        predictionsChart = new Chart(ctx, {
             type: "bar",
             data: {
                 labels: Array.from({length: predictions.length}, (_, i) => `Day ${i + 1}`),
                 datasets: [{
-                    label: "Predicted Sales",
+                    label: product === "all" ? "All Products" : product,
                     data: predictions,
                     backgroundColor: "rgba(108, 92, 231, 0.7)",
                     borderRadius: 6
                 }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false,
+                        text: product === "all" ? "All Products Analysis" : `${product} Analysis`
+                    }
+                }
             }
         });
     }
