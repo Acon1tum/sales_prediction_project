@@ -424,6 +424,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const prevBtn = document.getElementById("prev-btn");
     const nextBtn = document.getElementById("next-btn");
     const pageIndicator = document.getElementById("page-indicator");
+    const exportBtn = document.getElementById("export-btn");
+
+    // Add export button if it doesn't exist
+    if (!exportBtn) {
+        const actionsDiv = document.querySelector('.actions');
+        const exportButton = document.createElement('button');
+        exportButton.innerHTML = '<span>📤</span> Export Report';
+        exportButton.className = 'action-btn';
+        exportButton.id = 'export-btn';
+        exportButton.disabled = true; // Initially disabled until forecast is generated
+        actionsDiv.appendChild(exportButton);
+    }
 
     // Initialize with empty state
     showEmptyState();
@@ -533,6 +545,9 @@ document.addEventListener("DOMContentLoaded", () => {
             updateTotalSales();
             updateProductBadges();
             
+            // Enable the export button after successful forecast generation
+            document.getElementById('export-btn').disabled = false;
+            
             showToast("Forecast generated successfully!", 'success');
         })
         .catch(error => {
@@ -542,6 +557,16 @@ document.addEventListener("DOMContentLoaded", () => {
         .finally(() => {
             hideLoading();
         });
+    });
+
+    // Export Report
+    document.getElementById('export-btn').addEventListener('click', () => {
+        if (predictions.length === 0) {
+            showToast("Generate a forecast first", 'warning');
+            return;
+        }
+        
+        exportForecastReport();
     });
 
     // Reset Functionality
@@ -565,6 +590,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Reset UI elements
                 uploadBtn.value = "";
                 generateBtn.disabled = true;
+                document.getElementById('export-btn').disabled = true;
                 updateProductDropdown();
                 
                 // Clear charts
@@ -809,6 +835,267 @@ document.addEventListener("DOMContentLoaded", () => {
     function showToast(message, type = 'info') {
         // In a real implementation, you'd want a proper toast notification system
         alert(`${type.toUpperCase()}: ${message}`);
+    }
+    
+    function chartToImage(chart) {
+        return new Promise((resolve) => {
+            resolve(chart.toBase64Image('image/png', 1.0));
+        });
+    }
+    
+    function exportForecastReport() {
+        showLoading("Generating export...");
+        
+        // Create a report object with all the data
+        const reportData = {
+            title: `Sales Forecast Report - ${selectedProduct === "all" ? "All Products" : selectedProduct}`,
+            date: new Date().toLocaleDateString(),
+            predictions: predictions.map((value, index) => ({
+                day: index + 1,
+                value: value.toFixed(2)
+            })),
+            decisions: decisions,
+            summary: {
+                totalSales: predictions.reduce((sum, val) => sum + val, 0).toFixed(2),
+                averageSales: (predictions.reduce((sum, val) => sum + val, 0) / predictions.length).toFixed(2),
+                highestSales: Math.max(...predictions).toFixed(2),
+                lowestSales: Math.min(...predictions).toFixed(2),
+                selectedProduct: selectedProduct === "all" ? "All Products" : selectedProduct
+            }
+        };
+        
+        // Convert chart to base64 image
+        Promise.all([
+            chartToImage(forecastChart),
+            chartToImage(predictionsChart)
+        ]).then(([forecastChartImg, predictionsChartImg]) => {
+            // Create PDF content
+            const content = generateReportContent(reportData, forecastChartImg, predictionsChartImg);
+            
+            // Create download link
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `forecast-report-${new Date().toISOString().slice(0, 10)}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            hideLoading();
+            showToast("Report exported successfully!", 'success');
+        }).catch(error => {
+            console.error('Error exporting report:', error);
+            hideLoading();
+            showToast("Failed to export report", 'error');
+        });
+    }
+    
+    function generateReportContent(data, forecastChartImg, predictionsChartImg) {
+        return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${data.title}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 1200px;
+                        margin: 0 auto;
+                        padding: 20px;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        padding-bottom: 20px;
+                        border-bottom: 1px solid #eee;
+                    }
+                    .date {
+                        color: #666;
+                        font-style: italic;
+                    }
+                    .charts {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 30px;
+                        margin-bottom: 30px;
+                    }
+                    .chart-container {
+                        text-align: center;
+                    }
+                    .chart-container img {
+                        max-width: 100%;
+                        height: auto;
+                        border: 1px solid #eee;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    }
+                    .summary {
+                        background-color: #f5f5f5;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin-bottom: 30px;
+                    }
+                    .summary h2 {
+                        margin-top: 0;
+                    }
+                    .summary-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                        gap: 15px;
+                    }
+                    .summary-item {
+                        background: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+                    }
+                    .summary-item h3 {
+                        margin-top: 0;
+                        font-size: 16px;
+                        color: #666;
+                    }
+                    .summary-item .value {
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #6C5CE7;
+                    }
+                    .decisions h2 {
+                        margin-bottom: 20px;
+                    }
+                    .decision-item {
+                        display: flex;
+                        align-items: flex-start;
+                        gap: 15px;
+                        padding: 15px;
+                        background: rgba(108, 92, 231, 0.05);
+                        border-radius: 8px;
+                        border-left: 4px solid #6C5CE7;
+                        margin-bottom: 15px;
+                    }
+                    .decision-icon {
+                        font-size: 24px;
+                    }
+                    .decision-text {
+                        flex: 1;
+                    }
+                    .data-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 30px;
+                    }
+                    .data-table th, .data-table td {
+                        padding: 12px;
+                        text-align: left;
+                        border-bottom: 1px solid #eee;
+                    }
+                    .data-table th {
+                        background-color: #f5f5f5;
+                        font-weight: bold;
+                    }
+                    .data-table tr:nth-child(even) {
+                        background-color: #f9f9f9;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>${data.title}</h1>
+                    <p class="date">Generated on ${data.date}</p>
+                </div>
+                
+                <div class="summary">
+                    <h2>Summary</h2>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <h3>Product</h3>
+                            <div class="value">${data.summary.selectedProduct}</div>
+                        </div>
+                        <div class="summary-item">
+                            <h3>Total Forecasted Sales</h3>
+                            <div class="value">${data.summary.totalSales}</div>
+                        </div>
+                        <div class="summary-item">
+                            <h3>Average Daily Sales</h3>
+                            <div class="value">${data.summary.averageSales}</div>
+                        </div>
+                        <div class="summary-item">
+                            <h3>Highest Daily Sales</h3>
+                            <div class="value">${data.summary.highestSales}</div>
+                        </div>
+                        <div class="summary-item">
+                            <h3>Lowest Daily Sales</h3>
+                            <div class="value">${data.summary.lowestSales}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts">
+                    <div class="chart-container">
+                        <h2>Sales Forecast</h2>
+                        <img src="${forecastChartImg}" alt="Sales Forecast Chart">
+                    </div>
+                    <div class="chart-container">
+                        <h2>Predictions Analysis</h2>
+                        <img src="${predictionsChartImg}" alt="Predictions Analysis Chart">
+                    </div>
+                </div>
+                
+                <div class="data-section">
+                    <h2>Detailed Forecast Data</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Forecasted Sales</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.predictions.map(p => `
+                                <tr>
+                                    <td>Day ${p.day}</td>
+                                    <td>${p.value}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="decisions">
+                    <h2>Recommended Actions</h2>
+                    ${data.decisions.map(d => `
+                        <div class="decision-item">
+                            <div class="decision-icon">${d.icon}</div>
+                            <div class="decision-text">${d.text}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <p class="no-print">
+                    <small>© ${new Date().getFullYear()} ForecastIt. This report was generated automatically and should be reviewed by a business analyst.</small>
+                </p>
+                
+                <div class="no-print" style="text-align:center; margin-top: 30px;">
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #6C5CE7; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Print Report
+                    </button>
+                </div>
+            </body>
+            </html>
+        `;
     }
 });
 </script>
