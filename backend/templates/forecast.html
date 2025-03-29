@@ -161,6 +161,36 @@
         font-weight: 500;
     }
 
+    .sales-summary {
+        margin-top: 20px;
+        background-color: rgba(108, 92, 231, 0.05);
+        border-radius: 8px;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .total-sales {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .sales-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--primary);
+        color: white;
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-weight: 500;
+    }
+
+    .sales-badge span {
+        margin-right: 8px;
+    }
+
     @media (max-width: 768px) {
         .bento-container {
             grid-template-columns: 1fr;
@@ -202,6 +232,10 @@
                 <span id="product-badge-1" class="product-badge">All Products</span>
             </div>
             <canvas id="forecastChart"></canvas>
+            <div id="sales-summary" class="sales-summary" style="display: none;">
+                <div class="total-sales">Total Forecasted Sales: <span id="total-sales-value">0</span></div>
+                <div class="sales-badge"><span>💰</span>Sales Prediction</div>
+            </div>
         </div>
 
         <div class="bento-box">
@@ -293,6 +327,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Update product badges
         updateProductBadges("all");
         
+        // Hide total sales
+        document.getElementById("sales-summary").style.display = "none";
+        
         // Alert user
         alert("All data has been reset. You can start fresh.");
     })
@@ -372,6 +409,9 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // Update product badges
             updateProductBadges(selectedProduct);
+            
+            // Update total sales
+            updateTotalSales(predictions);
         })
         .catch(error => console.error(error));
     });
@@ -405,6 +445,20 @@ document.addEventListener("DOMContentLoaded", () => {
         badges.forEach(badge => {
             badge.textContent = displayName;
         });
+    }
+    
+    // Update Total Sales
+    function updateTotalSales(predictions) {
+        const salesSummary = document.getElementById("sales-summary");
+        const totalSalesValue = document.getElementById("total-sales-value");
+        
+        if (predictions && predictions.length > 0) {
+            const totalSales = predictions.reduce((sum, value) => sum + value, 0);
+            totalSalesValue.textContent = totalSales.toFixed(2);
+            salesSummary.style.display = "flex";
+        } else {
+            salesSummary.style.display = "none";
+        }
     }
 
     // Update Sales Forecast Chart
