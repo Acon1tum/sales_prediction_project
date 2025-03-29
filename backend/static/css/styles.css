@@ -34,7 +34,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-    width: 280px;
+    width: 230px;
     background: var(--sidebar-bg);
     color: white;
     display: flex;
@@ -46,6 +46,79 @@ body {
     z-index: 100;
     /* Add box shadow for better separation */
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: width 0.3s ease;
+    overflow: hidden;
+}
+
+.sidebar.collapsed {
+    width: 70px;
+}
+
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .link-text,
+.sidebar.collapsed .user-details {
+    display: none;
+}
+
+.sidebar.collapsed .logo {
+    padding: 1rem 0; /* Reduce padding in collapsed state */
+}
+
+.sidebar.collapsed .logo-img {
+    width: 40px; /* Smaller logo in collapsed state */
+    margin-bottom: 0;
+}
+
+.sidebar.collapsed .toggle-btn {
+    position: static; /* Reset position in collapsed state */
+    margin: 10px auto 0; /* Center the button */
+    display: block;
+}
+
+.sidebar.collapsed .user-info {
+    justify-content: center;
+}
+
+.sidebar.collapsed .user-info img {
+    margin-right: 0;
+}
+
+.sidebar.collapsed nav ul li a {
+    justify-content: center;
+}
+
+nav ul li a {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1rem;
+}
+
+.toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.5rem;
+    z-index: 101;
+}
+
+/* Adjust main content when sidebar is collapsed */
+.sidebar.collapsed ~ .main-content {
+    margin-left: 70px;
+    width: calc(100% - 70px);
+    /* Add subtle scale effect */
+    transform: scale(0.98);
+    opacity: 0.95;
+    transition: all 0.3s ease;
+}
+
+.sidebar.collapsed ~ .main-content:hover {
+    transform: scale(1);
+    opacity: 1;
 }
 
 
@@ -122,9 +195,7 @@ body {
 .user-info {
     display: flex;
     align-items: center;
-    padding: 10px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    padding: 1rem;
 }
 
 .user-info:hover {
@@ -156,8 +227,10 @@ body {
     flex-grow: 1;
     padding: 30px;
     background-color: var(--main-bg);
-    margin-left: 280px; /* Same as sidebar width */
+    margin-left: 230px; /* Match sidebar width */
     min-height: 100vh;
+    transition: all 0.3s ease; /* Add smooth transition */
+    transform-origin: left center; /* Set transform origin */
 }
 
 /* For mobile responsiveness */
@@ -469,35 +542,33 @@ body {
 /* Center and enlarge logo */
 .logo {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center horizontally */
+    padding: 1rem;
+    text-align: center; /* Center text */
+    margin-bottom: 20px;
 }
-
 /* Make logo bigger and remove background */
 .logo-img {
-    width: 100px; /* Increase size */
+    width: 100px; /* Adjust as needed */
     height: auto;
-    
-    /* Ensure transparency */
-    background: none;
-    border-radius: 0; /* Remove any rounded effect */
-    box-shadow: none; /* Remove any shadow */
+    margin-bottom: 10px; /* Space between image and text */
 }
 
 /* Style logo text */
 .logo-text {
-    font-size: 28px; /* Bigger text */
+    font-size: 28px;
     font-weight: bold;
     color: white;
-    margin-top: 10px;
+    margin: 0; /* Remove default margins */
+    line-height: 1.2; /* Adjust line height if needed */
 }
 
 /* Highlight 'trix' in green */
 .logo-text span {
-    color: #00ff00; /* Green color */
+    color: #00ff00;
 }
+
 
 .bento-container {
     display: grid;
