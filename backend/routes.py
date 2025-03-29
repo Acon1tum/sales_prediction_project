@@ -365,6 +365,31 @@ def generate_forecast():
         logging.error(f"❌ Error generating forecast: {e}", exc_info=True)
         return jsonify({"error": f"Failed to generate forecast: {str(e)}"}), 500
 
+
+@app.route("/reset", methods=["POST"])
+def reset():
+    """ Reset session data related to forecasting """
+    # Remove uploaded file reference from session
+    if "uploaded_file" in session:
+        # Optionally: Delete the actual file from server
+        if os.path.exists(session["uploaded_file"]):
+            try:
+                os.remove(session["uploaded_file"])
+            except Exception as e:
+                logging.error(f"Error removing file: {e}")
+        
+        # Remove from session
+        session.pop("uploaded_file", None)
+    
+    # Reset threshold
+    session["threshold"] = 0
+    
+    # Reset forecast type if it was set
+    if "forecast_type" in session:
+        session.pop("forecast_type", None)
+    
+    return jsonify({"message": "Reset successful"}), 200
+
 @app.route("/logout")
 def logout():
     """ Logs out the user and clears session data """

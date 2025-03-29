@@ -232,6 +232,7 @@
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    // Your existing code...
     let predictions = [];
     let decisions = [];
     let currentPage = 0;
@@ -240,6 +241,66 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedProduct = "all";
     let forecastChart = null;
     let predictionsChart = null;
+
+    // Add reset button to the actions div in your HTML
+    const actionsDiv = document.querySelector('.actions');
+    const resetButton = document.createElement('button');
+    resetButton.innerHTML = '<span>🔄</span> Reset';
+    resetButton.id = 'reset-btn';
+    actionsDiv.appendChild(resetButton);
+
+    // Reset functionality
+    document.getElementById("reset-btn").addEventListener("click", () => {
+    // Call the server reset endpoint
+    fetch("/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Server reset:", data.message);
+        
+        // Reset file input
+        document.getElementById("upload-btn").value = "";
+
+        // Reset product dropdown
+        const productSelect = document.getElementById("product-select");
+        productSelect.innerHTML = '<option value="all">All Products</option>';
+        productSelect.disabled = true;
+        selectedProduct = "all";
+
+        // Clear charts
+        if (forecastChart) {
+            forecastChart.destroy();
+            forecastChart = null;
+        }
+        if (predictionsChart) {
+            predictionsChart.destroy();
+            predictionsChart = null;
+        }
+
+        // Reset decisions
+        predictions = [];
+        decisions = [];
+        currentPage = 0;
+        const decisionSection = document.getElementById("decision-section");
+        decisionSection.innerHTML = "<p>No forecast data yet. Upload a file and generate a forecast.</p>";
+        
+        // Disable pagination buttons
+        document.getElementById("prev-btn").disabled = true;
+        document.getElementById("next-btn").disabled = true;
+        
+        // Update product badges
+        updateProductBadges("all");
+        
+        // Alert user
+        alert("All data has been reset. You can start fresh.");
+    })
+    .catch(error => {
+        console.error("Error resetting data:", error);
+        alert("Error resetting data. Please try again.");
+    });
+});
 
     // Set Threshold
     document.getElementById("threshold-btn").addEventListener("click", () => {
