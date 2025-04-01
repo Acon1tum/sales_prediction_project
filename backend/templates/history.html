@@ -1,231 +1,289 @@
-<!-- backend/templates/forecast_details.html -->
 {% extends "base.html" %}
 
-{% block title %}Forecastrix | Forecast Details{% endblock %}
-{% block header_subtitle %}Detailed view of your forecast{% endblock %}
+{% block title %}Forecastrix | History{% endblock %}
+{% block header_subtitle %}View your past forecasts and analyses{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/forecast_details.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
+<style>
+    
+</style>
 {% endblock %}
 
 {% block content %}
-<section class="forecast-details-container">
-    <div class="forecast-details-header">
-        <h1>Forecast Details</h1>
-        <button onclick="window.history.back()" class="back-btn">
-            <span>⬅️</span> Back to History
-        </button>
-    </div>
-    
-    <div class="forecast-meta">
-        <div class="meta-item">
-            <span class="meta-label">Forecast Type:</span>
-            <span class="meta-value">{{ forecast.forecast_type | capitalize }}</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">Product:</span>
-            <span class="meta-value">{{ forecast.product if forecast.product != "all" else "All Products" }}</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">Created:</span>
-            <span class="meta-value">{{ forecast.created_at | datetimeformat }}</span>
-        </div>
-        {% if upload_data %}
-        <div class="meta-item">
-            <span class="meta-label">Source File:</span>
-            <span class="meta-value">{{ upload_data.file_name }}</span>
-        </div>
-        {% endif %}
-    </div>
-    
-    <div class="forecast-summary">
-        <div class="summary-card">
-            <h3>Forecast Overview</h3>
-            <div class="summary-stats">
-                <div class="stat-item">
-                    <div class="stat-value">{{ forecast.forecast_data.predictions | length }}</div>
-                    <div class="stat-label">Days Forecasted</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ forecast.forecast_data.predictions | sum | round(2) }}</div>
-                    <div class="stat-label">Total Sales</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ forecast.threshold | round(2) }}</div>
-                    <div class="stat-label">Threshold</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="summary-card">
-            <h3>Data Quality</h3>
-            <div class="quality-stats">
-                <div class="quality-item">
-                    <span class="quality-label">Date Range:</span>
-                    <span class="quality-value">{{ forecast.forecast_data.data_quality.date_range_days }} days</span>
-                </div>
-                <div class="quality-item">
-                    <span class="quality-label">Unique Days:</span>
-                    <span class="quality-value">{{ forecast.forecast_data.data_quality.unique_days }}</span>
-                </div>
-                <div class="quality-item">
-                    <span class="quality-label">Data Density:</span>
-                    <span class="quality-value">{{ (forecast.forecast_data.data_quality.data_density * 100) | round(1) }}%</span>
-                </div>
-            </div>
+<section class="history-container">
+    <div class="history-header">
+        <h1>Forecast History</h1>
+        <div>
+            <button id="refresh-btn" class="action-btn">
+                <span>🔄</span> Refresh
+            </button>
         </div>
     </div>
     
-    <div class="forecast-charts">
-        <div class="chart-container">
-            <h3>Sales Predictions</h3>
-            <canvas id="predictionsChart"></canvas>
-        </div>
-        
-        <div class="chart-container">
-            <h3>Trend Analysis</h3>
-            <canvas id="trendsChart"></canvas>
+    <div class="history-filters">
+        <select id="product-filter">
+            <option value="all">All Products</option>
+        </select>
+        <select id="type-filter">
+            <option value="all">All Types</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="short-term">Short-term</option>
+        </select>
+        <input type="date" id="date-filter">
+        <button id="apply-filters">Apply Filters</button>
+    </div>
+    
+    <div class="forecast-cards" id="forecast-cards">
+        <div class="loading">
+            <div>⏳</div>
+            <p>Loading your forecast history...</p>
         </div>
     </div>
     
-    <div class="forecast-decisions">
-        <h2>Decision Insights</h2>
-        <div class="decisions-list">
-            {% for decision in forecast.forecast_data.decisions %}
-            <div class="decision-item {{ 'positive' if decision.trend == 'positive' else 'negative' if decision.trend == 'negative' else 'neutral' }}">
-                <div class="decision-icon">{{ decision.icon }}</div>
-                <div class="decision-text">{{ decision.text }}</div>
-                <div class="decision-severity">{{ decision.severity | capitalize }}</div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <div class="forecast-actions">
-        <button onclick="exportForecast()" class="primary">
-            <span>📤</span> Export Forecast
-        </button>
-    </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    // Prepare data for charts
-    const forecastData = {{ forecast.forecast_data | tojson | safe }};
-    const predictions = forecastData.predictions || [];
-    const days = Array.from({length: predictions.length}, (_, i) => i + 1);
+    let forecastHistory = [];
+    let productList = ["all"];
     
-    // Create predictions chart
-    const predictionsCtx = document.getElementById('predictionsChart').getContext('2d');
-    new Chart(predictionsCtx, {
-        type: 'line',
-        data: {
-            labels: days,
-            datasets: [{
-                label: 'Predicted Sales',
-                data: predictions,
-                borderColor: '#6C5CE7',
-                backgroundColor: 'rgba(108, 92, 231, 0.1)',
-                tension: 0.3,
-                fill: true
-            }, {
-                label: 'Threshold',
-                data: Array(predictions.length).fill({{ forecast.threshold }}),
-                borderColor: '#00B894',
-                borderDash: [5, 5],
-                backgroundColor: 'transparent'
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Daily Sales Predictions'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`;
-                        }
-                    }
+    // Load history when page loads
+    loadForecastHistory();
+    
+    // Setup refresh button
+    document.getElementById("refresh-btn").addEventListener("click", loadForecastHistory);
+    
+    // Setup filter button
+    document.getElementById("apply-filters").addEventListener("click", applyFilters);
+    
+    function loadForecastHistory() {
+        showLoading();
+        
+        fetch("/get_forecast_history")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    title: {
-                        display: true,
-                        text: 'Sales Amount'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Day'
-                    }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                    return;
                 }
-            }
+                
+                forecastHistory = data.history || [];
+                
+                // Extract unique products for filter
+                const products = new Set(["all"]);
+                forecastHistory.forEach(item => {
+                    if (item.product && item.product !== "all") {
+                        products.add(item.product);
+                    }
+                });
+                
+                productList = Array.from(products);
+                updateProductFilter();
+                
+                if (forecastHistory.length === 0) {
+                    showEmptyState();
+                } else {
+                    renderForecastCards(forecastHistory);
+                }
+            })
+            .catch(error => {
+                console.error("Error loading history:", error);
+                showError("Failed to load forecast history. Please try again.");
+            });
+    }
+    
+    function applyFilters() {
+        const productFilter = document.getElementById("product-filter").value;
+        const typeFilter = document.getElementById("type-filter").value;
+        const dateFilter = document.getElementById("date-filter").value;
+        
+        let filtered = [...forecastHistory];
+        
+        if (productFilter !== "all") {
+            filtered = filtered.filter(item => item.product === productFilter);
         }
-    });
-    
-    // Create trends chart
-    const decisions = forecastData.decisions || [];
-    const trendCounts = {
-        positive: decisions.filter(d => d.trend === 'positive').length,
-        negative: decisions.filter(d => d.trend === 'negative').length,
-        neutral: decisions.filter(d => d.trend === 'neutral').length
-    };
-    
-    const trendsCtx = document.getElementById('trendsChart').getContext('2d');
-    new Chart(trendsCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Positive', 'Negative', 'Neutral'],
-            datasets: [{
-                data: [trendCounts.positive, trendCounts.negative, trendCounts.neutral],
-                backgroundColor: [
-                    'rgba(0, 184, 148, 0.7)',
-                    'rgba(214, 48, 49, 0.7)',
-                    'rgba(178, 190, 195, 0.7)'
-                ],
-                borderColor: [
-                    'rgba(0, 184, 148, 1)',
-                    'rgba(214, 48, 49, 1)',
-                    'rgba(178, 190, 195, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Trend Distribution'
-                },
-                legend: {
-                    position: 'bottom'
-                }
-            }
+        
+        if (typeFilter !== "all") {
+            filtered = filtered.filter(item => item.forecast_type === typeFilter);
         }
-    });
-});
-
-function exportForecast() {
-    const forecastData = {{ forecast | tojson | safe }};
-    const dataStr = JSON.stringify(forecastData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        if (dateFilter) {
+            const filterDate = new Date(dateFilter).toISOString().split('T')[0];
+            filtered = filtered.filter(item => {
+                const itemDate = new Date(item.created_at).toISOString().split('T')[0];
+                return itemDate === filterDate;
+            });
+        }
+        
+        if (filtered.length === 0) {
+            showEmptyState("No forecasts match your filters");
+        } else {
+            renderForecastCards(filtered);
+        }
+    }
     
-    const exportFileDefaultName = `forecast-{{ forecast.id }}-${new Date().toISOString().split('T')[0]}.json`;
+    function updateProductFilter() {
+        const productFilter = document.getElementById("product-filter");
+        productFilter.innerHTML = "";
+        
+        productList.forEach(product => {
+            const option = document.createElement("option");
+            option.value = product;
+            option.textContent = product === "all" ? "All Products" : product;
+            productFilter.appendChild(option);
+        });
+    }
     
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    function renderForecastCards(forecasts) {
+        const container = document.getElementById("forecast-cards");
+        container.innerHTML = "";
+        
+        forecasts.forEach(forecast => {
+            const forecastData = forecast.forecast_data || {};
+            const predictions = forecastData.predictions || [];
+            const decisions = forecastData.decisions || [];
+            const dataQuality = forecastData.data_quality || {};
+            
+            const date = new Date(forecast.created_at);
+            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Calculate summary stats
+            const totalSales = predictions.reduce((sum, val) => sum + val, 0).toFixed(2);
+            const avgSales = predictions.length > 0 ? (totalSales / predictions.length).toFixed(2) : "0.00";
+            const maxSales = predictions.length > 0 ? Math.max(...predictions).toFixed(2) : "0.00";
+            
+            // Count decision types
+            const positiveDecisions = decisions.filter(d => d.trend === "positive").length;
+            const negativeDecisions = decisions.filter(d => d.trend === "negative").length;
+            const neutralDecisions = decisions.filter(d => d.trend === "neutral").length;
+            
+            const card = document.createElement("div");
+            card.className = "forecast-card";
+            card.innerHTML = `
+                <div class="forecast-header">
+                    <h3 class="forecast-title">${forecast.forecast_type ? forecast.forecast_type.charAt(0).toUpperCase() + forecast.forecast_type.slice(1) : 'Unknown'} Forecast</h3>
+                    <span class="forecast-date">${formattedDate}</span>
+                </div>
+                
+                <div class="forecast-meta">
+                    <span class="forecast-product">${forecast.product === "all" ? "All Products" : forecast.product || "Unknown"}</span>
+                    ${forecast.upload_name ? `<span class="forecast-source">From: ${forecast.upload_name}</span>` : ''}
+                </div>
+                
+                <div class="forecast-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">${predictions.length}</div>
+                        <div class="stat-label">Days</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${totalSales}</div>
+                        <div class="stat-label">Total Sales</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${maxSales}</div>
+                        <div class="stat-label">Peak Sales</div>
+                    </div>
+                </div>
+                
+                <div class="forecast-insights">
+                    <div class="insight positive">
+                        <span class="insight-count">${positiveDecisions}</span>
+                        <span class="insight-label">Positive Trends</span>
+                    </div>
+                    <div class="insight negative">
+                        <span class="insight-count">${negativeDecisions}</span>
+                        <span class="insight-label">Negative Trends</span>
+                    </div>
+                    <div class="insight neutral">
+                        <span class="insight-count">${neutralDecisions}</span>
+                        <span class="insight-label">Neutral</span>
+                    </div>
+                </div>
+                
+                <div class="forecast-actions">
+                    <button class="view-btn" data-id="${forecast.id}">
+                        <span>👁️</span> View Details
+                    </button>
+                    <button class="primary export-btn" data-id="${forecast.id}">
+                        <span>📤</span> Export
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(card);
+        });
+        
+        // Add event listeners to the new buttons
+        document.querySelectorAll(".view-btn").forEach(btn => {
+            btn.addEventListener("click", () => viewForecast(btn.dataset.id));
+        });
+        
+        document.querySelectorAll(".export-btn").forEach(btn => {
+            btn.addEventListener("click", () => exportForecast(btn.dataset.id));
+        });
+    }
+    
+    function viewForecast(forecastId) {
+        const forecast = forecastHistory.find(f => f.id == forecastId);
+        if (!forecast) return;
+        
+        // Store the forecast ID in sessionStorage for the details page
+        sessionStorage.setItem('selectedForecastId', forecastId);
+        
+        // Redirect to a new details page (you'll need to create this)
+        window.location.href = `/forecast_details/${forecastId}`;
+    }
+    
+    function exportForecast(forecastId) {
+    // Open the export directly as CSV
+    window.open(`/export_forecast/${forecastId}`, '_blank');
 }
+    
+    function showLoading() {
+        const container = document.getElementById("forecast-cards");
+        container.innerHTML = `
+            <div class="loading">
+                <div>⏳</div>
+                <p>Loading your forecast history...</p>
+            </div>
+        `;
+    }
+    
+    function showEmptyState(message = "You haven't generated any forecasts yet") {
+        const container = document.getElementById("forecast-cards");
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <p class="empty-state-text">${message}</p>
+                <button class="action-btn" onclick="window.location.href='/forecast'">
+                    <span>✨</span> Create Your First Forecast
+                </button>
+            </div>
+        `;
+    }
+    
+    function showError(message) {
+        const container = document.getElementById("forecast-cards");
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">❌</div>
+                <p class="empty-state-text">${message}</p>
+                <button onclick="window.location.reload()" class="action-btn">
+                    <span>🔄</span> Try Again
+                </button>
+            </div>
+        `;
+    }
+});
 </script>
 {% endblock %}

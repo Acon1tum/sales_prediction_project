@@ -3,11 +3,14 @@ import logging
 import pandas as pd
 import joblib
 import tensorflow as tf
+import csv
 from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 from werkzeug.utils import secure_filename
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from datetime import timedelta
+from flask import make_response
+from io import StringIO
 
 # Load environment variables
 load_dotenv()
@@ -625,7 +628,67 @@ def get_forecast_history():
         logging.error(f"Error fetching forecast history: {e}")
         return jsonify({"error": str(e)}), 500
     
+
+@app.route("/export_forecast/<int:forecast_id>", methods=["GET"])
+def export_forecast(forecast_id):
+    """Export forecast as CSV document"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        # Get the forecast
+        response = supabase_client.table("forecasts").select("*").eq("id", forecast_id).eq("user_id", session["user_id"]).execute()
+        
+        if not response.data:
+            return jsonify({"error": "Forecast not found"}), 404
+            
+        forecast = response.data[0]
+        forecast_data = forecast.get("forecast_data", {})
+        
+        return export_as_csv(forecast, forecast_data)
+            
+    except Exception as e:
+        logging.error(f"Error exporting forecast: {e}")
+        return jsonify({"error": str(e)}), 500
+
+def export_as_csv(forecast, forecast_data):
+    """Generate CSV export with full decision text"""
+    si = StringIO()
+    cw = csv.writer(si)
     
+    # Write header
+    cw.writerow(["Forecast Report"])
+    cw.writerow([])
+    cw.writerow(["Forecast ID:", forecast["id"]])
+    cw.writerow(["Product:", forecast.get("product", "All Products")])
+    cw.writerow(["Forecast Type:", forecast.get("forecast_type", "Unknown")])
+    cw.writerow(["Created At:", forecast.get("created_at", "")])
+    cw.writerow(["Threshold:", session.get("threshold", 100)])
+    cw.writerow([])
+    
+    # Write predictions with full decision text
+    cw.writerow(["Day", "Predicted Sales", "Decision"])
+    for i, (pred, decision) in enumerate(zip(
+        forecast_data.get("predictions", []),
+        forecast_data.get("decisions", [])
+    )):
+        cw.writerow([
+            i+1,
+            f"{pred:.2f}",
+            decision.get("text", "")  # Include full text without truncation
+        ])
+    
+    # Write data quality
+    cw.writerow([])
+    cw.writerow(["Data Quality Metrics"])
+    for k, v in forecast_data.get("data_quality", {}).items():
+        cw.writerow([k.replace("_", " ").title(), v])
+    
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = f"attachment; filename=forecast_{forecast['id']}.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
 @app.route("/forecast_details/<int:forecast_id>")
 def forecast_details(forecast_id):
     """Show detailed view of a specific forecast"""
