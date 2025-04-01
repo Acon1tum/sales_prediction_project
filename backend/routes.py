@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from flask import make_response
 from io import StringIO
+from base64 import b64encode
 
 # Load environment variables
 load_dotenv()
@@ -170,7 +171,10 @@ def validate_user_session():
     except Exception as e:
         logging.error(f"Error validating user session: {e}")
         return False
-    
+
+@app.context_processor
+def utility_processor():
+    return dict(b64encode=b64encode)   
 
 @app.route("/")
 def home():
@@ -254,12 +258,38 @@ def history():
 @app.route("/settings")
 def settings():
     """ Renders the settings page if logged in, otherwise redirects to login """
-    if "email" not in session:
+    if "email" not in session or "user_id" not in session:  # Check both
         flash("Please login first", "warning")
         return redirect(url_for("login"))
 
-    return render_template("settings.html", user={"email": session["email"]}, active_page="settings")
+    try:
+        # Fetch user data from Supabase
+        response = supabase_client.table("users").select(
+            "first_name", "last_name", "position", "profile_pic"
+        ).eq("id", session["user_id"]).execute()
+        
+        # Check if response contains data
+        if not response.data:
+            flash("User data not found", "danger")
+            return redirect(url_for("dashboard"))
+            
+        user_data = response.data[0]  # Now safe to access
+        
+        return render_template("settings.html", 
+                            user={
+                                "email": session["email"],
+                                "first_name": user_data.get("first_name", ""),
+                                "last_name": user_data.get("last_name", ""),
+                                "position": user_data.get("position", ""),
+                                "profile_pic": user_data.get("profile_pic", None)
+                            }, 
+                            active_page="settings")
 
+    except Exception as e:
+        logging.error(f"Error in settings route: {e}", exc_info=True)
+        flash("Error loading user settings", "danger")
+        return redirect(url_for("dashboard"))
+    
 
 @app.route("/set_threshold", methods=["POST"])
 def set_threshold():
@@ -847,6 +877,8 @@ def forecast_details_data(forecast_id):
     except Exception as e:
         logging.error(f"Error fetching forecast details data: {e}")
         return jsonify({"error": str(e)}), 500
+    
+    
 
 @app.route("/logout")
 def logout():
