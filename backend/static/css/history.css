@@ -336,11 +336,36 @@
 }
 
 .modal-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
 }
 
+.modal-section {
+    margin-bottom: 0;
+}
+
+/* Data Quality and Metadata grids */
+.data-quality-grid,
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.data-quality-card,
+.metadata-card {
+    padding: 12px;
+    border-radius: 8px;
+    background-color: #F5F6FA;
+}
+
+@media (max-width: 768px) {
+    .data-quality-grid,
+    .metadata-grid {
+        grid-template-columns: 1fr;
+    }
+}
 .modal-section {
     margin-bottom: 20px;
 }

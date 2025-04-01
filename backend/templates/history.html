@@ -243,49 +243,46 @@
     </div>
     
     <!-- Modal for forecast details -->
-    <div class="modal-overlay" id="forecast-modal">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modal-title">Forecast Details</h2>
-                <button class="close-modal" id="close-modal">&times;</button>
+<div class="modal-overlay" id="forecast-modal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modal-title">Forecast Details</h2>
+            <button class="close-modal" id="close-modal">&times;</button>
+        </div>
+        <div class="modal-content">
+            <!-- Sales Forecast Section -->
+            <div class="modal-section">
+                <h3 class="modal-section-title">Sales Forecast</h3>
+                <div class="chart-container">
+                    <canvas id="forecast-chart"></canvas>
+                </div>
             </div>
-            <div class="modal-content">
-                <!-- Sales Forecast Section -->
-                <div class="modal-section">
-                    <h3 class="modal-section-title">Sales Forecast</h3>
-                    <div class="chart-container">
-                        <canvas id="forecast-chart"></canvas>
-                    </div>
+            
+            <!-- Key Decisions Section -->
+            <div class="modal-section">
+                <h3 class="modal-section-title">Key Decisions</h3>
+                <div class="decisions-container" id="decisions-list"></div>
+                <div class="pagination-controls" id="decisions-pagination">
+                    <button class="pagination-btn" id="prev-page">&lt; Previous</button>
+                    <span id="page-info">Page 1 of 1</span>
+                    <button class="pagination-btn" id="next-page">Next &gt;</button>
                 </div>
-                
-                <!-- Key Decisions Section -->
-                <div class="modal-section">
-                    <h3 class="modal-section-title">Key Decisions</h3>
-                    <div class="decisions-container" id="decisions-list"></div>
-                    <div class="pagination-controls" id="decisions-pagination">
-                        <button class="pagination-btn" id="prev-page">&lt; Previous</button>
-                        <span id="page-info">Page 1 of 1</span>
-                        <button class="pagination-btn" id="next-page">Next &gt;</button>
-                    </div>
-                </div>
-                
-                <!-- Bottom Grid Sections -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <!-- Data Quality Section -->
-                    <div class="modal-section">
-                        <h3 class="modal-section-title">Data Quality</h3>
-                        <div class="data-quality-grid" id="data-quality-list"></div>
-                    </div>
-                    
-                    <!-- Forecast Metadata Section -->
-                    <div class="modal-section">
-                        <h3 class="modal-section-title">Forecast Metadata</h3>
-                        <div class="metadata-grid" id="forecast-meta"></div>
-                    </div>
-                </div>
+            </div>
+            
+            <!-- Data Quality Section -->
+            <div class="modal-section">
+                <h3 class="modal-section-title">Data Quality</h3>
+                <div class="data-quality-grid" id="data-quality-list"></div>
+            </div>
+            
+            <!-- Forecast Metadata Section -->
+            <div class="modal-section">
+                <h3 class="modal-section-title">Forecast Metadata</h3>
+                <div class="metadata-grid" id="forecast-meta"></div>
             </div>
         </div>
     </div>
+</div>
 </section>
 {% endblock %}
 
