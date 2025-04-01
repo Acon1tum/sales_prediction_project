@@ -8,7 +8,7 @@ from flask import Flask, render_template, redirect, url_for, request, session, f
 from werkzeug.utils import secure_filename
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from datetime import timedelta
+from datetime import datetime, timedelta
 from flask import make_response
 from io import StringIO
 
@@ -724,6 +724,129 @@ def forecast_details(forecast_id):
         logging.error(f"Error fetching forecast details: {e}")
         flash("Error loading forecast details", "danger")
         return redirect(url_for("history"))
+    
+
+@app.route("/dashboard_data")
+def dashboard_data():
+    """Provides data for the dashboard"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        user_id = session["user_id"]
+        
+        # Get total forecasts count
+        forecast_count = supabase_client.table("forecasts") \
+            .select("count", count="exact") \
+            .eq("user_id", user_id) \
+            .execute().count
+        
+        # Get count from previous period (e.g., last month)
+        one_month_ago = (datetime.now() - timedelta(days=30)).isoformat()
+        prev_count = supabase_client.table("forecasts") \
+            .select("count", count="exact") \
+            .eq("user_id", user_id) \
+            .lt("created_at", one_month_ago) \
+            .execute().count or 0  # Use 0 if no previous forecasts
+        
+        # Calculate percentage change
+        percentage_change = 0
+        if prev_count > 0:
+            percentage_change = round(((forecast_count - prev_count) / prev_count) * 100)
+        
+        # Get recent forecasts (last 2)
+        recent_forecasts = supabase_client.table("forecasts") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .order("created_at", desc=True) \
+            .limit(2) \
+            .execute().data
+        
+        # Get pinned forecasts
+        pinned_forecasts = supabase_client.table("forecasts") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .order("created_at", desc=True) \
+            .limit(2) \
+            .execute().data
+        
+        
+        # Process recent forecasts data
+        processed_recent = []
+        for forecast in recent_forecasts:
+            forecast_data = forecast.get("forecast_data", {})
+            predictions = forecast_data.get("predictions", [])
+            avg_prediction = sum(predictions) / len(predictions) if predictions else 0
+            
+            processed_recent.append({
+                "id": forecast["id"],
+                "date": forecast["created_at"],
+                "product": forecast["product"],
+                "type": forecast["forecast_type"],
+                "avg_prediction": round(avg_prediction, 2),
+                "threshold": forecast["threshold"],
+                "predictions": predictions[:7]  # Just show first week for preview
+            })
+        
+        # Process pinned forecasts
+        processed_pinned = []
+        for forecast in pinned_forecasts:
+            forecast_data = forecast.get("forecast_data", {})
+            predictions = forecast_data.get("predictions", [])
+            
+            processed_pinned.append({
+                "id": forecast["id"],
+                "title": f"{forecast['product']} - {forecast['forecast_type']} forecast",
+                "predictions": predictions[:5]  # Just show first few for preview
+            })
+        
+        return jsonify({
+            "total_forecasts": forecast_count,
+            "percentage_change": percentage_change,
+            "recent_forecasts": processed_recent,
+            "pinned_forecasts": processed_pinned
+        })
+        
+    except Exception as e:
+        logging.error(f"Error fetching dashboard data: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route("/forecast_details_data/<int:forecast_id>")
+def forecast_details_data(forecast_id):
+    """Provides data for a specific forecast"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        # Get the forecast
+        response = supabase_client.table("forecasts") \
+            .select("*") \
+            .eq("id", forecast_id) \
+            .eq("user_id", session["user_id"]) \
+            .execute()
+        
+        if not response.data:
+            return jsonify({"error": "Forecast not found"}), 404
+            
+        forecast = response.data[0]
+        forecast_data = forecast.get("forecast_data", {})
+        predictions = forecast_data.get("predictions", [])
+        avg_prediction = sum(predictions) / len(predictions) if predictions else 0
+        
+        return jsonify({
+            "id": forecast["id"],
+            "date": forecast["created_at"],
+            "product": forecast["product"],
+            "type": forecast["forecast_type"],
+            "avg_prediction": round(avg_prediction, 2),
+            "threshold": forecast["threshold"],
+            "predictions": predictions
+        })
+        
+    except Exception as e:
+        logging.error(f"Error fetching forecast details data: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/logout")
 def logout():

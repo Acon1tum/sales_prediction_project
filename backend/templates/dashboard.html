@@ -4,56 +4,61 @@
 {% block title %}Forecastrix | Dashboard{% endblock %}
 {% block header_subtitle %}Here's your sales forecast overview{% endblock %}
 
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
 <!-- Dashboard Content -->
 <section class="dashboard">
     <div class="stats-grid">
         <div class="stat-card primary">
-            <h3>Total Graphs Made</h3>
-            <p class="stat-value">56</p>
-            <p class="stat-change">+12% from last month</p>
+            <h3>Total Forecasts Generated</h3>
+            <p class="stat-value" id="total-forecasts">0</p>
+            <p class="stat-change" id="forecast-change">+0% from last month</p>
         </div>
-        
-        <div class="stat-card">
+
+        <div class="stat-card" id="recent-forecast-1">
             <div class="card-header">
                 <h3>Recent Forecast</h3>
-                <select class="date-selector">
-                    <option>Nov 24, 2024</option>
-                    <option>Nov 23, 2024</option>
-                    <option>Nov 22, 2024</option>
+                <select class="date-selector" onchange="loadForecast(this.value, 1)">
+                    <option value="">Loading...</option>
                 </select>
             </div>
-            <img src="{{ url_for('static', filename='images/graph1.png') }}" alt="Forecast Graph" class="graph-img">
+            <div class="graph-container">
+                <canvas id="graph1"></canvas>
+            </div>
             <div class="graph-stats">
                 <div class="stat-item">
                     <span class="indicator purple"></span>
-                    <p>Earned: <strong>3,000</strong> sales</p>
+                    <p>Threshold: <strong id="threshold-1">0</strong></p>
                 </div>
                 <div class="stat-item">
                     <span class="indicator green"></span>
-                    <p>Forecasted: <strong>4,000</strong></p>
+                    <p>Avg Prediction: <strong id="avg-prediction-1">0</strong></p>
                 </div>
             </div>
         </div>
         
-        <div class="stat-card">
+        <div class="stat-card" id="recent-forecast-2">
             <div class="card-header">
                 <h3>Recent Forecast</h3>
-                <select class="date-selector">
-                    <option>Nov 24, 2024</option>
-                    <option>Nov 23, 2024</option>
-                    <option>Nov 22, 2024</option>
+                <select class="date-selector" onchange="loadForecast(this.value, 2)">
+                    <option value="">Loading...</option>
                 </select>
             </div>
-            <img src="{{ url_for('static', filename='images/graph2.png') }}" alt="Forecast Graph" class="graph-img">
+            <div class="graph-container">
+                <canvas id="graph2"></canvas>
+            </div>
             <div class="graph-stats">
                 <div class="stat-item">
                     <span class="indicator purple"></span>
-                    <p>Earned: <strong>2,895</strong> sales</p>
+                    <p>Threshold: <strong id="threshold-2">0</strong></p>
                 </div>
                 <div class="stat-item">
                     <span class="indicator green"></span>
-                    <p>Forecasted: <strong>6,000</strong></p>
+                    <p>Avg Prediction: <strong id="avg-prediction-2">0</strong></p>
                 </div>
             </div>
         </div>
@@ -61,23 +66,19 @@
 
     <div class="pinned-section">
         <div class="section-header">
-            <h2>Pinned Forecasts</h2>
-            <button class="view-all">View All</button>
+            <h2>Recent Forecasts</h2>
+            <a href="{{ url_for('history') }}" class="view-all">View All</a>
         </div>
-        <div class="pinned-grid">
-            <div class="pinned-card">
-                <img src="{{ url_for('static', filename='images/graph3.png') }}" alt="Graph">
-                <p>Q3 Product Launch</p>
-            </div>
-            <div class="pinned-card">
-                <img src="{{ url_for('static', filename='images/graph4.png') }}" alt="Graph">
-                <p>Holiday Season Forecast</p>
-            </div>
+        <div class="pinned-grid" id="pinned-forecasts">
+            <!-- Will be populated by JavaScript -->
+            <div class="loading">Loading forecasts...</div>
         </div>
     </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 {% endblock %}
