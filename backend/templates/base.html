@@ -73,12 +73,6 @@
                     <h1>{% block header_title %}Welcome back, {{ session.get('email', 'Guest').split('@')[0] }}!{% endblock %}</h1>
                     <p>{% block header_subtitle %}{% endblock %}</p>
                 </div>
-                <div class="header-actions">
-                    <div class="search-bar">
-                        <input type="text" placeholder="Search...">
-                        <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
-                    </div>
-                </div>
             </header>
 
             {% block content %}{% endblock %}
