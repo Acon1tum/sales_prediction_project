@@ -587,6 +587,81 @@ def reset():
     
     return jsonify({"message": "Reset successful"}), 200
 
+
+@app.route("/get_forecast_history")
+def get_forecast_history():
+    """Retrieve forecast history for the current user"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        # Query forecasts for the current user
+        response = supabase_client.table("forecasts").select(
+            "id", "forecast_data", "product", "forecast_type", "threshold", "created_at", "upload_id"
+        ).eq("user_id", session["user_id"]).order("created_at", desc=True).execute()
+
+        # Also get the associated upload file names if available
+        upload_ids = [f.get("upload_id") for f in response.data if f.get("upload_id")]
+        upload_names = {}
+        
+        if upload_ids:
+            upload_response = supabase_client.table("uploaded_data").select(
+                "id", "file_name"
+            ).in_("id", upload_ids).execute()
+            
+            upload_names = {u["id"]: u["file_name"] for u in upload_response.data}
+
+        # Enhance the forecast data with upload file names
+        enhanced_data = []
+        for forecast in response.data:
+            enhanced = forecast.copy()
+            if forecast.get("upload_id") and forecast["upload_id"] in upload_names:
+                enhanced["upload_name"] = upload_names[forecast["upload_id"]]
+            enhanced_data.append(enhanced)
+
+        return jsonify({"history": enhanced_data})
+
+    except Exception as e:
+        logging.error(f"Error fetching forecast history: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+    
+@app.route("/forecast_details/<int:forecast_id>")
+def forecast_details(forecast_id):
+    """Show detailed view of a specific forecast"""
+    if "user_id" not in session:
+        flash("Please login first", "warning")
+        return redirect(url_for("login"))
+
+    try:
+        # Get the forecast
+        response = supabase_client.table("forecasts").select("*").eq("id", forecast_id).eq("user_id", session["user_id"]).execute()
+        
+        if not response.data:
+            flash("Forecast not found", "danger")
+            return redirect(url_for("history"))
+            
+        forecast = response.data[0]
+        
+        # Get the upload data if available
+        upload_data = None
+        if forecast.get("upload_id"):
+            upload_response = supabase_client.table("uploaded_data").select("*").eq("id", forecast["upload_id"]).execute()
+            if upload_response.data:
+                upload_data = upload_response.data[0]
+        
+        return render_template(
+            "forecast_details.html",
+            forecast=forecast,
+            upload_data=upload_data,
+            user={"email": session["email"]}
+        )
+        
+    except Exception as e:
+        logging.error(f"Error fetching forecast details: {e}")
+        flash("Error loading forecast details", "danger")
+        return redirect(url_for("history"))
+
 @app.route("/logout")
 def logout():
     """ Logs out the user and clears session data """

@@ -182,3 +182,93 @@
         min-width: auto;
     }
 }
+
+/* Add these to your existing history.css */
+
+.forecast-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.forecast-product {
+    display: inline-block;
+    background-color: rgba(108, 92, 231, 0.1);
+    color: #6C5CE7;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    align-self: flex-start;
+}
+
+.forecast-source {
+    font-size: 0.8rem;
+    color: #636E72;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.forecast-insights {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.insight {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.insight.positive {
+    background-color: rgba(0, 184, 148, 0.1);
+    color: #00B894;
+}
+
+.insight.negative {
+    background-color: rgba(214, 48, 49, 0.1);
+    color: #D63031;
+}
+
+.insight.neutral {
+    background-color: rgba(178, 190, 195, 0.1);
+    color: #636E72;
+}
+
+.insight-count {
+    display: block;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.insight-label {
+    display: block;
+    font-size: 0.75rem;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    background-color: #F5F6FA;
+    border: none;
+    border-radius: 6px;
+    color: #2D3436;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.action-btn:hover {
+    background-color: #E0E0E0;
+}
+
+.action-btn span {
+    font-size: 1rem;
+}
