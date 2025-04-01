@@ -405,49 +405,76 @@ def generate_forecast():
             if percentage_change >= 50 or z_score > 2:
                 decisions.append({
                     "icon": "🚀", 
-                    "text": f"Major increase expected on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
+                    "text": (
+                        f"Significant sales surge expected on Day {i+1} {product_context}. "
+                        f"Predicted sales: {predicted_sales:.2f}, which is a {percentage_change:.1f}% increase compared to the threshold ({threshold}). "
+                        "This indicates a strong market demand. Ensure sufficient stock levels and optimize supply chain logistics."
+                    ),
                     "severity": "high",
                     "trend": "positive"
                 })
             elif 20 <= percentage_change < 50 or 1 < z_score <= 2:
                 decisions.append({
                     "icon": "📈", 
-                    "text": f"Moderate growth expected on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
+                    "text": (
+                        f"Moderate sales growth anticipated on Day {i+1} {product_context}. "
+                        f"Sales projection: {predicted_sales:.2f}, marking a {percentage_change:.1f}% increase. "
+                        "This suggests a steady upward trend. Consider slight inventory adjustments and marketing enhancements."
+                    ),
                     "severity": "medium",
                     "trend": "positive"
                 })
             elif 5 <= percentage_change < 20 or 0.5 < z_score <= 1:
                 decisions.append({
                     "icon": "🔼", 
-                    "text": f"Small sales increase on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
+                    "text": (
+                        f"Slight increase in sales on Day {i+1} {product_context}. "
+                        f"Predicted: {predicted_sales:.2f} ({percentage_change:.1f}% above threshold). "
+                        "This could be due to minor seasonal effects or increased visibility. Continue monitoring market response."
+                    ),
                     "severity": "low",
                     "trend": "positive"
                 })
             elif -5 <= percentage_change < 5 or -0.5 <= z_score <= 0.5:
                 decisions.append({
                     "icon": "🔄", 
-                    "text": f"Stable sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
+                    "text": (
+                        f"Stable sales expected on Day {i+1} {product_context}, with a projection of {predicted_sales:.2f}. "
+                        "No significant changes detected. Keep a close watch on any emerging trends."
+                    ),
                     "severity": "none",
                     "trend": "neutral"
                 })
             elif -20 <= percentage_change < -5 or -1 <= z_score < -0.5:
                 decisions.append({
                     "icon": "📉", 
-                    "text": f"Small decline in sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
+                    "text": (
+                        f"Slight decline in sales anticipated on Day {i+1} {product_context}. "
+                        f"Expected sales: {predicted_sales:.2f}, which is {abs(percentage_change):.1f}% lower than the threshold. "
+                        "This could be a normal fluctuation, but monitoring customer behavior and promotional efforts is advised."
+                    ),
                     "severity": "low",
                     "trend": "negative"
                 })
             elif -50 <= percentage_change < -20 or -2 <= z_score < -1:
                 decisions.append({
                     "icon": "⚠️", 
-                    "text": f"Moderate drop in sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
+                    "text": (
+                        f"Moderate drop in sales predicted on Day {i+1} {product_context}. "
+                        f"Projected: {predicted_sales:.2f}, a {abs(percentage_change):.1f}% decrease. "
+                        "Possible factors include reduced demand or increased competition. Consider running targeted promotions."
+                    ),
                     "severity": "medium",
                     "trend": "negative"
                 })
             else:
                 decisions.append({
                     "icon": "🆘", 
-                    "text": f"Major sales drop on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
+                    "text": (
+                        f"Critical sales drop warning for Day {i+1} {product_context}. "
+                        f"Forecasted sales: {predicted_sales:.2f}, a drastic {abs(percentage_change):.1f}% decline. "
+                        "Immediate action is required—evaluate pricing, marketing, and inventory strategies to mitigate losses."
+                    ),
                     "severity": "high",
                     "trend": "negative"
                 })
