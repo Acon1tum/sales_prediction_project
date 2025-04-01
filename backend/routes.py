@@ -71,6 +71,104 @@ def allowed_file(filename):
     """Check if the uploaded file has a valid CSV extension."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Add these helper functions at the top of routes.py
+
+def save_upload_to_supabase(file_path, user_id):
+    """Save uploaded CSV data to Supabase"""
+    try:
+        # Read the CSV file
+        df = pd.read_csv(file_path)
+        
+        # Convert to JSON for storage
+        data_json = df.to_json(orient='records')
+        
+        # Prepare insert data
+        insert_data = {
+            "file_name": os.path.basename(file_path),
+            "data": data_json,
+            "uploaded_at": "now()"
+        }
+        
+        # Only add user_id if it exists and is valid
+        if user_id:
+            # Verify user exists in your custom users table
+            user_response = supabase_client.table("users").select("id").eq("id", user_id).execute()
+            if user_response.data:
+                insert_data["user_id"] = user_id
+            else:
+                logging.warning(f"User {user_id} not found in users table")
+        
+        # Insert into Supabase
+        response = supabase_client.table('uploaded_data').insert(insert_data).execute()
+        
+        if response.data:
+            return response.data[0]['id']
+        return None
+        
+    except Exception as e:
+        logging.error(f"Error saving upload to Supabase: {e}")
+        return None
+
+def save_forecast_to_supabase(user_id, upload_id, forecast_data, product):
+    """Save forecast results to Supabase"""
+    try:
+        # Prepare the forecast data for storage
+        forecast_json = {
+            "predictions": forecast_data.get("predictions", []),
+            "decisions": forecast_data.get("decisions", []),
+            "metadata": {
+                "forecast_type": forecast_data.get("forecast_type"),
+                "forecast_days": forecast_data.get("forecast_days"),
+                "data_quality": forecast_data.get("data_quality", {}),
+                "product": product
+            }
+        }
+        
+        # Prepare insert data
+        insert_data = {
+            "upload_id": upload_id,
+            "forecast_data": forecast_json,
+            "product": product,
+            "forecast_type": forecast_data.get("forecast_type", "unknown"),
+            "threshold": float(session.get("threshold", 100)),
+            "created_at": "now()"
+        }
+        
+        # Only add user_id if it exists and is valid
+        if user_id:
+            # Verify user exists in your custom users table
+            user_response = supabase_client.table("users").select("id").eq("id", user_id).execute()
+            if user_response.data:
+                insert_data["user_id"] = user_id
+            else:
+                logging.warning(f"User {user_id} not found in users table")
+        
+        # Insert into Supabase
+        response = supabase_client.table('forecast_results').insert(insert_data).execute()
+        
+        if response.data:
+            return response.data[0]['id']
+        return None
+        
+    except Exception as e:
+        logging.error(f"Error saving forecast to Supabase: {e}")
+        return None
+
+
+def validate_user_session():
+    """Check if user is properly authenticated with your custom users table"""
+    if "email" not in session or "user_id" not in session:
+        return False
+    
+    try:
+        # Check against your custom users table
+        response = supabase_client.table("users").select("id").eq("id", session["user_id"]).execute()
+        return len(response.data) > 0
+    except Exception as e:
+        logging.error(f"Error validating user session: {e}")
+        return False
+    
+
 @app.route("/")
 def home():
     """ Redirect authenticated users to the dashboard, otherwise to login page """
@@ -181,8 +279,19 @@ def upload_csv():
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
 
+    # Save to Supabase
+    upload_id = save_upload_to_supabase(filepath, session.get("user_id"))
+    if not upload_id:
+        return jsonify({"error": "Failed to save upload data"}), 500
+
     session["uploaded_file"] = filepath
-    return jsonify({"message": "File uploaded successfully!"})
+    session["upload_id"] = upload_id  # Store the Supabase upload ID
+    
+    return jsonify({
+        "message": "File uploaded successfully!",
+        "upload_id": upload_id
+    })
+
 
 
 @app.route("/generate_forecast", methods=["POST"])
@@ -202,25 +311,24 @@ def generate_forecast():
         if "Date" not in df.columns:
             return jsonify({"error": "Dataset must contain a 'Date' column"}), 400
             
-        # Check if Product Name column exists
         if "Product Name" not in df.columns:
             return jsonify({"error": "Dataset must contain a 'Product Name' column"}), 400
 
-        # Parse dates and create year-month periods
+        # Parse dates and create periods
         df["Date"] = pd.to_datetime(df["Date"], format="%d/%m/%Y", dayfirst=True, errors="coerce")
         df.dropna(subset=["Date"], inplace=True)
         
-        # Extract more granular time components
+        # Extract time components
         df["YearMonth"] = df["Date"].dt.to_period("M")
         df["Year"] = df["Date"].dt.year
         df["Month"] = df["Date"].dt.month
         df["Week"] = df["Date"].dt.isocalendar().week
         df["Day"] = df["Date"].dt.day
         
-        # Get product from request or use "all" as default
+        # Get product selection
         selected_product = request.json.get("product", "all")
         
-        # Filter by product if a specific product is selected
+        # Filter by product if specified
         if selected_product != "all" and selected_product in df["Product Name"].unique():
             product_df = df[df["Product Name"] == selected_product]
             logging.info(f"Filtering data for product: {selected_product}")
@@ -229,59 +337,47 @@ def generate_forecast():
             selected_product = "all"
             logging.info("Using all product data for forecast")
         
-        # Get unique product list for the dropdown
+        # Get product list for dropdown
         product_list = ["all"] + df["Product Name"].unique().tolist()
         
-        # Analyze data characteristics for better forecast determination
+        # Analyze data characteristics
         date_range = (product_df["Date"].max() - product_df["Date"].min()).days
         unique_days = product_df["Date"].nunique()
-        data_density = unique_days / max(date_range, 1)  # Avoid division by zero
+        data_density = unique_days / max(date_range, 1)
         
-        # Count unique periods
         unique_months = product_df["YearMonth"].nunique()
         unique_weeks = product_df.groupby(["Year", "Week"]).ngroups
         
-        # Determine data completeness by period
         monthly_completeness = product_df.groupby("YearMonth")["Day"].nunique().mean() / 30
         weekly_completeness = product_df.groupby(["Year", "Week"])["Day"].nunique().mean() / 7
         
-        # Dynamic forecast type determination based on data characteristics
+        # Determine forecast type based on data
         if unique_months >= 4 and monthly_completeness >= 0.7:
-            # If we have good monthly data coverage for 4+ months, use quarterly forecast
             forecast_type = "quarterly"
             forecast_days = 90
-            logging.info(f"Using quarterly forecast (data spans {unique_months} months with {monthly_completeness:.2f} completeness)")
         elif unique_months >= 2 and monthly_completeness >= 0.5:
-            # If we have decent monthly data coverage for 2+ months, use monthly forecast
             forecast_type = "monthly"
             forecast_days = 30
-            logging.info(f"Using monthly forecast (data spans {unique_months} months with {monthly_completeness:.2f} completeness)")
         elif unique_weeks >= 3 and weekly_completeness >= 0.6:
-            # If we have good weekly data coverage for 3+ weeks, use weekly forecast
             forecast_type = "weekly"
             forecast_days = 7
-            logging.info(f"Using weekly forecast (data spans {unique_weeks} weeks with {weekly_completeness:.2f} completeness)")
         else:
-            # Default to a short-term forecast if data quality is uncertain
             forecast_type = "short-term"
-            forecast_days = max(3, min(15, unique_days // 2))  # More adaptive based on available data
-            logging.info(f"Using short-term forecast of {forecast_days} days (limited data quality)")
+            forecast_days = max(3, min(15, unique_days // 2))
         
-        # Allow user to override with query parameter or session value
+        # Allow user override
         user_forecast_type = request.json.get("forecast_type") or session.get("forecast_type")
         if user_forecast_type in ["weekly", "monthly", "quarterly"]:
             forecast_type = user_forecast_type
             forecast_days = {"weekly": 7, "monthly": 30, "quarterly": 90}[forecast_type]
-            logging.info(f"User overrode forecast type to {forecast_type}")
 
         # Prepare data for prediction
-        product_df_numeric = product_df.drop(columns=["Date", "Product Name", "YearMonth", "Year", "Month", "Week", "Day"], errors="ignore").fillna(0)
+        product_df_numeric = product_df.drop(columns=["Date", "Product Name", "YearMonth", "Year", "Month", "Week", "Day"], 
+                                           errors="ignore").fillna(0)
         
-        # Make sure all expected features are present
         if all(f in product_df_numeric.columns for f in feature_names):
             X = product_df_numeric[feature_names]
         else:
-            # Fallback if feature names don't match
             logging.warning("Feature names don't match model expectations. Using available numeric columns.")
             X = product_df_numeric
             
@@ -291,77 +387,127 @@ def generate_forecast():
         y_pred_scaled = model.predict(X_scaled).flatten()
         y_pred = scaler_y.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
 
-        # User-defined threshold with default fallback
+        # Get threshold
         threshold = float(session.get("threshold", 100))
         
-        # Calculate baseline metrics for more contextual decisions
+        # Generate decisions
         avg_sales = y_pred.mean()
         sales_std = y_pred.std() if len(y_pred) > 1 else avg_sales * 0.1
-        
-        # Generate dynamic decisions based on predictions and context
         decisions = []
+        
         for i in range(min(len(y_pred), forecast_days)):
             predicted_sales = y_pred[i]
-            
-            # Calculate various metrics for decision making
             absolute_change = predicted_sales - threshold
             percentage_change = (absolute_change / threshold * 100) if threshold > 0 else 0
-            z_score = (predicted_sales - avg_sales) / max(sales_std, 1)  # Standardized score
-            
-            # Use multiple factors for more nuanced decisions
+            z_score = (predicted_sales - avg_sales) / max(sales_std, 1)
             product_context = f"for {selected_product}" if selected_product != "all" else "overall"
             
             if percentage_change >= 50 or z_score > 2:
                 decisions.append({
                     "icon": "🚀", 
-                    "text": f"Major increase expected on Day {i+1} {product_context}, sales: {predicted_sales:.2f}. Consider expanding stock and promotions!",
+                    "text": f"Major increase expected on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
                     "severity": "high",
                     "trend": "positive"
                 })
             elif 20 <= percentage_change < 50 or 1 < z_score <= 2:
                 decisions.append({
                     "icon": "📈", 
-                    "text": f"Moderate growth expected on Day {i+1} {product_context}, sales: {predicted_sales:.2f}. Increase production cautiously.",
+                    "text": f"Moderate growth expected on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
                     "severity": "medium",
                     "trend": "positive"
                 })
             elif 5 <= percentage_change < 20 or 0.5 < z_score <= 1:
                 decisions.append({
                     "icon": "🔼", 
-                    "text": f"Small sales increase on Day {i+1} {product_context}, sales: {predicted_sales:.2f}. Keep an eye on trends.",
+                    "text": f"Small sales increase on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
                     "severity": "low",
                     "trend": "positive"
                 })
             elif -5 <= percentage_change < 5 or -0.5 <= z_score <= 0.5:
                 decisions.append({
                     "icon": "🔄", 
-                    "text": f"Stable sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}. No immediate action needed.",
+                    "text": f"Stable sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
                     "severity": "none",
                     "trend": "neutral"
                 })
             elif -20 <= percentage_change < -5 or -1 <= z_score < -0.5:
                 decisions.append({
                     "icon": "📉", 
-                    "text": f"Small decline in sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}. Consider minor stock adjustments.",
+                    "text": f"Small decline in sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
                     "severity": "low",
                     "trend": "negative"
                 })
             elif -50 <= percentage_change < -20 or -2 <= z_score < -1:
                 decisions.append({
                     "icon": "⚠️", 
-                    "text": f"Moderate drop in sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}. Reduce stock and evaluate promotions.",
+                    "text": f"Moderate drop in sales on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
                     "severity": "medium",
                     "trend": "negative"
                 })
             else:
                 decisions.append({
                     "icon": "🆘", 
-                    "text": f"Major sales drop on Day {i+1} {product_context}, sales: {predicted_sales:.2f}. Immediate action required!",
+                    "text": f"Major sales drop on Day {i+1} {product_context}, sales: {predicted_sales:.2f}",
                     "severity": "high",
                     "trend": "negative"
                 })
 
-        # Return more comprehensive forecast information
+        # Prepare data for Supabase
+        forecast_data = {
+            "forecast_type": forecast_type,
+            "forecast_days": forecast_days,
+            "predictions": y_pred[:forecast_days].tolist(),
+            "decisions": decisions,
+            "data_quality": {
+                "date_range_days": date_range,
+                "unique_days": unique_days,
+                "unique_months": unique_months,
+                "unique_weeks": unique_weeks,
+                "data_density": round(data_density, 2),
+                "monthly_completeness": round(monthly_completeness, 2),
+                "weekly_completeness": round(weekly_completeness, 2)
+            },
+            "product": selected_product,
+            "threshold": threshold
+        }
+
+        # Save to Supabase with proper user reference
+        saved_to_db = False
+        try:
+            # Verify user exists in your custom users table
+            user_id = session.get("user_id")
+            if user_id:
+                user_response = supabase_client.table("users").select("id").eq("id", user_id).execute()
+                if not user_response.data:
+                    logging.warning(f"User {user_id} not found in users table")
+                    user_id = None
+
+            # Prepare insert data
+            insert_data = {
+                "forecast_data": forecast_data,
+                "product": selected_product,
+                "forecast_type": forecast_type,
+                "threshold": threshold,
+                "created_at": "now()"
+            }
+
+            # Add user_id if valid
+            if user_id:
+                insert_data["user_id"] = user_id
+
+            # Add upload_id if exists
+            upload_id = session.get("upload_id")
+            if upload_id:
+                insert_data["upload_id"] = upload_id
+
+            # Save to forecasts table
+            response = supabase_client.table("forecasts").insert(insert_data).execute()
+            saved_to_db = bool(response.data)
+
+        except Exception as e:
+            logging.error(f"Error saving to Supabase: {e}")
+
+        # Return response
         return jsonify({
             "forecast_type": forecast_type,
             "forecast_days": forecast_days,
@@ -377,11 +523,12 @@ def generate_forecast():
                 "data_density": round(data_density, 2),
                 "monthly_completeness": round(monthly_completeness, 2),
                 "weekly_completeness": round(weekly_completeness, 2)
-            }
+            },
+            "saved_to_db": saved_to_db
         })
 
     except Exception as e:
-        logging.error(f"❌ Error generating forecast: {e}", exc_info=True)
+        logging.error(f"Error generating forecast: {e}", exc_info=True)
         return jsonify({"error": f"Failed to generate forecast: {str(e)}"}), 500
 
 
@@ -399,6 +546,10 @@ def reset():
         
         # Remove from session
         session.pop("uploaded_file", None)
+    
+    # Remove Supabase references
+    session.pop("upload_id", None)
+    session.pop("forecast_id", None)
     
     # Reset threshold
     session["threshold"] = 0

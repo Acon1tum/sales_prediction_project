@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ForecastIt{% endblock %}</title>
+    <title>{% block title %}Forecastrix{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,7 +14,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ForecastIt Logo" class="logo-img">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Forecastrix Logo" class="logo-img">
                 <h2 class="logo-text">Forecas<span style="color: #00ff00;">trix</span></h2>
                 <button class="toggle-btn" id="toggleSidebar">
                     <i class="fa-solid fa-chevron-left"></i>
@@ -59,7 +59,7 @@
                     <img src="{{ url_for('static', filename='images/user.png') }}" alt="User">
                     <div class="user-details">
                         <p class="username">{{ session.get('email', 'Guest').split('@')[0] }}</p>
-                        <p class="user-email">{{ session.get('email', 'guest@forecastit.com') }}</p>
+                        <p class="user-email">{{ session.get('email', 'guest@Forecastrix.com') }}</p>
                     </div>
                 </div>
             </div>
