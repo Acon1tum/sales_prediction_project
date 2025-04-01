@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 import pandas as pd
 import joblib
 import tensorflow as tf
@@ -879,6 +880,118 @@ def forecast_details_data(forecast_id):
         return jsonify({"error": str(e)}), 500
     
     
+
+@app.route("/update_profile_picture", methods=["POST"])
+def update_profile_picture():
+    """Update user's profile picture in Supabase"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        data = request.json
+        profile_pic = data.get("profile_pic")
+
+        if not profile_pic:
+            return jsonify({"error": "No image provided"}), 400
+
+        # Update profile picture in Supabase
+        response = supabase_client.table("users").update({
+            "profile_pic": profile_pic,
+            "updated_at": "now()"
+        }).eq("id", session["user_id"]).execute()
+
+        if response.data:
+            return jsonify({"message": "Profile picture updated successfully"})
+        return jsonify({"error": "Failed to update profile picture"}), 400
+
+    except Exception as e:
+        logging.error(f"Error updating profile picture: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/update_profile", methods=["POST"])
+def update_profile():
+    """Update user's profile information in Supabase"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        data = request.json
+        update_data = {}
+
+        # Validate and prepare update data
+        if "first_name" in data:
+            update_data["first_name"] = data["first_name"].strip()
+        if "last_name" in data:
+            update_data["last_name"] = data["last_name"].strip()
+        if "email" in data:
+            new_email = data["email"].strip().lower()
+            if not re.match(r"[^@]+@[^@]+\.[^@]+", new_email):
+                return jsonify({"error": "Invalid email format"}), 400
+            update_data["email"] = new_email
+        if "position" in data:
+            update_data["position"] = data["position"].strip()
+
+        if not update_data:
+            return jsonify({"error": "No valid fields to update"}), 400
+
+        # Update user in Supabase
+        response = supabase_client.table("users").update({
+            **update_data,
+            "updated_at": "now()"
+        }).eq("id", session["user_id"]).execute()
+
+        if response.data:
+            # Update session email if it was changed
+            if "email" in update_data:
+                session["email"] = update_data["email"]
+            return jsonify({"message": "Profile updated successfully"})
+        return jsonify({"error": "Failed to update profile"}), 400
+
+    except Exception as e:
+        logging.error(f"Error updating profile: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/change_password", methods=["POST"])
+def change_password():
+    """Change user's password in Supabase"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        data = request.json
+        current_password = data.get("current_password")
+        new_password = data.get("new_password")
+
+        if not current_password or not new_password:
+            return jsonify({"error": "Current and new password required"}), 400
+
+        if len(new_password) < 8:
+            return jsonify({"error": "New password must be at least 8 characters"}), 400
+
+        # Get current user data
+        response = supabase_client.table("users").select("*").eq("id", session["user_id"]).execute()
+        if not response.data:
+            return jsonify({"error": "User not found"}), 404
+
+        user = response.data[0]
+
+        # Verify current password (in a real app, use proper password hashing)
+        if user.get("password") != current_password:
+            return jsonify({"error": "Current password is incorrect"}), 401
+
+        # Update password in Supabase
+        update_response = supabase_client.table("users").update({
+            "password": new_password,
+            "updated_at": "now()"
+        }).eq("id", session["user_id"]).execute()
+
+        if update_response.data:
+            return jsonify({"message": "Password changed successfully"})
+        return jsonify({"error": "Failed to change password"}), 400
+
+    except Exception as e:
+        logging.error(f"Error changing password: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/logout")
 def logout():
