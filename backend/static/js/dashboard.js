@@ -72,10 +72,15 @@ function updateRecentForecasts(forecasts) {
 function updateForecastCard(forecast, cardNumber) {
     // Get references to the card elements
     const card = document.getElementById(`recent-forecast-${cardNumber}`);
-    const select = card.querySelector('select');
     
-    // Update the dropdown select with the current forecast date
-    select.innerHTML = `<option value="${forecast.id}" selected>${new Date(forecast.date).toLocaleDateString()}</option>`;
+    // Update the date display
+    const dateDisplay = document.getElementById(`date-${cardNumber}`);
+    const date = new Date(forecast.date);
+    dateDisplay.textContent = date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
     
     // Update the statistics display
     document.getElementById(`threshold-${cardNumber}`).textContent = forecast.threshold;
@@ -187,23 +192,4 @@ function updatePinnedForecasts(forecasts) {
             });
         }, 100);
     });
-}
-
-// Function to load detailed forecast data when a forecast is selected
-// Parameters:
-// - forecastId: The ID of the selected forecast
-// - cardNumber: The number of the card being updated (1 or 2)
-function loadForecast(forecastId, cardNumber) {
-    if (!forecastId) return;
-    
-    // Fetch detailed forecast data from the server
-    fetch(`/forecast_details_data/${forecastId}`)
-        .then(response => response.json())
-        .then(forecast => {
-            // Update the card with the new forecast data
-            updateForecastCard(forecast, cardNumber);
-        })
-        .catch(error => {
-            console.error('Error loading forecast:', error);
-        });
 }

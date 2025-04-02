@@ -22,9 +22,7 @@
         <div class="stat-card" id="recent-forecast-1">
             <div class="card-header">
                 <h3>Recent Forecast</h3>
-                <select class="date-selector" onchange="loadForecast(this.value, 1)">
-                    <option value="">Loading...</option>
-                </select>
+                <span class="date-display" id="date-1">Loading...</span>
             </div>
             <div class="graph-container">
                 <canvas id="graph1"></canvas>
@@ -44,9 +42,7 @@
         <div class="stat-card" id="recent-forecast-2">
             <div class="card-header">
                 <h3>Recent Forecast</h3>
-                <select class="date-selector" onchange="loadForecast(this.value, 2)">
-                    <option value="">Loading...</option>
-                </select>
+                <span class="date-display" id="date-2">Loading...</span>
             </div>
             <div class="graph-container">
                 <canvas id="graph2"></canvas>
@@ -80,5 +76,4 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 {% endblock %}
