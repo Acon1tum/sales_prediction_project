@@ -304,6 +304,7 @@
     max-width: 900px;
     max-height: 90vh;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 25px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     transform: translateY(20px);
@@ -474,5 +475,24 @@
 #forecast-page-info {
     font-size: 0.9rem;
     color: #636E72;
+}
+
+.metadata-card {
+    padding: 12px;
+    border-radius: 8px;
+    background-color: #F5F6FA;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.metadata-label {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.metadata-value {
+    font-weight: 600;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
