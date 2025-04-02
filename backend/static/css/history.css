@@ -496,3 +496,26 @@
     word-break: break-word;
 }
 
+#refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: #6C5CE7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#refresh-btn:hover {
+    background-color: #5a4bc2;
+}
+
+#refresh-btn span {
+    font-size: 1.1rem;
+}
+
