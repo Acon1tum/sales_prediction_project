@@ -192,7 +192,8 @@ nav ul li a {
 .sidebar nav ul li {
     margin: 5px 0;
     border-radius: 8px;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
 }
 
 .sidebar nav ul li a {
@@ -203,11 +204,13 @@ nav ul li a {
     padding: 12px 15px;
     font-size: 0.95rem;
     font-weight: 500;
+    transition: all 0.3s ease;
 }
 
 .sidebar nav ul li .icon {
     margin-right: 12px;
     font-size: 1.1rem;
+    transition: all 0.3s ease;
 }
 
 .sidebar nav ul li.active {
@@ -221,6 +224,7 @@ nav ul li a {
 
 .sidebar nav ul li:hover:not(.active) {
     background: rgba(255, 255, 255, 0.1);
+    border-left: 4px solid rgba(255, 255, 255, 0.3);
 }
 
 .sidebar nav ul li.logout {
