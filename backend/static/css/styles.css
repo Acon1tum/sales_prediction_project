@@ -34,20 +34,57 @@ body {
 
 /* Sidebar */
 .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
     width: 230px;
     background: var(--sidebar-bg);
-    color: white;
+    color: #fff;
+    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
-    padding: 1px 5px; /* Reduce top padding */
-    position: fixed;
-    height: 100vh;
-    overflow-y: auto;
-    z-index: 100;
-    /* Add box shadow for better separation */
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    transition: width 0.3s ease;
-    overflow: hidden;
+    z-index: 1000;
+}
+
+.sidebar nav {
+    flex: 1;
+    padding: 20px 0;
+}
+
+.logout-section {
+    padding: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 8px;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn .icon {
+    margin-right: 10px;
+    font-size: 1.1em;
+}
+
+.logout-btn .link-text {
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar.collapsed {
@@ -185,16 +222,9 @@ nav ul li a {
     margin-top: 30px;
 }
 
-
-.sidebar-footer {
-    margin-top: auto;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 .profile-pic {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #ffffff;
@@ -204,11 +234,11 @@ nav ul li a {
 .user-info {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
+    gap: 8px;
+    padding: 8px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    margin: 0 12px 12px;
+    margin: 0 8px 8px;
 }
 
 .user-details {
@@ -220,13 +250,13 @@ nav ul li a {
     font-weight: 600;
     color: #ffffff;
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .user-email {
     color: rgba(255, 255, 255, 0.7);
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -237,10 +267,10 @@ nav ul li a {
     flex-grow: 1;
     padding: 30px;
     background-color: var(--main-bg);
-    margin-left: 230px; /* Match sidebar width */
+    margin-left: 230px;
     min-height: 100vh;
-    transition: all 0.3s ease; /* Add smooth transition */
-    transform-origin: left center; /* Set transform origin */
+    transition: all 0.3s ease;
+    transform-origin: left center;
 }
 
 /* For mobile responsiveness */

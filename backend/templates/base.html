@@ -46,14 +46,14 @@
                             <span class="link-text">Settings</span>
                         </a>
                     </li>                    
-                    <li class="logout">
-                        <a href="{{ url_for('logout') }}">
-                            <i class="fa-solid fa-right-from-bracket icon"></i> 
-                            <span class="link-text">Log out</span>
-                        </a>
-                    </li>
                 </ul>
             </nav>
+            <div class="logout-section">
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket icon"></i> 
+                    <span class="link-text">Log out</span>
+                </a>
+            </div>
             <div class="sidebar-footer">
                 <div class="user-info">
                     <img src="{{ user.get('profile_pic', url_for('static', filename='images/user.png')) }}" alt="User" class="profile-pic">
