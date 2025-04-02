@@ -246,10 +246,11 @@ def dashboard():
                 "email": session["email"],
                 "profile_pic": user_data.get("profile_pic"),
                 "first_name": user_data.get("first_name")
-            })
+            },
+            active_page="dashboard")
     except Exception as e:
         logging.error(f"Error fetching user data: {e}")
-        return render_template("dashboard.html", user={"email": session["email"]})
+        return render_template("dashboard.html", user={"email": session["email"]}, active_page="dashboard")
 
 @app.route("/forecast")
 def forecast():
@@ -268,10 +269,11 @@ def forecast():
                 "email": session["email"],
                 "profile_pic": user_data.get("profile_pic"),
                 "first_name": user_data.get("first_name")
-            })
+            },
+            active_page="forecast")
     except Exception as e:
         logging.error(f"Error fetching user data: {e}")
-        return render_template("forecast.html", user={"email": session["email"]})
+        return render_template("forecast.html", user={"email": session["email"]}, active_page="forecast")
 
 @app.route("/history")
 def history():
@@ -290,10 +292,11 @@ def history():
                 "email": session["email"],
                 "profile_pic": user_data.get("profile_pic"),
                 "first_name": user_data.get("first_name")
-            })
+            },
+            active_page="history")
     except Exception as e:
         logging.error(f"Error fetching user data: {e}")
-        return render_template("history.html", user={"email": session["email"]})
+        return render_template("history.html", user={"email": session["email"]}, active_page="history")
 
 @app.route("/settings")
 def settings():
