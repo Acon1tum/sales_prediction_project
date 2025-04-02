@@ -13,23 +13,24 @@
         <h1 class="page-title">User Settings</h1>
         
         <div class="user-profile">
-            <div class="profile-image-container">
-                {% if user.profile_pic and user.profile_pic.startswith('data:image/') %}
-                    <img src="{{ user.profile_pic }}" 
-                         alt="Profile Picture" 
-                         class="profile-picture" 
-                         id="profile-image"
-                         onerror="this.onerror=null;this.parentNode.innerHTML='<div class=\'profile-picture placeholder\' id=\'profile-image\'>{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>'">
-                {% else %}
-                    <div class="profile-picture placeholder" id="profile-image">
-                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                    </div>
-                {% endif %}
-                <input type="file" id="profile-upload" accept="image/*" style="display: none;">
-                <button class="change-photo-btn" id="change-photo-btn" title="Change Photo">
-                    <i class="fas fa-camera"></i>
-                </button>
-            </div>
+            <div class="profile-header">
+                <div class="profile-image-container">
+                    {% if user.profile_pic and user.profile_pic.startswith('data:image/') %}
+                        <img src="{{ user.profile_pic }}" 
+                             alt="Profile Picture" 
+                             class="profile-picture" 
+                             id="profile-image"
+                             onerror="this.onerror=null;this.parentNode.innerHTML='<div class=\'profile-picture placeholder\' id=\'profile-image\'>{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>'">
+                    {% else %}
+                        <div class="profile-picture placeholder" id="profile-image">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                    {% endif %}
+                    <input type="file" id="profile-upload" accept="image/*" style="display: none;">
+                    <button class="change-photo-btn" id="change-photo-btn" title="Change Photo">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
                 <div class="profile-info">
                     <h2 id="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
                     <p class="position" id="profile-position">{{ user.position }}</p>

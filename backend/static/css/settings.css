@@ -1,4 +1,3 @@
-
 :root {
     --primary-color: #4361ee;
     --primary-hover: #3a56d4;
@@ -47,10 +46,14 @@ body {
     margin-bottom: 30px;
     flex-wrap: wrap;
     gap: 20px;
+    position: relative;
 }
 
 .profile-image-container {
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .profile-picture {
@@ -73,9 +76,6 @@ body {
 }
 
 .change-photo-btn {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
     background: var(--primary-color);
     color: white;
     border: none;
@@ -88,6 +88,8 @@ body {
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     transition: all 0.2s;
+    position: static;
+    margin-left: 10px;
 }
 
 .change-photo-btn:hover {
@@ -128,8 +130,7 @@ body {
     display: flex;
     border-bottom: 2px solid var(--border-color);
     margin-bottom: 25px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
 }
 
 .tab-btn {
