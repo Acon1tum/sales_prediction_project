@@ -1,44 +1,50 @@
 document.addEventListener("DOMContentLoaded", () => {
-    let predictions = [];
-    let decisions = [];
-    let currentPage = 0;
-    const itemsPerPage = 3;
-    let productList = ["all"];
-    let selectedProduct = "all";
-    let forecastChart = null;
-    let predictionsChart = null;
+    // Global state variables to store application data
+    let predictions = []; // Array to store sales predictions
+    let decisions = []; // Array to store business decisions/recommendations
+    let currentPage = 0; // Current page number for pagination
+    const itemsPerPage = 3; // Number of decisions to show per page
+    let productList = ["all"]; // List of available products, initialized with "all" option
+    let selectedProduct = "all"; // Currently selected product for filtering
+    let forecastChart = null; // Chart.js instance for forecast visualization
+    let predictionsChart = null; // Chart.js instance for predictions visualization
 
-    // UI Elements
-    const uploadBtn = document.getElementById("upload-btn");
-    const generateBtn = document.getElementById("generate-btn");
-    const productSelect = document.getElementById("product-select");
-    const decisionSection = document.getElementById("decision-section");
-    const prevBtn = document.getElementById("prev-btn");
-    const nextBtn = document.getElementById("next-btn");
-    const pageIndicator = document.getElementById("page-indicator");
-    const exportBtn = document.getElementById("export-btn");
+    // Get references to important DOM elements for manipulation
+    const uploadBtn = document.getElementById("upload-btn"); // File upload button
+    const generateBtn = document.getElementById("generate-btn"); // Forecast generation button
+    const productSelect = document.getElementById("product-select"); // Product selection dropdown
+    const decisionSection = document.getElementById("decision-section"); // Container for decisions display
+    const prevBtn = document.getElementById("prev-btn"); // Previous page button for pagination
+    const nextBtn = document.getElementById("next-btn"); // Next page button for pagination
+    const pageIndicator = document.getElementById("page-indicator"); // Page number indicator
+    const exportBtn = document.getElementById("export-btn"); // Export report button
 
-    // Add export button if it doesn't exist
+    // Create export button if it doesn't exist in the DOM
     if (!exportBtn) {
-        const actionsDiv = document.querySelector('.actions');
-        const exportButton = document.createElement('button');
-        exportButton.innerHTML = '<span>📤</span> Export Report';
-        exportButton.className = 'action-btn';
-        exportButton.id = 'export-btn';
+        const actionsDiv = document.querySelector('.actions'); // Get the actions container
+        const exportButton = document.createElement('button'); // Create new button element
+        exportButton.innerHTML = '<span>📤</span> Export Report'; // Set button content
+        exportButton.className = 'action-btn'; // Add styling class
+        exportButton.id = 'export-btn'; // Set unique identifier
         exportButton.disabled = true; // Initially disabled until forecast is generated
-        actionsDiv.appendChild(exportButton);
+        actionsDiv.appendChild(exportButton); // Add button to the DOM
     }
 
-    // Initialize with empty state
+    // Initialize the application with an empty state
     showEmptyState();
 
-    // Set Threshold
+    // Add event listener for threshold setting button
     document.getElementById("threshold-btn").addEventListener("click", () => {
+        // Get current threshold from localStorage or empty string if not set
         const currentThreshold = localStorage.getItem('forecastThreshold') || '';
+        // Prompt user for new threshold value
         const threshold = prompt("Enter your desired sales threshold (e.g., 1000):", currentThreshold);
         
+        // If user provided a value and it's not empty
         if (threshold !== null && threshold.trim() !== "") {
+            // Validate that the input is a number
             if (!isNaN(threshold)) {
+                // Send threshold to server
                 fetch("/set_threshold", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -46,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // Store threshold in localStorage for persistence
                     localStorage.setItem('forecastThreshold', threshold.trim());
                     showToast(data.message, 'success');
                 })
@@ -59,30 +66,36 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Upload CSV File
+    // Add event listener for file upload
     uploadBtn.addEventListener("change", function() {
+        // Return if no file is selected
         if (!this.files.length) return;
 
+        // Create FormData object for file upload
         const formData = new FormData();
         formData.append("file", this.files[0]);
         
+        // Show loading state while uploading
         showLoading("Uploading and processing data...");
         
+        // Send file to server
         fetch("/upload_csv", { 
             method: "POST", 
             body: formData 
         })
         .then(response => response.json())
         .then(data => {
+            // Handle error response
             if (data.error) {
                 showToast(data.error, 'error');
                 return;
             }
             
+            // Show success message and enable generate button
             showToast(data.message, 'success');
             generateBtn.disabled = false;
             
-            // If the response includes product list, update the dropdown
+            // Update product list if provided by server
             if (data.product_list) {
                 productList = ["all", ...data.product_list];
                 updateProductDropdown();
@@ -97,21 +110,24 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Product Select Change
+    // Add event listener for product selection changes
     productSelect.addEventListener("change", function() {
-        selectedProduct = this.value;
-        updateProductBadges();
+        selectedProduct = this.value; // Update selected product
+        updateProductBadges(); // Update UI to reflect selection
     });
 
-    // Generate Forecast
+    // Add event listener for forecast generation
     generateBtn.addEventListener("click", () => {
+        // Validate that data is available
         if (!uploadBtn.files.length && productList.length <= 1) {
             showToast("Please upload a CSV file first", 'warning');
             return;
         }
         
+        // Show loading state
         showLoading("Generating forecast...");
         
+        // Send request to generate forecast
         fetch("/generate_forecast", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -119,25 +135,29 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(response => response.json())
         .then(data => {
+            // Handle error response
             if (data.error) {
                 showToast(data.error, 'error');
                 return;
             }
 
+            // Update application state with new data
             predictions = data.predictions || [];
             decisions = data.decisions || [];
             
+            // Update product list if provided
             if (data.product_list) {
                 productList = ["all", ...data.product_list];
                 updateProductDropdown();
             }
             
+            // Update all UI components
             updateCharts();
             updateDecisions();
             updateTotalSales();
             updateProductBadges();
             
-            // Enable the export button after successful forecast generation
+            // Enable export functionality
             document.getElementById('export-btn').disabled = false;
             
             showToast("Forecast generated successfully!", 'success');
@@ -151,8 +171,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Export Report
-    document.getElementById('export-btn').addEventListener('click', () => {
+    // Add event listener for report export
+    document.getElementById('export-btn').addEventListener("click", () => {
+        // Validate that forecast data exists
         if (predictions.length === 0) {
             showToast("Generate a forecast first", 'warning');
             return;
@@ -161,18 +182,20 @@ document.addEventListener("DOMContentLoaded", () => {
         exportForecastReport();
     });
 
-    // Reset Functionality
+    // Add event listener for reset functionality
     document.getElementById("reset-btn").addEventListener("click", () => {
+        // Confirm with user before resetting
         if (confirm("Are you sure you want to reset all data? This cannot be undone.")) {
             showLoading("Resetting data...");
             
+            // Send reset request to server
             fetch("/reset", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" }
             })
             .then(response => response.json())
             .then(data => {
-                // Reset all local state
+                // Reset all state variables
                 predictions = [];
                 decisions = [];
                 currentPage = 0;
@@ -191,12 +214,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 forecastChart = null;
                 predictionsChart = null;
                 
-                // Reset decisions display
+                // Reset UI state
                 showEmptyState();
                 updateTotalSales();
                 updateProductBadges();
                 
-                // Disable pagination
+                // Reset pagination
                 prevBtn.disabled = true;
                 nextBtn.disabled = true;
                 updatePageIndicator();
@@ -213,7 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Pagination
+    // Add event listeners for pagination
     prevBtn.addEventListener("click", () => {
         if (currentPage > 0) {
             currentPage--;
@@ -229,10 +252,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Helper Functions
+
+    // Updates the product selection dropdown with current product list
     function updateProductDropdown() {
-        productSelect.innerHTML = '';
-        productSelect.disabled = productList.length <= 1;
+        productSelect.innerHTML = ''; // Clear existing options
+        productSelect.disabled = productList.length <= 1; // Disable if only "all" option exists
         
+        // Create and add options for each product
         productList.forEach(product => {
             const option = document.createElement("option");
             option.value = product;
@@ -240,22 +266,26 @@ document.addEventListener("DOMContentLoaded", () => {
             productSelect.appendChild(option);
         });
         
-        productSelect.value = selectedProduct;
+        productSelect.value = selectedProduct; // Set current selection
     }
     
+    // Updates product badges in the UI to show current selection
     function updateProductBadges() {
-        const badges = document.querySelectorAll(".product-badge");
-        const displayName = selectedProduct === "all" ? "All Products" : selectedProduct;
+        const badges = document.querySelectorAll(".product-badge"); // Get all product badge elements
+        const displayName = selectedProduct === "all" ? "All Products" : selectedProduct; // Get display name
         
+        // Update each badge with current product name
         badges.forEach(badge => {
             badge.textContent = displayName;
         });
     }
     
+    // Updates the total sales display in the UI
     function updateTotalSales() {
         const salesSummary = document.getElementById("sales-summary");
         const totalSalesValue = document.getElementById("total-sales-value");
         
+        // Calculate and display total sales if predictions exist
         if (predictions && predictions.length > 0) {
             const totalSales = predictions.reduce((sum, value) => sum + value, 0);
             totalSalesValue.textContent = totalSales.toFixed(2);
@@ -265,18 +295,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Updates both charts with current data
     function updateCharts() {
         updateForecastChart();
         updatePredictionsChart();
     }
 
+    // Creates/updates the forecast line chart
     function updateForecastChart() {
         const ctx = document.getElementById("forecastChart").getContext("2d");
         
+        // Clean up existing chart
         if (forecastChart) forecastChart.destroy();
         
+        // Return if no data available
         if (predictions.length === 0) return;
         
+        // Create new line chart
         forecastChart = new Chart(ctx, {
             type: "line",
             data: {
@@ -323,13 +358,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Creates/updates the predictions bar chart
     function updatePredictionsChart() {
         const ctx = document.getElementById("predictionsChart").getContext("2d");
         
+        // Clean up existing chart
         if (predictionsChart) predictionsChart.destroy();
         
+        // Return if no data available
         if (predictions.length === 0) return;
         
+        // Create new bar chart
         predictionsChart = new Chart(ctx, {
             type: "bar",
             data: {
@@ -367,7 +406,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Updates the decisions display with pagination
     function updateDecisions() {
+        // Show empty state if no decisions
         if (decisions.length === 0) {
             showEmptyState();
             prevBtn.disabled = true;
@@ -375,10 +416,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         
+        // Calculate pagination range
         const start = currentPage * itemsPerPage;
         const end = start + itemsPerPage;
         const paginatedDecisions = decisions.slice(start, end);
         
+        // Update decisions display
         decisionSection.innerHTML = paginatedDecisions.map(d => `
             <div class="decision-item">
                 <span class="decision-icon">${d.icon || '💡'}</span>
@@ -386,16 +429,19 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `).join("");
         
+        // Update pagination controls
         prevBtn.disabled = currentPage === 0;
         nextBtn.disabled = end >= decisions.length;
         updatePageIndicator();
     }
     
+    // Updates the page indicator text
     function updatePageIndicator() {
         const totalPages = Math.ceil(decisions.length / itemsPerPage);
         pageIndicator.textContent = `Page ${currentPage + 1} of ${totalPages}`;
     }
 
+    // Shows empty state message when no data is available
     function showEmptyState() {
         decisionSection.innerHTML = `
             <div class="empty-state">
@@ -407,6 +453,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
     
+    // Shows loading state with message
     function showLoading(message) {
         decisionSection.innerHTML = `
             <div class="loading">
@@ -416,6 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
     
+    // Hides loading state and shows appropriate content
     function hideLoading() {
         if (decisions.length > 0) {
             updateDecisions();
@@ -424,21 +472,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     
+    // Shows toast notification with message and type
     function showToast(message, type = 'info') {
-        // In a real implementation, you'd want a proper toast notification system
         alert(`${type.toUpperCase()}: ${message}`);
     }
     
+    // Converts chart to base64 image for export
     function chartToImage(chart) {
         return new Promise((resolve) => {
             resolve(chart.toBase64Image('image/png', 1.0));
         });
     }
     
+    // Exports forecast report as HTML
     function exportForecastReport() {
         showLoading("Generating export...");
         
-        // Create a report object with all the data
+        // Prepare report data
         const reportData = {
             title: `Sales Forecast Report - ${selectedProduct === "all" ? "All Products" : selectedProduct}`,
             date: new Date().toLocaleDateString(),
@@ -456,15 +506,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
         
-        // Convert chart to base64 image
+        // Convert charts to images and generate report
         Promise.all([
             chartToImage(forecastChart),
             chartToImage(predictionsChart)
         ]).then(([forecastChartImg, predictionsChartImg]) => {
-            // Create PDF content
+            // Generate HTML content
             const content = generateReportContent(reportData, forecastChartImg, predictionsChartImg);
             
-            // Create download link
+            // Create and trigger download
             const blob = new Blob([content], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -484,6 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
+    // Generates HTML content for the report
     function generateReportContent(data, forecastChartImg, predictionsChartImg) {
         return `
             <!DOCTYPE html>
@@ -493,6 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>${data.title}</title>
                 <style>
+                    /* Report styling */
                     body {
                         font-family: Arial, sans-serif;
                         line-height: 1.6;

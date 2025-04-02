@@ -1,29 +1,31 @@
+// Main event listener that initializes the history page functionality when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
-    let forecastHistory = [];
-    let productList = ["all"];
-    let forecastChart = null;
-    let currentDecisionsPage = 1;
-    const decisionsPerPage = 5;
+    // Global state variables to store forecast data and UI state
+    let forecastHistory = []; // Stores all forecast records fetched from the server
+    let productList = ["all"]; // List of unique products for filtering, initialized with "all" option
+    let forecastChart = null; // Reference to the Chart.js instance for displaying forecasts
+    let currentDecisionsPage = 1; // Tracks current page number for paginated decisions
+    const decisionsPerPage = 5; // Number of decisions to show per page in the modal
     
-    // Modal elements
-    const modal = document.getElementById('forecast-modal');
-    const closeModalBtn = document.getElementById('close-modal');
-    const forecastChartCtx = document.getElementById('forecast-chart').getContext('2d');
-    const prevPageBtn = document.getElementById('prev-page');
-    const nextPageBtn = document.getElementById('next-page');
-    const pageInfo = document.getElementById('page-info');
+    // DOM element references for the modal and its components
+    const modal = document.getElementById('forecast-modal'); // Main modal container for forecast details
+    const closeModalBtn = document.getElementById('close-modal'); // Button to close the modal
+    const forecastChartCtx = document.getElementById('forecast-chart').getContext('2d'); // Canvas context for the chart
+    const prevPageBtn = document.getElementById('prev-page'); // Button to navigate to previous decisions page
+    const nextPageBtn = document.getElementById('next-page'); // Button to navigate to next decisions page
+    const pageInfo = document.getElementById('page-info'); // Element to display current page information
     
-    // Close modal when clicking outside content
+    // Event listener to close modal when clicking outside the modal content
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             closeModal();
         }
     });
     
-    // Close modal with button
+    // Event listener to close modal when clicking the close button
     closeModalBtn.addEventListener('click', closeModal);
     
-    // Pagination controls
+    // Event listener for previous page button in decisions pagination
     prevPageBtn.addEventListener('click', () => {
         if (currentDecisionsPage > 1) {
             currentDecisionsPage--;
@@ -31,8 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
     
+    // Event listener for next page button in decisions pagination
     nextPageBtn.addEventListener('click', () => {
-        const forecastId = modal.dataset.currentForecast;
+        const forecastId = modal.dataset.currentForecast; // Get current forecast ID from modal data
         const forecast = forecastHistory.find(f => f.id == forecastId);
         if (!forecast) return;
         
@@ -45,43 +48,47 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
     
+    // Function to close the modal and clean up resources
     function closeModal() {
-        modal.classList.remove('active');
-        currentDecisionsPage = 1;
+        modal.classList.remove('active'); // Hide the modal
+        currentDecisionsPage = 1; // Reset pagination to first page
         
-        // Destroy chart when modal closes
+        // Clean up chart instance to prevent memory leaks
         if (forecastChart) {
             forecastChart.destroy();
             forecastChart = null;
         }
     }
     
+    // Function to open the modal and display forecast details
     function openModal(forecastId) {
         const forecast = forecastHistory.find(f => f.id == forecastId);
         if (!forecast) return;
         
-        // Store current forecast ID in modal dataset
+        // Store current forecast ID in modal for pagination and other operations
         modal.dataset.currentForecast = forecastId;
         
+        // Extract forecast data components
         const forecastData = forecast.forecast_data || {};
         const predictions = forecastData.predictions || [];
         const decisions = forecastData.decisions || [];
         const dataQuality = forecastData.data_quality || {};
         
-        // Set modal title
+        // Update modal title with product and forecast type
         document.getElementById('modal-title').textContent = 
             `${forecast.product === "all" ? "All Products" : forecast.product} - ${forecast.forecast_type} Forecast`;
         
-        // Render chart
+        // Initialize chart with prediction data
         renderForecastChart(predictions, forecast.forecast_type);
         
-        // Render decisions with pagination
+        // Display paginated decisions
         renderDecisionsPage();
         
-        // Render data quality
+        // Render data quality metrics
         const dataQualityList = document.getElementById('data-quality-list');
         dataQualityList.innerHTML = '';
         
+        // Create cards for each data quality metric
         for (const [key, value] of Object.entries(dataQuality)) {
             const item = document.createElement('div');
             item.className = 'data-quality-card';
@@ -92,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
             dataQualityList.appendChild(item);
         }
         
-        // Render forecast metadata
+        // Display forecast metadata
         const forecastMeta = document.getElementById('forecast-meta');
         forecastMeta.innerHTML = `
             <div class="metadata-card">
@@ -115,10 +122,11 @@ document.addEventListener("DOMContentLoaded", () => {
             ` : ''}
         `;
         
-        // Show modal
+        // Show the modal
         modal.classList.add('active');
     }
     
+    // Function to render the current page of decisions in the modal
     function renderDecisionsPage() {
         const forecastId = modal.dataset.currentForecast;
         const forecast = forecastHistory.find(f => f.id == forecastId);
@@ -127,19 +135,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const decisions = forecast.forecast_data.decisions || [];
         const totalPages = Math.ceil(decisions.length / decisionsPerPage);
         
-        // Update pagination controls
+        // Update pagination UI elements
         pageInfo.textContent = `Page ${currentDecisionsPage} of ${totalPages}`;
         prevPageBtn.disabled = currentDecisionsPage <= 1;
         nextPageBtn.disabled = currentDecisionsPage >= totalPages;
         
-        // Calculate start and end index for current page
+        // Calculate the range of decisions to display
         const startIndex = (currentDecisionsPage - 1) * decisionsPerPage;
         const endIndex = Math.min(startIndex + decisionsPerPage, decisions.length);
         
-        // Render decisions for current page
+        // Render decisions for the current page
         const decisionsList = document.getElementById('decisions-list');
         decisionsList.innerHTML = '';
         
+        // Create decision elements with appropriate styling based on trend
         for (let i = startIndex; i < endIndex; i++) {
             const decision = decisions[i];
             const decisionEl = document.createElement('div');
@@ -152,11 +161,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     
+    // Helper function to format labels for display
     function formatLabel(key) {
         return key.replace(/_/g, ' ')
             .replace(/\b\w/g, l => l.toUpperCase());
     }
     
+    // Helper function to format values based on their type and context
     function formatValue(key, value) {
         if (typeof value === 'number') {
             if (key.includes('percent') || key.includes('completeness')) {
@@ -167,13 +178,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return value;
     }
     
+    // Function to render the forecast chart using Chart.js
     function renderForecastChart(predictions, forecastType) {
-        // Destroy existing chart if it exists
+        // Clean up existing chart instance
         if (forecastChart) {
             forecastChart.destroy();
         }
         
-        // Determine x-axis labels based on forecast type
+        // Determine appropriate x-axis labels based on forecast type
         let labels = [];
         let xAxisTitle = 'Day';
         
@@ -191,9 +203,10 @@ document.addEventListener("DOMContentLoaded", () => {
             labels = Array.from({length: predictions.length}, (_, i) => `Day ${i + 1}`);
         }
         
-        // Limit labels to predictions length
+        // Ensure labels array matches predictions length
         labels = labels.slice(0, predictions.length);
         
+        // Create new Chart.js instance with forecast data
         forecastChart = new Chart(forecastChartCtx, {
             type: 'line',
             data: {
@@ -246,15 +259,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    // Load history when page loads
+    // Initialize the page by loading forecast history
     loadForecastHistory();
     
-    // Setup refresh button
+    // Set up event listeners for UI controls
     document.getElementById("refresh-btn").addEventListener("click", loadForecastHistory);
-    
-    // Setup filter button
     document.getElementById("apply-filters").addEventListener("click", applyFilters);
     
+    // Function to fetch and load forecast history from the server
     function loadForecastHistory() {
         showLoading();
         
@@ -271,9 +283,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
                 
+                // Update global forecast history
                 forecastHistory = data.history || [];
                 
-                // Extract unique products for filter
+                // Extract unique products for filter dropdown
                 const products = new Set(["all"]);
                 forecastHistory.forEach(item => {
                     if (item.product && item.product !== "all") {
@@ -284,6 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 productList = Array.from(products);
                 updateProductFilter();
                 
+                // Show appropriate UI state based on data
                 if (forecastHistory.length === 0) {
                     showEmptyState();
                 } else {
@@ -296,6 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
     
+    // Function to apply filters to the forecast history
     function applyFilters() {
         const productFilter = document.getElementById("product-filter").value;
         const typeFilter = document.getElementById("type-filter").value;
@@ -303,14 +318,17 @@ document.addEventListener("DOMContentLoaded", () => {
         
         let filtered = [...forecastHistory];
         
+        // Apply product filter
         if (productFilter !== "all") {
             filtered = filtered.filter(item => item.product === productFilter);
         }
         
+        // Apply forecast type filter
         if (typeFilter !== "all") {
             filtered = filtered.filter(item => item.forecast_type === typeFilter);
         }
         
+        // Apply date filter
         if (dateFilter) {
             const filterDate = new Date(dateFilter).toISOString().split('T')[0];
             filtered = filtered.filter(item => {
@@ -319,6 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
         
+        // Show appropriate UI state based on filtered results
         if (filtered.length === 0) {
             showEmptyState("No forecasts match your filters");
         } else {
@@ -326,6 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     
+    // Function to update the product filter dropdown with available products
     function updateProductFilter() {
         const productFilter = document.getElementById("product-filter");
         productFilter.innerHTML = "";
@@ -338,29 +358,33 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
+    // Function to render forecast cards in the main view
     function renderForecastCards(forecasts) {
         const container = document.getElementById("forecast-cards");
         container.innerHTML = "";
         
         forecasts.forEach(forecast => {
+            // Extract forecast data components
             const forecastData = forecast.forecast_data || {};
             const predictions = forecastData.predictions || [];
             const decisions = forecastData.decisions || [];
             const dataQuality = forecastData.data_quality || {};
             
+            // Format date for display
             const date = new Date(forecast.created_at);
             const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
-            // Calculate summary stats
+            // Calculate summary statistics
             const totalSales = predictions.reduce((sum, val) => sum + val, 0).toFixed(2);
             const avgSales = predictions.length > 0 ? (totalSales / predictions.length).toFixed(2) : "0.00";
             const maxSales = predictions.length > 0 ? Math.max(...predictions).toFixed(2) : "0.00";
             
-            // Count decision types
+            // Count different types of decisions
             const positiveDecisions = decisions.filter(d => d.trend === "positive").length;
             const negativeDecisions = decisions.filter(d => d.trend === "negative").length;
             const neutralDecisions = decisions.filter(d => d.trend === "neutral").length;
             
+            // Create and append forecast card element
             const card = document.createElement("div");
             card.className = "forecast-card";
             card.innerHTML = `
@@ -417,7 +441,7 @@ document.addEventListener("DOMContentLoaded", () => {
             container.appendChild(card);
         });
         
-        // Add event listeners to the new buttons
+        // Add event listeners to the newly created buttons
         document.querySelectorAll(".view-btn").forEach(btn => {
             btn.addEventListener("click", () => viewForecast(btn.dataset.id));
         });
@@ -427,15 +451,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
+    // Function to handle viewing forecast details
     function viewForecast(forecastId) {
-    openModal(forecastId);
-}
+        openModal(forecastId);
+    }
     
+    // Function to handle exporting forecast data
     function exportForecast(forecastId) {
-    // Open the export directly as CSV
-    window.open(`/export_forecast/${forecastId}`, '_blank');
-}
+        window.open(`/export_forecast/${forecastId}`, '_blank');
+    }
     
+    // Function to show loading state while fetching data
     function showLoading() {
         const container = document.getElementById("forecast-cards");
         container.innerHTML = `
@@ -446,6 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
     
+    // Function to show empty state when no forecasts are available
     function showEmptyState(message = "You haven't generated any forecasts yet") {
         const container = document.getElementById("forecast-cards");
         container.innerHTML = `
@@ -459,6 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
     
+    // Function to show error state when something goes wrong
     function showError(message) {
         const container = document.getElementById("forecast-cards");
         container.innerHTML = `

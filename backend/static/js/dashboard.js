@@ -1,48 +1,63 @@
-// Global variables to store chart instances
+// Global variables to store Chart.js instances for the two main forecast graphs
+// These are used to properly manage chart updates and prevent memory leaks
 let chart1, chart2;
 
+// Event listener that triggers when the DOM is fully loaded
+// This ensures all HTML elements are available before running JavaScript code
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the dashboard by fetching data from the server
     fetchDashboardData();
 });
 
+// Main function to fetch all dashboard data from the server
+// This is the entry point for populating the dashboard with data
 function fetchDashboardData() {
+    // Make an HTTP GET request to the /dashboard_data endpoint
     fetch('/dashboard_data')
         .then(response => response.json())
         .then(data => {
-            // Update total forecasts count
+            // Get references to DOM elements for displaying total forecasts and change
             const totalElement = document.getElementById('total-forecasts');
             const changeElement = document.getElementById('forecast-change');
             
+            // Update the total number of forecasts display
             totalElement.textContent = data.total_forecasts;
             
-            // Calculate percentage change (you'll need to implement this logic)
-            // For now, we'll use a placeholder calculation
-            const prevMonthCount = Math.floor(data.total_forecasts * 0.88); // Example: 12% increase
+            // Calculate the percentage change from the previous month
+            // This is currently using a placeholder calculation (88% of current total)
+            // In a real implementation, this would come from the server
+            const prevMonthCount = Math.floor(data.total_forecasts * 0.88);
             const percentageChange = data.total_forecasts > 0 ? 
                 Math.round(((data.total_forecasts - prevMonthCount) / prevMonthCount) * 100) : 0;
             
-                changeElement.textContent = data.percentage_change >= 0 ?
-                    `+${data.percentage_change}% from last month` :
-                    `${data.percentage_change}% from last month`;
-            // Update recent forecasts
+            // Update the percentage change display with proper formatting
+            // Adds a '+' sign for positive changes
+            changeElement.textContent = data.percentage_change >= 0 ?
+                `+${data.percentage_change}% from last month` :
+                `${data.percentage_change}% from last month`;
+
+            // Update the recent forecasts section with the latest data
             updateRecentForecasts(data.recent_forecasts);
             
-            // Update pinned forecasts
+            // Update the pinned forecasts section with user's pinned forecasts
             updatePinnedForecasts(data.pinned_forecasts);
         })
         .catch(error => {
+            // Handle any errors during data fetching
             console.error('Error fetching dashboard data:', error);
             document.getElementById('forecast-change').textContent = 'Data unavailable';
         });
 }
 
+// Function to update the recent forecasts section
+// Takes an array of forecast objects and displays them in the dashboard
 function updateRecentForecasts(forecasts) {
     if (forecasts.length > 0) {
-        // First recent forecast
+        // Update the first recent forecast card
         const forecast1 = forecasts[0];
         updateForecastCard(forecast1, 1);
         
-        // Second recent forecast if available
+        // Update the second recent forecast card if available
         if (forecasts.length > 1) {
             const forecast2 = forecasts[1];
             updateForecastCard(forecast2, 2);
@@ -50,35 +65,44 @@ function updateRecentForecasts(forecasts) {
     }
 }
 
+// Function to update a single forecast card with new data
+// Parameters:
+// - forecast: The forecast data object
+// - cardNumber: The number of the card being updated (1 or 2)
 function updateForecastCard(forecast, cardNumber) {
+    // Get references to the card elements
     const card = document.getElementById(`recent-forecast-${cardNumber}`);
     const select = card.querySelector('select');
     
-    // Update select options
+    // Update the dropdown select with the current forecast date
     select.innerHTML = `<option value="${forecast.id}" selected>${new Date(forecast.date).toLocaleDateString()}</option>`;
     
-    // Update stats
+    // Update the statistics display
     document.getElementById(`threshold-${cardNumber}`).textContent = forecast.threshold;
     document.getElementById(`avg-prediction-${cardNumber}`).textContent = forecast.avg_prediction;
     
-    // Create or update chart
+    // Get the canvas context for the chart
     const ctx = document.getElementById(`graph${cardNumber}`).getContext('2d');
     
-    // Destroy previous chart if exists
+    // Clean up existing charts to prevent memory leaks
     if (cardNumber === 1 && chart1) chart1.destroy();
     if (cardNumber === 2 && chart2) chart2.destroy();
     
+    // Create a new Chart.js instance with the forecast data
     const newChart = new Chart(ctx, {
         type: 'line',
         data: {
+            // Create labels for each day of predictions
             labels: forecast.predictions.map((_, i) => `Day ${i+1}`),
             datasets: [{
+                // Main dataset showing predicted sales
                 label: 'Predicted Sales',
                 data: forecast.predictions,
                 borderColor: '#4CAF50',
                 tension: 0.1,
                 fill: false
             }, {
+                // Secondary dataset showing the threshold line
                 label: 'Threshold',
                 data: Array(forecast.predictions.length).fill(forecast.threshold),
                 borderColor: '#9C27B0',
@@ -106,15 +130,19 @@ function updateForecastCard(forecast, cardNumber) {
         }
     });
     
-    // Store chart reference
+    // Store the chart instance in the global variables
     if (cardNumber === 1) chart1 = newChart;
     if (cardNumber === 2) chart2 = newChart;
 }
 
+// Function to update the pinned forecasts section
+// Creates mini-cards for each pinned forecast with a small preview chart
 function updatePinnedForecasts(forecasts) {
+    // Get the container for pinned forecasts
     const container = document.getElementById('pinned-forecasts');
     container.innerHTML = '';
     
+    // Create a card for each pinned forecast
     forecasts.forEach(forecast => {
         const card = document.createElement('div');
         card.className = 'pinned-card';
@@ -127,7 +155,8 @@ function updatePinnedForecasts(forecasts) {
         `;
         container.appendChild(card);
         
-        // Render mini chart
+        // Create a mini chart for the pinned forecast
+        // Using setTimeout to ensure the canvas is properly rendered
         setTimeout(() => {
             const ctx = document.getElementById(`mini-chart-${forecast.id}`).getContext('2d');
             new Chart(ctx, {
@@ -160,12 +189,18 @@ function updatePinnedForecasts(forecasts) {
     });
 }
 
+// Function to load detailed forecast data when a forecast is selected
+// Parameters:
+// - forecastId: The ID of the selected forecast
+// - cardNumber: The number of the card being updated (1 or 2)
 function loadForecast(forecastId, cardNumber) {
     if (!forecastId) return;
     
+    // Fetch detailed forecast data from the server
     fetch(`/forecast_details_data/${forecastId}`)
         .then(response => response.json())
         .then(forecast => {
+            // Update the card with the new forecast data
             updateForecastCard(forecast, cardNumber);
         })
         .catch(error => {
