@@ -236,7 +236,20 @@ def dashboard():
         flash("Please login first", "warning")
         return redirect(url_for("login"))
 
-    return render_template("dashboard.html", user={"email": session["email"]})
+    try:
+        # Get user data including profile picture and first_name
+        response = supabase_client.table("users").select("profile_pic, first_name").eq("id", session["user_id"]).execute()
+        user_data = response.data[0] if response.data else {}
+        
+        return render_template("dashboard.html", 
+            user={
+                "email": session["email"],
+                "profile_pic": user_data.get("profile_pic"),
+                "first_name": user_data.get("first_name")
+            })
+    except Exception as e:
+        logging.error(f"Error fetching user data: {e}")
+        return render_template("dashboard.html", user={"email": session["email"]})
 
 @app.route("/forecast")
 def forecast():
@@ -245,7 +258,20 @@ def forecast():
         flash("Please login first", "warning")
         return redirect(url_for("login"))
 
-    return render_template("forecast.html", user={"email": session["email"]})
+    try:
+        # Get user data including profile picture and first_name
+        response = supabase_client.table("users").select("profile_pic, first_name").eq("id", session["user_id"]).execute()
+        user_data = response.data[0] if response.data else {}
+        
+        return render_template("forecast.html", 
+            user={
+                "email": session["email"],
+                "profile_pic": user_data.get("profile_pic"),
+                "first_name": user_data.get("first_name")
+            })
+    except Exception as e:
+        logging.error(f"Error fetching user data: {e}")
+        return render_template("forecast.html", user={"email": session["email"]})
 
 @app.route("/history")
 def history():
@@ -254,7 +280,20 @@ def history():
         flash("Please login first", "warning")
         return redirect(url_for("login"))
 
-    return render_template("history.html", user={"email": session["email"]})
+    try:
+        # Get user data including profile picture and first_name
+        response = supabase_client.table("users").select("profile_pic, first_name").eq("id", session["user_id"]).execute()
+        user_data = response.data[0] if response.data else {}
+        
+        return render_template("history.html", 
+            user={
+                "email": session["email"],
+                "profile_pic": user_data.get("profile_pic"),
+                "first_name": user_data.get("first_name")
+            })
+    except Exception as e:
+        logging.error(f"Error fetching user data: {e}")
+        return render_template("history.html", user={"email": session["email"]})
 
 @app.route("/settings")
 def settings():
@@ -496,7 +535,7 @@ def generate_forecast():
                 })
             elif -50 <= percentage_change < -20 or -2 <= z_score < -1:
                 decisions.append({
-                    "icon": "⚠️", 
+                    "icon": "📉", 
                     "text": (
                         f"Moderate drop in sales predicted on Day {i+1} {product_context}. "
                         f"Projected: {predicted_sales:.2f}, a {abs(percentage_change):.1f}% decrease. "

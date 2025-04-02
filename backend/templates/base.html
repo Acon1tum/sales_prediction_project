@@ -56,9 +56,9 @@
             </nav>
             <div class="sidebar-footer">
                 <div class="user-info">
-                    <img src="{{ url_for('static', filename='images/user.png') }}" alt="User">
+                    <img src="{{ user.get('profile_pic', url_for('static', filename='images/user.png')) }}" alt="User" class="profile-pic">
                     <div class="user-details">
-                        <p class="username">{{ session.get('email', 'Guest').split('@')[0] }}</p>
+                        <p class="username">{{ user.get('first_name', 'Guest') }}</p>
                         <p class="user-email">{{ session.get('email', 'guest@Forecastrix.com') }}</p>
                     </div>
                 </div>
@@ -70,7 +70,7 @@
             <!-- Header -->
             <header class="header">
                 <div class="header-text">
-                    <h1>{% block header_title %}Welcome back, {{ session.get('email', 'Guest').split('@')[0] }}!{% endblock %}</h1>
+                    <h1>{% block header_title %}Welcome back, {{ user.get('first_name', 'Guest') }}!{% endblock %}</h1>
                     <p>{% block header_subtitle %}{% endblock %}</p>
                 </div>
             </header>
