@@ -258,37 +258,41 @@ def history():
 
 @app.route("/settings")
 def settings():
-    """ Renders the settings page if logged in, otherwise redirects to login """
-    if "email" not in session or "user_id" not in session:  # Check both
+    if "user_id" not in session:
         flash("Please login first", "warning")
         return redirect(url_for("login"))
 
     try:
-        # Fetch user data from Supabase
         response = supabase_client.table("users").select(
             "first_name", "last_name", "position", "profile_pic"
         ).eq("id", session["user_id"]).execute()
         
-        # Check if response contains data
         if not response.data:
             flash("User data not found", "danger")
             return redirect(url_for("dashboard"))
             
-        user_data = response.data[0]  # Now safe to access
+        user_data = response.data[0]
+        
+        # Safely handle profile picture
+        profile_pic = user_data.get("profile_pic")
+        if profile_pic and not isinstance(profile_pic, str):
+            profile_pic = None
+        elif profile_pic and not profile_pic.startswith('data:image/'):
+            profile_pic = None
         
         return render_template("settings.html", 
-                            user={
-                                "email": session["email"],
-                                "first_name": user_data.get("first_name", ""),
-                                "last_name": user_data.get("last_name", ""),
-                                "position": user_data.get("position", ""),
-                                "profile_pic": user_data.get("profile_pic", None)
-                            }, 
-                            active_page="settings")
-
+            user={
+                "email": session["email"],
+                "first_name": user_data.get("first_name", ""),
+                "last_name": user_data.get("last_name", ""),
+                "position": user_data.get("position", ""),
+                "profile_pic": profile_pic
+            }, 
+            active_page="settings")
+            
     except Exception as e:
-        logging.error(f"Error in settings route: {e}", exc_info=True)
-        flash("Error loading user settings", "danger")
+        logging.error(f"Settings error: {e}")
+        flash("Error loading settings", "danger")
         return redirect(url_for("dashboard"))
     
 
@@ -893,6 +897,26 @@ def update_profile_picture():
 
         if not profile_pic:
             return jsonify({"error": "No image provided"}), 400
+
+        # Validate the image data
+        try:
+            import base64
+            # Check if it's a proper data URI
+            if not profile_pic.startswith('data:image/'):
+                return jsonify({"error": "Invalid image format. Must be a data URI starting with 'data:image/'"}), 400
+                
+            # Extract the base64 portion
+            header, encoded = profile_pic.split(',', 1)
+            # Verify the base64 data
+            base64.b64decode(encoded)
+            
+            # Check image type from header
+            if 'png' not in header and 'jpeg' not in header and 'jpg' not in header and 'gif' not in header:
+                return jsonify({"error": "Only PNG, JPEG, or GIF images are allowed"}), 400
+
+        except ValueError as e:
+            logging.error(f"Invalid base64 image data: {e}")
+            return jsonify({"error": "Invalid image data"}), 400
 
         # Update profile picture in Supabase
         response = supabase_client.table("users").update({

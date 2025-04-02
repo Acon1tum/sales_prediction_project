@@ -7,21 +7,23 @@
         <h1 class="page-title">User Settings</h1>
         
         <div class="user-profile">
-            <div class="profile-header">
-                <div class="profile-image-container">
-                    {% if user.profile_pic %}
-                        <img src="data:image/png;base64,{{ user.profile_pic | b64encode }}" 
-                             alt="Profile Picture" class="profile-picture" id="profile-image">
-                    {% else %}
-                        <div class="profile-picture placeholder" id="profile-image">
-                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                        </div>
-                    {% endif %}
-                    <input type="file" id="profile-upload" accept="image/*" style="display: none;">
-                    <button class="change-photo-btn" id="change-photo-btn" title="Change Photo">
-                        <i class="fas fa-camera"></i>
-                    </button>
-                </div>
+            <div class="profile-image-container">
+                {% if user.profile_pic and user.profile_pic.startswith('data:image/') %}
+                    <img src="{{ user.profile_pic }}" 
+                         alt="Profile Picture" 
+                         class="profile-picture" 
+                         id="profile-image"
+                         onerror="this.onerror=null;this.parentNode.innerHTML='<div class=\'profile-picture placeholder\' id=\'profile-image\'>{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>'">
+                {% else %}
+                    <div class="profile-picture placeholder" id="profile-image">
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                {% endif %}
+                <input type="file" id="profile-upload" accept="image/*" style="display: none;">
+                <button class="change-photo-btn" id="change-photo-btn" title="Change Photo">
+                    <i class="fas fa-camera"></i>
+                </button>
+            </div>
                 <div class="profile-info">
                     <h2 id="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
                     <p class="position" id="profile-position">{{ user.position }}</p>
@@ -523,73 +525,80 @@
             });
             
             // Profile picture upload
-            const profileUpload = document.getElementById('profile-upload');
-            const changePhotoBtn = document.getElementById('change-photo-btn');
-            const profileImage = document.getElementById('profile-image');
+           // Profile picture upload
+const profileUpload = document.getElementById('profile-upload');
+const changePhotoBtn = document.getElementById('change-photo-btn');
+let profileImage = document.getElementById('profile-image'); // Changed from const to let
+
+changePhotoBtn.addEventListener('click', () => {
+    profileUpload.click();
+});
+
+profileUpload.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Add loading state
+    if (profileImage.tagName === 'IMG') {
+        profileImage.classList.add('updating');
+    }
+    
+    try {
+        // Read the file as base64 with proper formatting
+        const base64String = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                // Ensure the result is properly formatted
+                if (typeof reader.result === 'string' && reader.result.startsWith('data:')) {
+                    resolve(reader.result);
+                } else {
+                    reject(new Error('Invalid file read result'));
+                }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+        
+        // Update the profile image preview
+        if (profileImage.classList.contains('placeholder')) {
+            profileImage.classList.remove('placeholder');
+            profileImage.innerHTML = '';
+            profileImage.style.background = 'none';
             
-            changePhotoBtn.addEventListener('click', () => {
-                profileUpload.click();
-            });
-            
-            profileUpload.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                if (!file.type.match('image.*')) {
-                    showAlert('Please select an image file', 'error');
-                    return;
-                }
-                
-                if (file.size > 2 * 1024 * 1024) { // 2MB limit
-                    showAlert('Image size should be less than 2MB', 'error');
-                    return;
-                }
-                
-                try {
-                    // Read the file as base64
-                    const base64String = await readFileAsBase64(file);
-                    
-                    // Update the profile image preview
-                    if (profileImage.classList.contains('placeholder')) {
-                        profileImage.classList.remove('placeholder');
-                        profileImage.innerHTML = '';
-                        profileImage.style.background = 'none';
-                    }
-                    
-                    if (profileImage.tagName === 'IMG') {
-                        profileImage.src = `data:${file.type};base64,${base64String}`;
-                    } else {
-                        const img = document.createElement('img');
-                        img.src = `data:${file.type};base64,${base64String}`;
-                        img.className = 'profile-picture';
-                        img.alt = 'Profile Picture';
-                        profileImage.parentNode.replaceChild(img, profileImage);
-                        profileImage = img; // Update reference
-                    }
-                    
-                    // Save to database
-                    const response = await fetch('/update_profile_picture', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            profile_pic: base64String
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        showAlert('Profile picture updated successfully!', 'success');
-                    } else {
-                        throw new Error(result.error || 'Failed to update profile picture');
-                    }
-                } catch (error) {
-                    console.error('Error updating profile picture:', error);
-                    showAlert(error.message, 'error');
-                }
-            });
+            const img = document.createElement('img');
+            img.src = base64String;
+            img.className = 'profile-picture';
+            img.alt = 'Profile Picture';
+            img.id = 'profile-image';
+            profileImage.parentNode.replaceChild(img, profileImage);
+            profileImage = img;
+        } else if (profileImage.tagName === 'IMG') {
+            profileImage.src = base64String;
+        }
+        
+        // Save to database
+        const response = await fetch('/update_profile_picture', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                profile_pic: base64String
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Profile picture updated successfully!', 'success');
+        } else {
+            throw new Error(result.error || 'Failed to update profile picture');
+        }
+    } catch (error) {
+        console.error('Error updating profile picture:', error);
+        showAlert(error.message, 'error');
+    }
+});
             
             // Helper function to read file as base64
             function readFileAsBase64(file) {
