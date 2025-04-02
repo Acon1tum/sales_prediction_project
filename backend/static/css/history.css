@@ -41,6 +41,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 20px;
+    margin-bottom: 30px;
 }
 
 .forecast-card {
@@ -436,5 +437,42 @@
 .modal-container {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
+}
+
+/* Forecast Pagination Styles */
+#forecast-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 20px 0;
+}
+
+#forecast-pagination .pagination-btn {
+    padding: 8px 16px;
+    border: 1px solid #DFE6E9;
+    background-color: white;
+    border-radius: 8px;
+    color: #2D3436;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#forecast-pagination .pagination-btn:hover:not(:disabled) {
+    background-color: #6C5CE7;
+    color: white;
+    border-color: #6C5CE7;
+}
+
+#forecast-pagination .pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#forecast-page-info {
+    font-size: 0.9rem;
+    color: #636E72;
 }
 

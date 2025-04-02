@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let forecastChart = null; // Reference to the Chart.js instance for displaying forecasts
     let currentDecisionsPage = 1; // Tracks current page number for paginated decisions
     const decisionsPerPage = 5; // Number of decisions to show per page in the modal
+    let currentForecastPage = 1; // Tracks current page number for forecast cards
+    const forecastsPerPage = 6; // Number of forecast cards to show per page
     
     // DOM element references for the modal and its components
     const modal = document.getElementById('forecast-modal'); // Main modal container for forecast details
@@ -14,6 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const prevPageBtn = document.getElementById('prev-page'); // Button to navigate to previous decisions page
     const nextPageBtn = document.getElementById('next-page'); // Button to navigate to next decisions page
     const pageInfo = document.getElementById('page-info'); // Element to display current page information
+    
+    // Pagination controls for forecast cards
+    const prevForecastPageBtn = document.getElementById('prev-forecast-page');
+    const nextForecastPageBtn = document.getElementById('next-forecast-page');
+    const forecastPageInfo = document.getElementById('forecast-page-info');
     
     // Event listener to close modal when clicking outside the modal content
     modal.addEventListener('click', (e) => {
@@ -45,6 +52,22 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentDecisionsPage < totalPages) {
             currentDecisionsPage++;
             renderDecisionsPage();
+        }
+    });
+    
+    // Event listeners for forecast pagination
+    prevForecastPageBtn.addEventListener('click', () => {
+        if (currentForecastPage > 1) {
+            currentForecastPage--;
+            renderForecastCards(forecastHistory);
+        }
+    });
+    
+    nextForecastPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(forecastHistory.length / forecastsPerPage);
+        if (currentForecastPage < totalPages) {
+            currentForecastPage++;
+            renderForecastCards(forecastHistory);
         }
     });
     
@@ -337,6 +360,9 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
         
+        // Reset to first page when applying filters
+        currentForecastPage = 1;
+        
         // Show appropriate UI state based on filtered results
         if (filtered.length === 0) {
             showEmptyState("No forecasts match your filters");
@@ -363,7 +389,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const container = document.getElementById("forecast-cards");
         container.innerHTML = "";
         
-        forecasts.forEach(forecast => {
+        // Calculate pagination
+        const startIndex = (currentForecastPage - 1) * forecastsPerPage;
+        const endIndex = Math.min(startIndex + forecastsPerPage, forecasts.length);
+        const totalPages = Math.ceil(forecasts.length / forecastsPerPage);
+        
+        // Update pagination UI
+        forecastPageInfo.textContent = `Page ${currentForecastPage} of ${totalPages}`;
+        prevForecastPageBtn.disabled = currentForecastPage <= 1;
+        nextForecastPageBtn.disabled = currentForecastPage >= totalPages;
+        
+        // Show/hide pagination controls based on number of pages
+        document.getElementById('forecast-pagination').style.display = totalPages > 1 ? 'flex' : 'none';
+        
+        // Render only the forecasts for the current page
+        const pageForecasts = forecasts.slice(startIndex, endIndex);
+        
+        pageForecasts.forEach(forecast => {
             // Extract forecast data components
             const forecastData = forecast.forecast_data || {};
             const predictions = forecastData.predictions || [];
