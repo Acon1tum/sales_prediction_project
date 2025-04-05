@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.inspection import permutation_importance
@@ -37,7 +37,7 @@ class SalesPredictionModel:
         np.random.seed(random_state)
         tf.random.set_seed(random_state)
         self.scaler_X = StandardScaler()
-        self.scaler_y = StandardScaler()
+        self.scaler_y = MinMaxScaler()  # Use MinMaxScaler for target
         self.model = None
         self.feature_names = None  # Store feature names
 
@@ -61,29 +61,22 @@ class SalesPredictionModel:
 
     def create_model(self, input_shape, learning_rate=0.001):
         """
-        Create a TensorFlow neural network model
+        Create a TensorFlow linear regression model
         """
         model = tf.keras.Sequential([
             tf.keras.layers.Input(shape=(input_shape,)),
-            tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001)),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.3),
-            tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001)),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.2),
-            tf.keras.layers.Dense(1)
+            tf.keras.layers.Dense(1)  # No activation function for linear regression
         ])
 
-        lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-            learning_rate, decay_steps=100, decay_rate=0.9, staircase=True
-        )
-
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                       loss='mean_squared_error', metrics=['mae'])
 
         return model
 
     def train_model(self, X, y, test_size=0.2, epochs=200, batch_size=32):
+        """
+        Train the linear regression model
+        """
         X_scaled = self.scaler_X.fit_transform(X)
         y_scaled = self.scaler_y.fit_transform(y.values.reshape(-1, 1)).flatten()
 
@@ -91,15 +84,13 @@ class SalesPredictionModel:
             X_scaled, y_scaled, test_size=test_size, random_state=42
         )
 
+        # Create the linear regression model
         self.model = self.create_model(X_train.shape[1])
 
-        early_stopping = tf.keras.callbacks.EarlyStopping(
-            monitor='val_loss', patience=20, restore_best_weights=True
-        )
-
+        # Train the model (no early stopping needed for linear regression)
         history = self.model.fit(
             X_train, y_train, validation_split=0.2, epochs=epochs, 
-            batch_size=batch_size, callbacks=[early_stopping], verbose=1
+            batch_size=batch_size, verbose=1
         )
 
         return history, X_test, y_test
@@ -156,7 +147,7 @@ class SalesPredictionModel:
         prediction_scaled = self.model.predict(input_scaled).flatten()
         prediction = self.scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1)).flatten()
 
-        return prediction[0]
+        return max(0, prediction[0])  # Clip negative predictions to zero
 
 def main():
     sales_predictor = SalesPredictionModel()
