@@ -1,0 +1,279 @@
+# Detailed Documentation: Flask Routes and APIs for Sales Prediction System
+
+## Overview
+This document provides an in-depth explanation of the `routes.py` file, which serves as the backend for the Sales Prediction System. It includes the purpose of the file, how it works, and a breakdown of each function and API endpoint. Additionally, it explains the imports used in the file and their roles in the application.
+
+---
+
+## Purpose
+The `routes.py` file is the backbone of the Sales Prediction System. It is responsible for:
+1. **User Authentication and Session Management**: Ensures secure login, session handling, and user-specific data access.
+2. **File Uploads and Data Processing**: Handles CSV file uploads, validates data, and processes it for forecasting.
+3. **Database Integration**: Uses Supabase to store and retrieve user data, uploaded files, and forecast results.
+4. **Machine Learning Model Integration**: Loads a pre-trained TensorFlow model to generate sales predictions.
+5. **API Endpoints**: Provides RESTful APIs for frontend interaction, enabling dynamic and responsive user experiences.
+6. **Data Export and Reporting**: Allows users to export forecast results and view detailed reports.
+7. **User Profile Management**: Enables users to update their profiles, including personal details and preferences.
+
+---
+
+## Imports and Their Purpose
+
+### Core Libraries
+- **`os`**: 
+  - Handles file system operations such as creating directories, checking file paths, and joining paths.
+  - Example: Ensures the upload folder exists and constructs paths for model files.
+- **`logging`**: 
+  - Provides logging functionality for debugging and tracking errors.
+  - Example: Logs errors during model loading or database interactions.
+- **`re`**: 
+  - Used for regular expression operations, such as validating email formats.
+- **`pandas as pd`**: 
+  - A powerful library for data manipulation and analysis.
+  - Example: Reads and processes CSV files uploaded by users.
+- **`joblib`**: 
+  - Used for saving and loading Python objects, such as scalers for machine learning models.
+  - Example: Loads pre-trained scalers for input and output data normalization.
+- **`tensorflow as tf`**: 
+  - Core library for loading and using the machine learning model.
+  - Example: Loads the pre-trained Keras model for sales prediction.
+- **`csv`**: 
+  - Handles CSV file creation for exporting data.
+  - Example: Generates downloadable CSV reports for forecasts.
+
+### Flask Libraries
+- **`Flask`**: 
+  - The main web framework used to create the application.
+  - Example: Initializes the app and defines routes.
+- **`render_template`**: 
+  - Renders HTML templates for the frontend.
+  - Example: Displays pages like login, dashboard, and forecast.
+- **`redirect`**: 
+  - Redirects users to different routes.
+  - Example: Redirects unauthenticated users to the login page.
+- **`url_for`**: 
+  - Generates URLs for specific routes.
+  - Example: Dynamically creates links to other pages.
+- **`request`**: 
+  - Handles incoming HTTP requests.
+  - Example: Processes form data and JSON payloads from the frontend.
+- **`session`**: 
+  - Manages user session data.
+  - Example: Stores user-specific data like email, user ID, and preferences.
+- **`flash`**: 
+  - Displays one-time messages to users.
+  - Example: Shows success or error messages after login or file upload.
+- **`jsonify`**: 
+  - Converts Python objects to JSON responses for APIs.
+  - Example: Returns JSON responses for AJAX requests.
+- **`make_response`**: 
+  - Creates custom HTTP responses.
+  - Example: Generates downloadable CSV files.
+
+### Other Libraries
+- **`werkzeug.utils.secure_filename`**: 
+  - Ensures safe filenames for uploaded files.
+  - Example: Prevents malicious file uploads by sanitizing filenames.
+- **`supabase.create_client, Client`**: 
+  - Initializes and interacts with the Supabase database.
+  - Example: Queries and updates user, upload, and forecast data.
+- **`dotenv.load_dotenv`**: 
+  - Loads environment variables from a `.env` file.
+  - Example: Retrieves sensitive data like API keys and database URLs.
+- **`datetime, timedelta`**: 
+  - Handles date and time operations.
+  - Example: Manages session expiration and processes date columns in CSV files.
+- **`io.StringIO`**: 
+  - Provides an in-memory file-like object for CSV generation.
+  - Example: Creates CSV data for exporting forecasts.
+- **`base64.b64encode`**: 
+  - Encodes binary data to Base64 format.
+  - Example: Encodes profile pictures for display in the frontend.
+
+---
+
+## API Endpoints and Functions
+
+1. Home Route
+@app.route("/")
+def home():
+
+Purpose: 
+    - Redirects users to the appropriate page based on their authentication status.
+Explanation:
+    - @app.route("/"): Defines the route for the home page (/). This is the default route when the application is accessed.
+    - def home(): The function that handles requests to the home page.
+    - if "email" in session: Checks if the user's email is stored in the session, indicating they are logged in.
+    - return redirect(url_for("dashboard")): If the user is logged in, they are redirected to the dashboard route.
+    - return redirect(url_for("login")): If the user is not logged in, they are redirected to the login route.
+
+2. Login API
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+Purpose: 
+    - Handles user login functionality.
+Explanation:
+    - @app.route("/login", methods=["GET", "POST"]): Defines the route for the login page and allows both GET and POST requests.
+    - def login(): The function that handles login requests.
+    - if "email" in session: Checks if the user is already logged in. If so, redirects them to the dashboard.
+    - if request.method == "POST": Checks if the request is a POST request (indicating form submission).
+    - email = request.form.get("email", "").strip().lower(): Retrieves the email from the form, trims whitespace, and converts it to lowercase.
+    - # Additional logic: Validates the email and password, creates a session, and redirects to the dashboard if successful. Otherwise, flashes an error message.
+
+
+
+3. Dashboard Route
+@app.route("/dashboard")
+def dashboard():
+
+Purpose: 
+    - Displays the dashboard for authenticated users.
+Explanation:
+    - @app.route("/dashboard"): Defines the route for the dashboard page.
+    - def dashboard(): The function that handles requests to the dashboard.
+    - # Logic to fetch user data: Retrieves user-specific data (e.g., profile picture, first name) from the database.
+    - return render_template("dashboard.html", ...): Renders the dashboard.html template and passes the user data to it.
+
+4. Forecast Page
+@app.route("/forecast")
+def forecast():
+
+Purpose: 
+    - Displays the forecast generation page.
+Explanation:
+    - @app.route("/forecast"): Defines the route for the forecast page.
+    - def forecast(): The function that handles requests to the forecast page.
+    - # Logic to fetch user data: Retrieves user-specific data required for the forecast page.
+    - return render_template("forecast.html", ...): Renders the forecast.html template and passes the necessary data to it.
+
+
+5. History Page
+@app.route("/history")
+def history():
+
+Purpose: 
+    - Displays the user's forecast history.
+Explanation:
+    - @app.route("/history"): Defines the route for the history page.
+    - def history(): The function that handles requests to the history page.
+    - # Logic to fetch forecast history: Queries the database for the user's forecast history.
+    - return render_template("history.html", ...): Renders the history.html template and passes the forecast history data to it.
+
+
+6. Settings Page
+@app.route("/settings")
+def settings():    
+
+Purpose: 
+    - Allows users to manage their profile settings.
+Explanation:
+    - @app.route("/settings"): Defines the route for the settings page.
+    - def settings(): The function that handles requests to the settings page.
+    - # Logic to fetch user profile data: Queries the database for the user's profile information.
+    - return render_template("settings.html", ...): Renders the settings.html template and passes the profile data to it.
+
+
+7. Set Threshold API
+@app.route("/set_threshold", methods=["POST"])
+def set_threshold():   
+
+Purpose: 
+    - Updates the sales threshold value in the session.
+Explanation:
+    - @app.route("/set_threshold", methods=["POST"]): Defines the route for setting the threshold and allows only POST requests.
+    - def set_threshold(): The function that handles threshold updates.
+    - threshold = request.json.get("threshold"): Retrieves the threshold value from the JSON payload of the request.
+    - session["threshold"] = threshold: Stores the threshold value in the session.
+
+
+8. Upload CSV API
+@app.route("/upload_csv", methods=["POST"])
+def upload_csv():
+
+Purpose: 
+    - Handles CSV file uploads.
+Explanation:
+    - @app.route("/upload_csv", methods=["POST"]): Defines the route for uploading CSV files and allows only POST requests.
+    - def upload_csv(): The function that handles file uploads.
+    - file = request.files["file"]: Retrieves the uploaded file from the request.
+    - if allowed_file(file.filename): Checks if the file has a valid extension (e.g., .csv).
+    - file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename)): Saves the file to the server.
+    - # Logic to upload data to Supabase: Processes the file and uploads its data to the database.
+
+9. Generate Forecast API
+@app.route("/generate_forecast", methods=["POST"])
+def generate_forecast():
+
+Purpose: 
+    - Generates sales forecasts using the uploaded data and machine learning model.
+Explanation:
+    - @app.route("/generate_forecast", methods=["POST"]): Defines the route for generating forecasts and allows only POST requests.
+    - def generate_forecast(): The function that handles forecast generation.
+    - # Logic to preprocess data: Prepares the uploaded data for prediction (e.g., scaling, filtering).
+    - predictions = model.predict(preprocessed_data): Uses the pre-loaded TensorFlow model to generate predictions.
+    - # Logic to save forecast results: Stores the predictions and related data in the database.
+
+
+10. Reset API
+@app.route("/reset", methods=["POST"])
+def reset():
+
+Purpose: 
+    - Resets session data related to forecasting.
+Explanation:
+    - @app.route("/reset", methods=["POST"]): Defines the route for resetting session data and allows only POST requests.
+    - def reset(): The function that handles session resets.
+    - session.clear(): Clears all session data.
+
+
+11. Get Forecast History API
+@app.route("/get_forecast_history")
+def get_forecast_history():
+
+Purpose: 
+    - Retrieves the forecast history for the logged-in user.
+Explanation:
+    - @app.route("/get_forecast_history"): Defines the route for fetching forecast history.
+    - def get_forecast_history(): The function that handles forecast history retrieval.
+    - # Logic to query database: Fetches the user's forecast history from the database.
+    - return jsonify(history_data): Returns the forecast history as a JSON response.
+
+
+
+12. Export Forecast API
+@app.route("/export_forecast/<int:forecast_id>", methods=["GET"])
+def export_forecast(forecast_id):
+
+Purpose: 
+    - Exports a specific forecast as a CSV file.
+Explanation:
+    - @app.route("/export_forecast/<int:forecast_id>", methods=["GET"]): Defines the route for exporting forecasts and allows only GET requests.
+    - def export_forecast(forecast_id): The function that handles forecast export.
+    - # Logic to fetch forecast data: Retrieves the forecast data for the specified ID from the database.
+    - # Logic to generate CSV: Creates a CSV file with the forecast data.
+    - return make_response(csv_data): Returns the CSV file as a downloadable response.
+
+
+
+13. Logout API   
+@app.route("/logout")
+def logout():
+
+Purpose: 
+    - Logs out the user and clears session data.
+Explanation:
+    - @app.route("/logout"): Defines the route for logging out.
+    - def logout(): The function that handles user logout.
+    - session.clear(): Clears all session data.
+    - return redirect(url_for("login")): Redirects the user to the login page.
+
+
+
+
+
+
+
+
+
+
