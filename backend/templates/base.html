@@ -39,7 +39,15 @@
                             <i class="fa-solid fa-list-ul icon"></i> 
                             <span class="link-text">History</span>
                         </a>
-                    </li>                    
+                    </li>
+                    {% if session.get('role') == 'admin' %}
+                    <li class="{% if active_page == 'manage_users' %}active{% endif %}">
+                        <a href="{{ url_for('manage_users') }}">
+                            <i class="fa-solid fa-users-cog icon"></i> 
+                            <span class="link-text">User Management</span>
+                        </a>
+                    </li>
+                    {% endif %}
                     <li class="{% if active_page == 'settings' %}active{% endif %}">
                         <a href="{{ url_for('settings') }}">
                             <i class="fa-solid fa-gears icon"></i> 

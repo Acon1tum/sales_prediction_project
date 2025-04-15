@@ -129,7 +129,7 @@ body {
     font-size: 1.8rem;
     margin-bottom: 1.5rem;
     color: var(--dark);
-    text-align: center; /* Add this line */
+    text-align: center;
 }
 
 .login-form {
@@ -269,6 +269,29 @@ body {
     text-decoration: none;
 }
 
+/* Approval notice styling */
+.approval-notice {
+    background-color: #FFF8E1;
+    border-left: 4px solid #FFA000;
+    padding: 12px 15px;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.approval-notice i {
+    color: #FFA000;
+    font-size: 1.2rem;
+    margin-right: 10px;
+}
+
+.approval-notice p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #855A00;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .login-container {
@@ -291,10 +314,10 @@ body {
 }
 
 .signin-title {
-text-align: center;
-font-size: 1.8rem;
-margin-bottom: 1.5rem;
-color: var(--dark);
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    color: var(--dark);
 }
 
 @keyframes fadeIn {
@@ -338,5 +361,37 @@ color: var(--dark);
         opacity: 1;
         transform: translateX(0);
     }
+}
+
+/* Added styles for alerts */
+.alert {
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.alert-danger {
+    background-color: #FDECEA;
+    color: #B71C1C;
+    border: 1px solid #EFCDD2;
+}
+
+.alert-success {
+    background-color: #E8F5E9;
+    color: #1B5E20;
+    border: 1px solid #C8E6C9;
+}
+
+.alert-info {
+    background-color: #E1F5FE;
+    color: #0277BD;
+    border: 1px solid #B3E5FC;
+}
+
+.alert-warning {
+    background-color: #FFF8E1;
+    color: #F57F17;
+    border: 1px solid #FFECB3;
 }
 
