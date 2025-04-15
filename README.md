@@ -33,6 +33,12 @@ Follow these steps to set up and run the project.
    python routes.py
    ```
 
+**FOR ADMIN ACCOUNT**
+   admin@example.com
+   adminpassword123
+
+
+
 ## Notes
 - To deactivate the virtual environment, run `deactivate`.
 - If you face issues, check your Python version and dependencies.
