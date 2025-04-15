@@ -5,6 +5,8 @@ import pandas as pd
 import joblib
 import tensorflow as tf
 import csv
+import secrets
+import string
 from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 from werkzeug.utils import secure_filename
 from supabase import create_client, Client
@@ -173,6 +175,77 @@ def validate_user_session():
         logging.error(f"Error validating user session: {e}")
         return False
 
+def generate_token(length=32):
+    """Generate a random token for password reset"""
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+def store_reset_token(email, token):
+    """Store password reset token in Supabase"""
+    try:
+        # Set token expiration to 1 hour from now
+        expiration = datetime.now() + timedelta(hours=1)
+        
+        # First check if user exists
+        user_response = supabase_client.table("users").select("id").eq("email", email).execute()
+        if not user_response.data:
+            return False
+        
+        # Store token with expiration (first delete any existing tokens for this user)
+        supabase_client.table("password_resets").delete().eq("email", email).execute()
+        
+        token_data = {
+            "email": email,
+            "token": token,
+            "expires_at": expiration.isoformat(),
+            "created_at": "now()"
+        }
+        
+        response = supabase_client.table("password_resets").insert(token_data).execute()
+        return bool(response.data)
+        
+    except Exception as e:
+        logging.error(f"Error storing reset token: {e}")
+        return False
+
+def validate_reset_token(token):
+    """Validate that a password reset token is valid and not expired"""
+    try:
+        # Get token data from Supabase
+        response = supabase_client.table("password_resets").select("*").eq("token", token).execute()
+        
+        if not response.data:
+            logging.warning(f"Token not found in database: {token[:10]}...")
+            return None
+            
+        token_data = response.data[0]
+        
+        # Ensure proper datetime parsing with error handling
+        try:
+            # Strip any timezone info to make comparison consistent
+            expiration_str = token_data["expires_at"]
+            if 'T' in expiration_str and '+' in expiration_str:
+                expiration_str = expiration_str.split('+')[0]
+                
+            expiration = datetime.fromisoformat(expiration_str)
+            now = datetime.now()
+            
+            logging.info(f"Token expiration: {expiration}, Current time: {now}")
+            
+            # Check if token is expired
+            if now > expiration:
+                logging.warning(f"Token expired at {expiration}")
+                return None
+                
+            return token_data["email"]
+        except ValueError as e:
+            logging.error(f"Error parsing date from token data: {e}")
+            return None
+        
+    except Exception as e:
+        logging.error(f"Error validating reset token: {e}")
+        return None
+
 @app.context_processor
 def utility_processor():
     return dict(b64encode=b64encode)   
@@ -207,10 +280,17 @@ def login():
                 
             user = response.data[0]
 
+            # Check if the account is pending approval
+            if user.get("status") == "pending":
+                flash("Your account is pending approval from an administrator. Please try again later.", "warning")
+                return redirect(url_for("login"))
+
             # In a real app, use proper password hashing like bcrypt
             if user and user.get("password") == password:
                 session["email"] = user["email"]
                 session["user_id"] = user["id"]
+                if "role" in user:
+                    session["role"] = user["role"]
 
                 if remember:
                     session.permanent = True
@@ -228,6 +308,248 @@ def login():
             return redirect(url_for("login"))
 
     return render_template("login.html")
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """ Handle user registration """
+    if "email" in session:
+        return redirect(url_for("dashboard"))
+        
+    if request.method == "POST":
+        # Get form data
+        first_name = request.form.get("first_name", "").strip()
+        last_name = request.form.get("last_name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        position = request.form.get("position", "").strip()
+        security_question = request.form.get("security_question", "").strip()
+        security_answer = request.form.get("security_answer", "").strip()
+        password = request.form.get("password", "").strip()
+        confirm_password = request.form.get("confirm_password", "").strip()
+        
+        # Basic validation
+        if not first_name or not last_name or not email or not password or not security_question or not security_answer:
+            flash("All required fields must be filled", "danger")
+            return redirect(url_for("register"))
+            
+        if password != confirm_password:
+            flash("Passwords do not match", "danger")
+            return redirect(url_for("register"))
+            
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long", "danger")
+            return redirect(url_for("register"))
+            
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            flash("Invalid email format", "danger")
+            return redirect(url_for("register"))
+            
+        try:
+            # Check if email already exists
+            check_response = supabase_client.table("users").select("id").eq("email", email).execute()
+            if check_response.data:
+                flash("Email already registered. Please use a different email or try to login.", "danger")
+                return redirect(url_for("register"))
+                
+            # Create new user with pending status
+            new_user = {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": email,
+                "position": position,
+                "security_question": security_question,
+                "security_answer": security_answer,
+                "password": password,  # In a real app, hash this password
+                "status": "pending",   # Set initial status to pending
+                "created_at": "now()",
+                "updated_at": "now()"
+            }
+            
+            response = supabase_client.table("users").insert(new_user).execute()
+            
+            if response.data:
+                # Get admin users for notification
+                admin_response = supabase_client.table("users").select("email").eq("role", "admin").execute()
+                admin_emails = [admin["email"] for admin in admin_response.data] if admin_response.data else []
+                
+                # In a real app, send email notifications to admins
+                # For this demo, just log the notification
+                if admin_emails:
+                    admin_emails_str = ", ".join(admin_emails)
+                    logging.info(f"New registration pending approval: {email}. Notifying admins: {admin_emails_str}")
+                
+                flash("Registration submitted! Your account is pending approval from an administrator.", "info")
+                return redirect(url_for("login"))
+            else:
+                flash("Registration failed. Please try again.", "danger")
+                return redirect(url_for("register"))
+                
+        except Exception as e:
+            logging.error(f"Registration error: {e}")
+            flash("Server error during registration. Please try again later.", "danger")
+            return redirect(url_for("register"))
+    
+    return render_template("register.html")
+
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    """ Handle direct password reset with security questions """
+    if "email" in session:
+        return redirect(url_for("dashboard"))
+        
+    if request.method == "POST":
+        step = request.form.get("step", "")
+        
+        # Step 1: Check if email exists and get security question
+        if step == "check_email":
+            email = request.form.get("email", "").strip().lower()
+            
+            if not email or not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                flash("Please enter a valid email address", "danger")
+                return redirect(url_for("forgot_password"))
+                
+            try:
+                # Check if email exists and get security question
+                check_response = supabase_client.table("users").select("security_question").eq("email", email).execute()
+                
+                if not check_response.data:
+                    # Security best practice: Don't reveal if email exists or not
+                    flash("If your email is registered, you'll be asked a security question.", "info")
+                    return redirect(url_for("forgot_password"))
+                
+                security_question = check_response.data[0].get("security_question")
+                
+                if not security_question:
+                    flash("Your account doesn't have a security question set. Please contact support.", "warning")
+                    return redirect(url_for("login"))
+                    
+                # Show security question form
+                return render_template(
+                    "forgot_password.html", 
+                    security_question=security_question, 
+                    email=email
+                )
+                
+            except Exception as e:
+                logging.error(f"Password reset error: {e}")
+                flash("Server error during password reset request. Please try again later.", "danger")
+                return redirect(url_for("forgot_password"))
+                
+        # Step 2: Verify security answer
+        elif step == "verify_answer":
+            email = request.form.get("email", "").strip().lower()
+            security_answer = request.form.get("security_answer", "").strip()
+            
+            if not email or not security_answer:
+                flash("All fields are required", "danger")
+                return redirect(url_for("forgot_password"))
+                
+            try:
+                # Verify security answer
+                user_response = supabase_client.table("users").select("security_answer, security_question").eq("email", email).execute()
+                
+                if not user_response.data:
+                    flash("Invalid email or security answer", "danger")
+                    return redirect(url_for("forgot_password"))
+                    
+                stored_answer = user_response.data[0].get("security_answer")
+                
+                if not stored_answer or stored_answer != security_answer:
+                    # Show the question again but with error
+                    return render_template(
+                        "forgot_password.html", 
+                        security_question=user_response.data[0].get("security_question"), 
+                        email=email,
+                        error="Incorrect answer. Please try again."
+                    )
+                
+                # Generate reset token
+                token = generate_token()
+                
+                # Store token in database with short expiry (15 minutes)
+                expiration = datetime.now() + timedelta(minutes=15)
+                
+                # Format expiration with ISO format and timezone information
+                expiration_str = expiration.isoformat()
+                
+                # Store token with expiration (first delete any existing tokens for this user)
+                supabase_client.table("password_resets").delete().eq("email", email).execute()
+                
+                token_data = {
+                    "email": email,
+                    "token": token,
+                    "expires_at": expiration_str,
+                    "created_at": "now()"
+                }
+                
+                response = supabase_client.table("password_resets").insert(token_data).execute()
+                
+                if not response.data:
+                    flash("Error processing password reset. Please try again.", "danger")
+                    return redirect(url_for("forgot_password"))
+                
+                # Log token creation for debugging
+                logging.info(f"Reset token created for {email}. Expires at: {expiration_str}")
+                
+                # Show password reset form
+                return render_template("forgot_password.html", reset_token=token)
+                
+            except Exception as e:
+                logging.error(f"Security answer verification error: {e}")
+                flash("Server error during verification. Please try again later.", "danger")
+                return redirect(url_for("forgot_password"))
+                
+        # Step 3: Reset password
+        elif step == "reset_password":
+            token = request.form.get("token", "")
+            password = request.form.get("password", "").strip()
+            confirm_password = request.form.get("confirm_password", "").strip()
+            
+            if not token or not password or not confirm_password:
+                flash("All fields are required", "danger")
+                return redirect(url_for("forgot_password"))
+                
+            if password != confirm_password:
+                flash("Passwords do not match", "danger")
+                return render_template("forgot_password.html", reset_token=token)
+                
+            if len(password) < 8:
+                flash("Password must be at least 8 characters long", "danger")
+                return render_template("forgot_password.html", reset_token=token)
+                
+            # Validate token
+            logging.info(f"Validating reset token: {token[:8]}...")
+            email = validate_reset_token(token)
+            
+            if not email:
+                logging.warning(f"Token validation failed: {token[:8]}...")
+                flash("Invalid or expired reset token. Please restart the password reset process.", "danger")
+                return redirect(url_for("forgot_password"))
+                
+            try:
+                # Update password in Supabase
+                logging.info(f"Updating password for user: {email}")
+                response = supabase_client.table("users").update({
+                    "password": password,  # In a real app, hash this password
+                    "updated_at": "now()"
+                }).eq("email", email).execute()
+                
+                # Delete the used token
+                token_deleted = supabase_client.table("password_resets").delete().eq("token", token).execute()
+                logging.info(f"Token deleted: {bool(token_deleted.data)}")
+                
+                if response.data:
+                    flash("Your password has been reset successfully. Please login with your new password.", "success")
+                    return redirect(url_for("login"))
+                else:
+                    flash("Error resetting password. Please try again.", "danger")
+                    return redirect(url_for("forgot_password"))
+                    
+            except Exception as e:
+                logging.error(f"Password update error: {e}")
+                flash("Server error during password reset. Please try again later.", "danger")
+                return redirect(url_for("forgot_password"))
+    
+    return render_template("forgot_password.html")
 
 @app.route("/dashboard")
 def dashboard():
@@ -1065,6 +1387,123 @@ def logout():
     session.clear()
     flash("You have been logged out", "info")
     return redirect(url_for("login"))
+
+# Helper function to check if the current user is an admin
+def is_admin():
+    if "role" not in session:
+        return False
+    return session["role"] == "admin"
+
+@app.route("/manage_users")
+def manage_users():
+    """Admin page to manage user approvals"""
+    if "user_id" not in session:
+        flash("Please login first", "warning")
+        return redirect(url_for("login"))
+        
+    # Check if the user is an admin
+    if not is_admin():
+        flash("You don't have permission to access this page", "danger")
+        return redirect(url_for("dashboard"))
+    
+    try:
+        # Get all users
+        response = supabase_client.table("users").select("*").execute()
+        users = response.data
+        
+        # Group users by status
+        pending_users = []
+        active_users = []
+        
+        for user in users:
+            if user.get("status") == "pending":
+                pending_users.append(user)
+            else:
+                active_users.append(user)
+        
+        # Get current user information for the template
+        user_response = supabase_client.table("users").select("profile_pic, first_name").eq("id", session["user_id"]).execute()
+        user_data = user_response.data[0] if user_response.data else {}
+        
+        # Set default profile picture if none exists
+        profile_pic = user_data.get("profile_pic")
+        if not profile_pic:
+            profile_pic = url_for('static', filename='images/user.png')
+        
+        return render_template(
+            "manage_users.html",
+            pending_users=pending_users,
+            active_users=active_users,
+            user={
+                "email": session["email"],
+                "profile_pic": profile_pic,
+                "first_name": user_data.get("first_name")
+            },
+            active_page="manage_users"
+        )
+        
+    except Exception as e:
+        logging.error(f"Error fetching users: {e}")
+        flash("Error loading users", "danger")
+        return redirect(url_for("dashboard"))
+
+@app.route("/approve_user/<string:user_id>", methods=["POST"])
+def approve_user(user_id):
+    """Endpoint to approve a pending user"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+        
+    # Check if the current user is an admin
+    if not is_admin():
+        return jsonify({"error": "Permission denied"}), 403
+        
+    try:
+        # Update user status to active
+        response = supabase_client.table("users").update({
+            "status": "active",
+            "updated_at": "now()"
+        }).eq("id", user_id).execute()
+        
+        if response.data:
+            # In a real app, send email notification to the approved user
+            approved_user = response.data[0]
+            logging.info(f"User approved: {approved_user.get('email')}")
+            
+            return jsonify({"message": "User approved successfully"})
+        else:
+            return jsonify({"error": "User not found or already approved"}), 404
+            
+    except Exception as e:
+        logging.error(f"Error approving user: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/reject_user/<string:user_id>", methods=["POST"])
+def reject_user(user_id):
+    """Endpoint to reject and delete a pending user"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+        
+    # Check if the current user is an admin
+    if not is_admin():
+        return jsonify({"error": "Permission denied"}), 403
+        
+    try:
+        # Get user email before deletion for logging
+        user_response = supabase_client.table("users").select("email").eq("id", user_id).execute()
+        user_email = user_response.data[0].get("email") if user_response.data else "Unknown"
+        
+        # Delete the user
+        response = supabase_client.table("users").delete().eq("id", user_id).execute()
+        
+        if response.data:
+            logging.info(f"User rejected and deleted: {user_email}")
+            return jsonify({"message": "User rejected successfully"})
+        else:
+            return jsonify({"error": "User not found"}), 404
+            
+    except Exception as e:
+        logging.error(f"Error rejecting user: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

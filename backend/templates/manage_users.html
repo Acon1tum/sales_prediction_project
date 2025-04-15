@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-header">
+        <h1>User Management</h1>
+        <p>Manage user accounts and approve new registrations</p>
+    </div>
+
+    <div class="section-card">
+        <div class="section-header">
+            <h2>Pending Approvals</h2>
+            <span class="badge">{{ pending_users|length }}</span>
+        </div>
+        
+        {% if pending_users %}
+        <div class="users-table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Position</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in pending_users %}
+                    <tr data-user-id="{{ user.id }}">
+                        <td>{{ user.first_name }} {{ user.last_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.position or 'N/A' }}</td>
+                        <td>{{ user.created_at|replace('T', ' ')|truncate(16, True, '') }}</td>
+                        <td class="actions">
+                            <button class="btn-approve" data-user-id="{{ user.id }}">Approve</button>
+                            <button class="btn-reject" data-user-id="{{ user.id }}">Reject</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>No pending approval requests</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="section-card">
+        <div class="section-header">
+            <h2>Active Users</h2>
+            <span class="badge">{{ active_users|length }}</span>
+        </div>
+        
+        {% if active_users %}
+        <div class="users-table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Position</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in active_users %}
+                    <tr>
+                        <td>{{ user.first_name }} {{ user.last_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.position or 'N/A' }}</td>
+                        <td>
+                            <span class="role-badge {% if user.role == 'admin' %}role-admin{% else %}role-user{% endif %}">
+                                {{ user.role or 'user' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge {% if user.status == 'active' %}status-active{% else %}status-{{ user.status }}{% endif %}">
+                                {{ user.status or 'active' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">👥</div>
+            <p>No active users</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="approval-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title"></h2>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="modal-message"></p>
+        </div>
+        <div class="modal-footer">
+            <button id="modal-cancel" class="btn-secondary">Cancel</button>
+            <button id="modal-confirm" class="btn-primary"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+function approveUser(userId) {
+    openModal('Approve User', 'Are you sure you want to approve this user?', 'Approve', function() {
+        processUserAction('/approve_user/' + userId, 'User approved successfully');
+    });
+}
+
+function rejectUser(userId) {
+    openModal('Reject User', 'Are you sure you want to reject this user? This action cannot be undone.', 'Reject', function() {
+        processUserAction('/reject_user/' + userId, 'User rejected successfully');
+    });
+}
+
+function processUserAction(url, successMessage) {
+    var modal = document.getElementById('approval-modal');
+    var modalBody = modal.querySelector('.modal-body');
+    modalBody.innerHTML = '<div class="loading-spinner"></div><p>Processing...</p>';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.error) {
+            modalBody.innerHTML = '<p class="error-message">' + data.error + '</p>';
+        } else {
+            modalBody.innerHTML = '<p class="success-message">' + successMessage + '</p>';
+            setTimeout(function() {
+                closeModal();
+                window.location.reload();
+            }, 1500);
+        }
+    })
+    .catch(function(error) {
+        modalBody.innerHTML = '<p class="error-message">An error occurred: ' + error + '</p>';
+    });
+}
+
+function openModal(title, message, confirmText, onConfirm) {
+    var modal = document.getElementById('approval-modal');
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('modal-confirm').textContent = confirmText;
+    
+    document.getElementById('modal-confirm').onclick = onConfirm;
+    document.getElementById('modal-cancel').onclick = closeModal;
+    document.querySelector('.close-modal').onclick = closeModal;
+    
+    modal.style.display = 'block';
+    
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    };
+}
+
+function closeModal() {
+    document.getElementById('approval-modal').style.display = 'none';
+}
+
+// Add event listeners when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners to all approve buttons
+    var approveButtons = document.querySelectorAll('.btn-approve');
+    approveButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var userId = this.getAttribute('data-user-id');
+            approveUser(userId);
+        });
+    });
+    
+    // Add event listeners to all reject buttons
+    var rejectButtons = document.querySelectorAll('.btn-reject');
+    rejectButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var userId = this.getAttribute('data-user-id');
+            rejectUser(userId);
+        });
+    });
+});
+</script>
+
+<style>
+.section-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--dark);
+}
+
+.badge {
+    background-color: var(--primary);
+    color: white;
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.users-table-container {
+    overflow-x: auto;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table th, .users-table td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.users-table th {
+    font-weight: 600;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.users-table td {
+    font-size: 0.9rem;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-approve, .btn-reject {
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-approve {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.btn-reject {
+    background-color: #F44336;
+    color: white;
+}
+
+.btn-approve:hover {
+    background-color: #43A047;
+}
+
+.btn-reject:hover {
+    background-color: #E53935;
+}
+
+.role-badge, .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.role-admin {
+    background-color: #E3F2FD;
+    color: #1565C0;
+}
+
+.role-user {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+}
+
+.status-active {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+}
+
+.status-pending {
+    background-color: #FFF8E1;
+    color: #FF8F00;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    color: #888;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.close-modal {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #888;
+}
+
+.close-modal:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    min-height: 80px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.success-message {
+    color: #2E7D32;
+}
+
+.error-message {
+    color: #C62828;
+}
+</style>
+{% endblock %} 

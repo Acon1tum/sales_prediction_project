@@ -1,0 +1,19 @@
+Units Sold
+Unit Price
+Foot Traffic
+Discount Applied (%)
+Ad Spend (₱)
+Social Media Engagement
+Holiday
+Local Event
+Category_Appetizers
+Category_Cakes | Pastries
+Category_Iced Coffee
+Category_Pasta | Noodles
+Category_Rice Meals
+Category_Silog Meals
+Category_Specialty Coffee
+Weather_Partly Cloudy
+Weather_Rainy
+Weather_Stormy
+Weather_Sunny

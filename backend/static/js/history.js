@@ -207,42 +207,57 @@ document.addEventListener("DOMContentLoaded", () => {
         if (forecastChart) {
             forecastChart.destroy();
         }
-        
+    
         // Determine appropriate x-axis labels based on forecast type
         let labels = [];
         let xAxisTitle = 'Day';
-        
+    
         if (forecastType === 'weekly') {
             labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             xAxisTitle = 'Day of Week';
         } else if (forecastType === 'monthly') {
             const daysInMonth = 30;
-            labels = Array.from({length: daysInMonth}, (_, i) => `Day ${i + 1}`);
+            labels = Array.from({ length: daysInMonth }, (_, i) => `Day ${i + 1}`);
             xAxisTitle = 'Day of Month';
         } else if (forecastType === 'quarterly') {
             labels = ['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8', 'Week 9-10', 'Week 11-12', 'Week 13'];
             xAxisTitle = 'Week of Quarter';
         } else {
-            labels = Array.from({length: predictions.length}, (_, i) => `Day ${i + 1}`);
+            labels = Array.from({ length: predictions.length }, (_, i) => `Day ${i + 1}`);
         }
-        
+    
         // Ensure labels array matches predictions length
         labels = labels.slice(0, predictions.length);
-        
+    
+        // Get the threshold value from the forecast data
+        const forecastId = modal.dataset.currentForecast;
+        const forecast = forecastHistory.find(f => f.id == forecastId);
+        const threshold = forecast ? forecast.threshold : 0;
+    
         // Create new Chart.js instance with forecast data
         forecastChart = new Chart(forecastChartCtx, {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Predicted Sales',
-                    data: predictions,
-                    borderColor: '#6C5CE7',
-                    backgroundColor: 'rgba(108, 92, 231, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.1,
-                    fill: true
-                }]
+                datasets: [
+                    {
+                        label: 'Predicted Sales',
+                        data: predictions,
+                        borderColor: '#6C5CE7',
+                        backgroundColor: 'rgba(108, 92, 231, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: 'Threshold',
+                        data: Array(predictions.length).fill(threshold), // Create a horizontal line
+                        borderColor: '#FF6B6B',
+                        borderWidth: 2,
+                        borderDash: [5, 5], // Dashed line
+                        pointRadius: 0 // No points
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -257,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return `Sales: ${context.parsed.y.toFixed(2)}`;
                             }
                         }

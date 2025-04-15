@@ -101,17 +101,26 @@
     padding: 10px;
     border-radius: 8px;
     background-color: #F5F6FA;
+    display: flex;
+    flex-direction: column; /* Stack title and value vertically */
+    justify-content: center;
+    align-items: center;
 }
 
 .stat-value {
-    font-size: 1.2rem;
+    font-size: 1.5rem; /* Increase font size for emphasis */
     font-weight: 600;
     color: #2D3436;
     margin-bottom: 5px;
+    word-wrap: break-word; /* Ensures long text wraps */
+    overflow-wrap: break-word; /* Handles word breaking for long values */
+    white-space: normal; /* Allows text to wrap to the next line */
+    overflow: visible; /* Ensures no text is hidden */
+    text-overflow: unset; /* Disables ellipsis */
 }
 
 .stat-label {
-    font-size: 0.8rem;
+    font-size: 0.9rem; /* Slightly larger for better readability */
     color: #636E72;
 }
 

@@ -304,30 +304,43 @@ document.addEventListener("DOMContentLoaded", () => {
     // Creates/updates the forecast line chart
     function updateForecastChart() {
         const ctx = document.getElementById("forecastChart").getContext("2d");
-        
+
         // Clean up existing chart
         if (forecastChart) forecastChart.destroy();
-        
+
         // Return if no data available
         if (predictions.length === 0) return;
-        
+
+        // Get the threshold value from localStorage or default to 0
+        const threshold = parseFloat(localStorage.getItem('forecastThreshold')) || 0;
+
         // Create new line chart
         forecastChart = new Chart(ctx, {
             type: "line",
             data: {
                 labels: predictions.map((_, i) => `Day ${i + 1}`),
-                datasets: [{
-                    label: selectedProduct === "all" ? "All Products" : selectedProduct,
-                    data: predictions,
-                    borderColor: "#6C5CE7",
-                    backgroundColor: "rgba(108, 92, 231, 0.1)",
-                    tension: 0.3,
-                    fill: true,
-                    borderWidth: 2,
-                    pointBackgroundColor: "#6C5CE7",
-                    pointRadius: 3,
-                    pointHoverRadius: 5
-                }]
+                datasets: [
+                    {
+                        label: selectedProduct === "all" ? "All Products" : selectedProduct,
+                        data: predictions,
+                        borderColor: "#6C5CE7",
+                        backgroundColor: "rgba(108, 92, 231, 0.1)",
+                        tension: 0.3,
+                        fill: true,
+                        borderWidth: 2,
+                        pointBackgroundColor: "#6C5CE7",
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: "Threshold",
+                        data: Array(predictions.length).fill(threshold), // Create a horizontal line
+                        borderColor: "#FF6B6B",
+                        borderWidth: 2,
+                        borderDash: [5, 5], // Dashed line
+                        pointRadius: 0, // No points
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -361,25 +374,39 @@ document.addEventListener("DOMContentLoaded", () => {
     // Creates/updates the predictions bar chart
     function updatePredictionsChart() {
         const ctx = document.getElementById("predictionsChart").getContext("2d");
-        
+
         // Clean up existing chart
         if (predictionsChart) predictionsChart.destroy();
-        
+
         // Return if no data available
         if (predictions.length === 0) return;
-        
+
+        // Get the threshold value from localStorage or default to 0
+        const threshold = parseFloat(localStorage.getItem('forecastThreshold')) || 0;
+
         // Create new bar chart
         predictionsChart = new Chart(ctx, {
             type: "bar",
             data: {
                 labels: predictions.map((_, i) => `Day ${i + 1}`),
-                datasets: [{
-                    label: selectedProduct === "all" ? "All Products" : selectedProduct,
-                    data: predictions,
-                    backgroundColor: "rgba(108, 92, 231, 0.7)",
-                    borderRadius: 6,
-                    borderWidth: 0
-                }]
+                datasets: [
+                    {
+                        label: selectedProduct === "all" ? "All Products" : selectedProduct,
+                        data: predictions,
+                        backgroundColor: "rgba(108, 92, 231, 0.7)",
+                        borderRadius: 6,
+                        borderWidth: 0
+                    },
+                    {
+                        label: "Threshold",
+                        data: Array(predictions.length).fill(threshold), // Create a horizontal line
+                        type: "line", // Add a line to the bar chart
+                        borderColor: "#FF6B6B",
+                        borderWidth: 2,
+                        borderDash: [5, 5], // Dashed line
+                        pointRadius: 0, // No points
+                    }
+                ]
             },
             options: {
                 responsive: true,
