@@ -54,6 +54,23 @@
                         <input type="text" id="position" name="position" class="form-control" placeholder="Enter your position (e.g., Sales Manager)">
                     </div>
                     <div class="form-group">
+                        <label for="security_question">Security Question</label>
+                        <select id="security_question" name="security_question" class="form-control" required>
+                            <option value="">Select a security question</option>
+                            <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+                            <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+                            <option value="In what city were you born?">In what city were you born?</option>
+                            <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                            <option value="What was the make of your first car?">What was the make of your first car?</option>
+                            <option value="What high school did you attend?">What high school did you attend?</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="security_answer">Security Answer</label>
+                        <input type="text" id="security_answer" name="security_answer" class="form-control" placeholder="Enter your answer" required>
+                        <small class="form-text">For password recovery. Remember this answer exactly as written.</small>
+                    </div>
+                    <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" class="form-control" placeholder="Create password (min. 8 characters)" required minlength="8">
                     </div>

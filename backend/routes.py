@@ -215,16 +215,32 @@ def validate_reset_token(token):
         response = supabase_client.table("password_resets").select("*").eq("token", token).execute()
         
         if not response.data:
+            logging.warning(f"Token not found in database: {token[:10]}...")
             return None
             
         token_data = response.data[0]
-        expiration = datetime.fromisoformat(token_data["expires_at"])
         
-        # Check if token is expired
-        if datetime.now() > expiration:
-            return None
+        # Ensure proper datetime parsing with error handling
+        try:
+            # Strip any timezone info to make comparison consistent
+            expiration_str = token_data["expires_at"]
+            if 'T' in expiration_str and '+' in expiration_str:
+                expiration_str = expiration_str.split('+')[0]
+                
+            expiration = datetime.fromisoformat(expiration_str)
+            now = datetime.now()
             
-        return token_data["email"]
+            logging.info(f"Token expiration: {expiration}, Current time: {now}")
+            
+            # Check if token is expired
+            if now > expiration:
+                logging.warning(f"Token expired at {expiration}")
+                return None
+                
+            return token_data["email"]
+        except ValueError as e:
+            logging.error(f"Error parsing date from token data: {e}")
+            return None
         
     except Exception as e:
         logging.error(f"Error validating reset token: {e}")
@@ -305,11 +321,13 @@ def register():
         last_name = request.form.get("last_name", "").strip()
         email = request.form.get("email", "").strip().lower()
         position = request.form.get("position", "").strip()
+        security_question = request.form.get("security_question", "").strip()
+        security_answer = request.form.get("security_answer", "").strip()
         password = request.form.get("password", "").strip()
         confirm_password = request.form.get("confirm_password", "").strip()
         
         # Basic validation
-        if not first_name or not last_name or not email or not password:
+        if not first_name or not last_name or not email or not password or not security_question or not security_answer:
             flash("All required fields must be filled", "danger")
             return redirect(url_for("register"))
             
@@ -338,6 +356,8 @@ def register():
                 "last_name": last_name,
                 "email": email,
                 "position": position,
+                "security_question": security_question,
+                "security_answer": security_answer,
                 "password": password,  # In a real app, hash this password
                 "status": "pending",   # Set initial status to pending
                 "created_at": "now()",
@@ -372,94 +392,164 @@ def register():
 
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
-    """ Handle password reset request """
+    """ Handle direct password reset with security questions """
     if "email" in session:
         return redirect(url_for("dashboard"))
         
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
+        step = request.form.get("step", "")
         
-        if not email or not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            flash("Please enter a valid email address", "danger")
-            return redirect(url_for("forgot_password"))
+        # Step 1: Check if email exists and get security question
+        if step == "check_email":
+            email = request.form.get("email", "").strip().lower()
             
-        try:
-            # Check if email exists
-            check_response = supabase_client.table("users").select("id").eq("email", email).execute()
-            if not check_response.data:
-                # Security best practice: Don't reveal if email exists or not
-                flash("If your email is registered, you will receive reset instructions shortly.", "info")
-                return redirect(url_for("login"))
-                
-            # Generate reset token
-            token = generate_token()
-            
-            # Store token in database
-            if store_reset_token(email, token):
-                # In a real app, send an email with reset link
-                # For this demo, we'll just show the reset link directly
-                reset_url = url_for('reset_password', token=token, _external=True)
-                
-                flash(f"Password reset requested. In a real application, an email would be sent to {email}. For demonstration purposes, click this link to reset: <a href='{reset_url}'>Reset Password</a>", "info")
-                return redirect(url_for("login"))
-            else:
-                flash("Error processing password reset. Please try again.", "danger")
+            if not email or not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                flash("Please enter a valid email address", "danger")
                 return redirect(url_for("forgot_password"))
                 
-        except Exception as e:
-            logging.error(f"Password reset error: {e}")
-            flash("Server error during password reset request. Please try again later.", "danger")
-            return redirect(url_for("forgot_password"))
+            try:
+                # Check if email exists and get security question
+                check_response = supabase_client.table("users").select("security_question").eq("email", email).execute()
+                
+                if not check_response.data:
+                    # Security best practice: Don't reveal if email exists or not
+                    flash("If your email is registered, you'll be asked a security question.", "info")
+                    return redirect(url_for("forgot_password"))
+                
+                security_question = check_response.data[0].get("security_question")
+                
+                if not security_question:
+                    flash("Your account doesn't have a security question set. Please contact support.", "warning")
+                    return redirect(url_for("login"))
+                    
+                # Show security question form
+                return render_template(
+                    "forgot_password.html", 
+                    security_question=security_question, 
+                    email=email
+                )
+                
+            except Exception as e:
+                logging.error(f"Password reset error: {e}")
+                flash("Server error during password reset request. Please try again later.", "danger")
+                return redirect(url_for("forgot_password"))
+                
+        # Step 2: Verify security answer
+        elif step == "verify_answer":
+            email = request.form.get("email", "").strip().lower()
+            security_answer = request.form.get("security_answer", "").strip()
+            
+            if not email or not security_answer:
+                flash("All fields are required", "danger")
+                return redirect(url_for("forgot_password"))
+                
+            try:
+                # Verify security answer
+                user_response = supabase_client.table("users").select("security_answer, security_question").eq("email", email).execute()
+                
+                if not user_response.data:
+                    flash("Invalid email or security answer", "danger")
+                    return redirect(url_for("forgot_password"))
+                    
+                stored_answer = user_response.data[0].get("security_answer")
+                
+                if not stored_answer or stored_answer != security_answer:
+                    # Show the question again but with error
+                    return render_template(
+                        "forgot_password.html", 
+                        security_question=user_response.data[0].get("security_question"), 
+                        email=email,
+                        error="Incorrect answer. Please try again."
+                    )
+                
+                # Generate reset token
+                token = generate_token()
+                
+                # Store token in database with short expiry (15 minutes)
+                expiration = datetime.now() + timedelta(minutes=15)
+                
+                # Format expiration with ISO format and timezone information
+                expiration_str = expiration.isoformat()
+                
+                # Store token with expiration (first delete any existing tokens for this user)
+                supabase_client.table("password_resets").delete().eq("email", email).execute()
+                
+                token_data = {
+                    "email": email,
+                    "token": token,
+                    "expires_at": expiration_str,
+                    "created_at": "now()"
+                }
+                
+                response = supabase_client.table("password_resets").insert(token_data).execute()
+                
+                if not response.data:
+                    flash("Error processing password reset. Please try again.", "danger")
+                    return redirect(url_for("forgot_password"))
+                
+                # Log token creation for debugging
+                logging.info(f"Reset token created for {email}. Expires at: {expiration_str}")
+                
+                # Show password reset form
+                return render_template("forgot_password.html", reset_token=token)
+                
+            except Exception as e:
+                logging.error(f"Security answer verification error: {e}")
+                flash("Server error during verification. Please try again later.", "danger")
+                return redirect(url_for("forgot_password"))
+                
+        # Step 3: Reset password
+        elif step == "reset_password":
+            token = request.form.get("token", "")
+            password = request.form.get("password", "").strip()
+            confirm_password = request.form.get("confirm_password", "").strip()
+            
+            if not token or not password or not confirm_password:
+                flash("All fields are required", "danger")
+                return redirect(url_for("forgot_password"))
+                
+            if password != confirm_password:
+                flash("Passwords do not match", "danger")
+                return render_template("forgot_password.html", reset_token=token)
+                
+            if len(password) < 8:
+                flash("Password must be at least 8 characters long", "danger")
+                return render_template("forgot_password.html", reset_token=token)
+                
+            # Validate token
+            logging.info(f"Validating reset token: {token[:8]}...")
+            email = validate_reset_token(token)
+            
+            if not email:
+                logging.warning(f"Token validation failed: {token[:8]}...")
+                flash("Invalid or expired reset token. Please restart the password reset process.", "danger")
+                return redirect(url_for("forgot_password"))
+                
+            try:
+                # Update password in Supabase
+                logging.info(f"Updating password for user: {email}")
+                response = supabase_client.table("users").update({
+                    "password": password,  # In a real app, hash this password
+                    "updated_at": "now()"
+                }).eq("email", email).execute()
+                
+                # Delete the used token
+                token_deleted = supabase_client.table("password_resets").delete().eq("token", token).execute()
+                logging.info(f"Token deleted: {bool(token_deleted.data)}")
+                
+                if response.data:
+                    flash("Your password has been reset successfully. Please login with your new password.", "success")
+                    return redirect(url_for("login"))
+                else:
+                    flash("Error resetting password. Please try again.", "danger")
+                    return redirect(url_for("forgot_password"))
+                    
+            except Exception as e:
+                logging.error(f"Password update error: {e}")
+                flash("Server error during password reset. Please try again later.", "danger")
+                return redirect(url_for("forgot_password"))
     
     return render_template("forgot_password.html")
-
-@app.route("/reset_password/<token>", methods=["GET", "POST"])
-def reset_password(token):
-    """ Handle password reset with token """
-    if "email" in session:
-        return redirect(url_for("dashboard"))
-        
-    # Validate token
-    email = validate_reset_token(token)
-    if not email:
-        flash("Invalid or expired password reset link. Please request a new one.", "danger")
-        return redirect(url_for("forgot_password"))
-        
-    if request.method == "POST":
-        password = request.form.get("password", "").strip()
-        confirm_password = request.form.get("confirm_password", "").strip()
-        
-        if password != confirm_password:
-            flash("Passwords do not match", "danger")
-            return redirect(url_for("reset_password", token=token))
-            
-        if len(password) < 8:
-            flash("Password must be at least 8 characters long", "danger")
-            return redirect(url_for("reset_password", token=token))
-            
-        try:
-            # Update password in Supabase
-            response = supabase_client.table("users").update({
-                "password": password,  # In a real app, hash this password
-                "updated_at": "now()"
-            }).eq("email", email).execute()
-            
-            # Delete the used token
-            supabase_client.table("password_resets").delete().eq("token", token).execute()
-            
-            if response.data:
-                flash("Your password has been reset successfully. Please login with your new password.", "success")
-                return redirect(url_for("login"))
-            else:
-                flash("Error resetting password. Please try again.", "danger")
-                return redirect(url_for("reset_password", token=token))
-                
-        except Exception as e:
-            logging.error(f"Password update error: {e}")
-            flash("Server error during password reset. Please try again later.", "danger")
-            return redirect(url_for("reset_password", token=token))
-    
-    return render_template("reset_password.html", token=token)
 
 @app.route("/dashboard")
 def dashboard():
