@@ -1,0 +1,44 @@
+Bakit Magkaiba ang Total Forecasted Sales para sa "All Products" at Individual Categories
+
+
+Kapag gumagamit tayo ng machine learning model para sa paghula ng sales, mapapansin natin na ang kabuuang hula para sa "All Products" ay maaaring hindi katumbas ng suma ng mga indibidwal na kategorya. Ito ay normal at may ilang teknikal na dahilan:
+
+Mga Dahilan
+
+1. Iba't ibang Pattern sa Data
+
+Ang bawat kategorya ng produkto ay may sariling unique pattern ng pagbebenta:
+- Ang ilang produkto ay mas mabenta kapag mainit ang panahon
+- Ang iba ay mas mabenta kapag may holiday o special event
+- May mga produkto na hindi gaanong naaapektuhan ng mga external factors
+
+Kapag hinuhulaan ng model ang "All Products", nakikita nito ang kabuuang pattern. Pero kapag hinahulaan ang bawat kategorya, nakikita nito ang mas detalyadong pattern na specific sa produktong iyon.
+
+2. Feature Interactions
+
+Ang ating model ay gumagamit ng linear regression sa Tensorflow/Keras na may mga feature tulad ng:
+- Units Sold
+- Unit Price
+- Foot Traffic
+- Weather
+- Category (one-hot encoded)
+
+Kapag nagte-train ang model para sa "All Products", itinuturing nito na walang specific category (lahat ng category features ay 0). Kapag nagte-train para sa isang specific category, itinuturing na ang feature ng category na iyon ay 1.
+
+Dahil dito, ang mathematical relationship na nakikita ng model ay magkaiba sa dalawang scenario.
+
+3. Scaling Effects
+
+Gumagamit ng StandardScaler at MinMaxScaler para sa preprocessing ng data. Ang mga scaling transformations na ito ay magkakaiba ang epekto kapag:
+- Ginagamit sa aggregated data (All Products)
+- Ginagamit sa category-specific data
+
+4. Statistical Properties
+
+Sa statistics, may concept na tinatawag na "aggregation bias" kung saan ang model na naka-train sa aggregated data ay magkakaroon ng ibang prediction properties kaysa sa isang model na naka-train sa disaggregated data.
+
+## Alin ang Mas Accurate?
+
+Sa karamihan ng cases, ang category-specific forecasts ay mas accurate para sa decision-making sa level ng kategorya, habang ang "All Products" forecast ay mas maganda para sa overall business planning.
+
+Ang approach na ginagamit ng system (generating separate forecasts for each level) ay standard practice sa enterprise forecasting systems at generally mas reliable para sa business decision-making. 
