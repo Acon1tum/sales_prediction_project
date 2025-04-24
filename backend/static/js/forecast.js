@@ -171,49 +171,77 @@ document.addEventListener("DOMContentLoaded", () => {
         // Show loading state
         showLoading("Generating forecast...");
         
-        // Send request to generate forecast
-        fetch("/generate_forecast", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ product: selectedProduct })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Handle error response
-            if (data.error) {
-                showToast(data.error, 'error');
-                return;
-            }
-
-            // Update application state with new data
-            predictions = data.predictions || [];
-            decisions = data.decisions || [];
-            
-            // Update product list if provided
-            if (data.product_list) {
-                productList = ["all", ...data.product_list];
-                updateProductDropdown();
-            }
-            
-            // Update all UI components
-            updateCharts();
-            updateDecisions();
-            updateTotalSales();
-            updateProductBadges();
-            
-            // Enable export functionality
-            document.getElementById('export-btn').disabled = false;
-            
-            showToast("Forecast generated successfully!", 'success');
-        })
-        .catch(error => {
-            console.error(error);
-            showToast("Failed to generate forecast", 'error');
-        })
-        .finally(() => {
-            hideLoading();
-        });
+        // Generate forecast with retry mechanism
+        generateForecastWithRetry()
+            .then(data => {
+                // Update application state with new data
+                predictions = data.predictions || [];
+                decisions = data.decisions || [];
+                
+                // Update product list if provided
+                if (data.product_list) {
+                    productList = ["all", ...data.product_list];
+                    updateProductDropdown();
+                }
+                
+                // Update all UI components
+                updateCharts();
+                updateDecisions();
+                updateTotalSales();
+                updateProductBadges();
+                
+                // Enable export functionality
+                document.getElementById('export-btn').disabled = false;
+                
+                showToast("Forecast generated successfully!", 'success');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast("Failed to generate forecast. Please try again.", 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
     });
+
+    // Add retry mechanism for forecast generation
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000; // 1 second
+
+    async function generateForecastWithRetry(attempt = 1) {
+        try {
+            const response = await fetch('/generate_forecast', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    product: selectedProduct,
+                    forecast_type: selectedForecastType
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Check for error in response
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            return data;
+        } catch (error) {
+            if (attempt < MAX_RETRIES) {
+                console.log(`Retry attempt ${attempt}...`);
+                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+                return generateForecastWithRetry(attempt + 1);
+            }
+            throw error;
+        }
+    }
 
     // Add event listener for report export
     document.getElementById('export-btn').addEventListener("click", () => {
@@ -556,7 +584,30 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Shows toast notification with message and type
     function showToast(message, type = 'info') {
-        alert(`${type.toUpperCase()}: ${message}`);
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+
+        // Add toast to container
+        toastContainer.appendChild(toast);
+
+        // Remove toast after 3 seconds
+        setTimeout(() => {
+            toast.remove();
+            // Remove container if empty
+            if (toastContainer.children.length === 0) {
+                toastContainer.remove();
+            }
+        }, 3000);
     }
     
     // Converts chart to base64 image for export

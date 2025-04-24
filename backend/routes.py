@@ -700,14 +700,14 @@ def upload_csv():
 @app.route("/generate_forecast", methods=["POST"])
 def generate_forecast():
     """Generates sales forecast based on data characteristics with product-specific forecasting"""
-    if model is None or scaler_X is None or scaler_y is None:
-        return jsonify({"error": "Model not loaded properly"}), 500
-
-    file_path = session.get("uploaded_file")
-    if not file_path or not os.path.exists(file_path):
-        return jsonify({"error": "No uploaded file"}), 400
-
     try:
+        if model is None or scaler_X is None or scaler_y is None:
+            return jsonify({"error": "Model not loaded properly"}), 500
+
+        file_path = session.get("uploaded_file")
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({"error": "No uploaded file"}), 400
+
         # Load data in chunks to reduce memory usage
         chunksize = 10000
         df_chunks = []
@@ -910,63 +910,8 @@ def generate_forecast():
                     "trend": "negative"
                 })
 
-        # Prepare data for Supabase
-        forecast_data = {
-            "forecast_type": forecast_type,
-            "forecast_days": forecast_days,
-            "predictions": y_pred[:forecast_days].tolist(),
-            "decisions": decisions,
-            "data_quality": {
-                "date_range_days": date_range,
-                "unique_days": unique_days,
-                "unique_months": unique_months,
-                "unique_weeks": unique_weeks,
-                "data_density": round(data_density, 2),
-                "monthly_completeness": round(monthly_completeness, 2),
-                "weekly_completeness": round(weekly_completeness, 2)
-            },
-            "product": selected_product,
-            "threshold": threshold
-        }
-
-        # Save to Supabase with proper user reference
-        saved_to_db = False
-        try:
-            # Verify user exists in your custom users table
-            user_id = session.get("user_id")
-            if user_id:
-                user_response = supabase_client.table("users").select("id").eq("id", user_id).execute()
-                if not user_response.data:
-                    logging.warning(f"User {user_id} not found in users table")
-                    user_id = None
-
-            # Prepare insert data
-            insert_data = {
-                "forecast_data": forecast_data,
-                "product": selected_product,
-                "forecast_type": forecast_type,
-                "threshold": threshold,
-                "created_at": "now()"
-            }
-
-            # Add user_id if valid
-            if user_id:
-                insert_data["user_id"] = user_id
-
-            # Add upload_id if exists
-            upload_id = session.get("upload_id")
-            if upload_id:
-                insert_data["upload_id"] = upload_id
-
-            # Save to forecasts table
-            response = supabase_client.table("forecasts").insert(insert_data).execute()
-            saved_to_db = bool(response.data)
-
-        except Exception as e:
-            logging.error(f"Error saving to Supabase: {e}")
-
-        # Return response
-        return jsonify({
+        # Prepare response data
+        response_data = {
             "forecast_type": forecast_type,
             "forecast_days": forecast_days,
             "predictions": y_pred[:forecast_days].tolist(),
@@ -981,12 +926,23 @@ def generate_forecast():
                 "data_density": round(data_density, 2),
                 "monthly_completeness": round(monthly_completeness, 2),
                 "weekly_completeness": round(weekly_completeness, 2)
-            },
-            "saved_to_db": saved_to_db
-        })
+            }
+        }
+
+        # Save to Supabase if possible
+        try:
+            upload_id = session.get("upload_id")
+            user_id = session.get("user_id")
+            if upload_id and user_id:
+                save_forecast_to_supabase(user_id, upload_id, response_data, selected_product)
+        except Exception as e:
+            logging.error(f"Error saving forecast to Supabase: {e}")
+            # Don't fail the request if Supabase save fails
+
+        return jsonify(response_data)
 
     except Exception as e:
-        logging.error(f"Error generating forecast: {e}", exc_info=True)
+        logging.error(f"Error generating forecast: {str(e)}", exc_info=True)
         return jsonify({"error": f"Failed to generate forecast: {str(e)}"}), 500
 
 
