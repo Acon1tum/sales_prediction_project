@@ -2,11 +2,11 @@ services:
   - type: web
     name: sales-prediction-app
     env: python
+    build:
+      pythonVersion: 3.11.7
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn routes:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.10.13
       - key: SECRET_KEY
         fromService:
           name: sales-prediction-app
@@ -21,4 +21,4 @@ services:
         fromService:
           name: sales-prediction-app
           type: env
-          property: supabase_key 
+          property: supabase_key
