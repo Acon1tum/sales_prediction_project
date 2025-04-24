@@ -5,7 +5,7 @@ services:
     build:
       pythonVersion: 3.11.7
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn backend.routes:app
+    startCommand: gunicorn --timeout 300 --workers 2 --threads 4 --worker-class gthread backend.routes:app
     envVars:
       - key: SECRET_KEY
         fromService:

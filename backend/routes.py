@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from flask import make_response
 from io import StringIO
 from base64 import b64encode
+import numpy as np
 
 # Load environment variables
 load_dotenv()
@@ -707,8 +708,13 @@ def generate_forecast():
         return jsonify({"error": "No uploaded file"}), 400
 
     try:
-        # Load and preprocess CSV data
-        df = pd.read_csv(file_path)
+        # Load data in chunks to reduce memory usage
+        chunksize = 10000
+        df_chunks = []
+        for chunk in pd.read_csv(file_path, chunksize=chunksize):
+            df_chunks.append(chunk)
+        df = pd.concat(df_chunks, ignore_index=True)
+        del df_chunks  # Clear memory
 
         if "Date" not in df.columns:
             return jsonify({"error": "Dataset must contain a 'Date' column"}), 400
@@ -732,15 +738,18 @@ def generate_forecast():
         
         # Filter by product if specified
         if selected_product != "all" and selected_product in df["Product Name"].unique():
-            product_df = df[df["Product Name"] == selected_product]
+            product_df = df[df["Product Name"] == selected_product].copy()
             logging.info(f"Filtering data for product: {selected_product}")
         else:
-            product_df = df
+            product_df = df.copy()
             selected_product = "all"
             logging.info("Using all product data for forecast")
         
+        # Clear original dataframe to free memory
+        del df
+        
         # Get product list for dropdown
-        product_list = ["all"] + df["Product Name"].unique().tolist()
+        product_list = ["all"] + product_df["Product Name"].unique().tolist()
         
         # Analyze data characteristics
         date_range = (product_df["Date"].max() - product_df["Date"].min()).days
@@ -777,17 +786,37 @@ def generate_forecast():
         product_df_numeric = product_df.drop(columns=["Date", "Product Name", "YearMonth", "Year", "Month", "Week", "Day"], 
                                            errors="ignore").fillna(0)
         
+        # Clear product_df to free memory
+        del product_df
+        
         if all(f in product_df_numeric.columns for f in feature_names):
             X = product_df_numeric[feature_names]
         else:
             logging.warning("Feature names don't match model expectations. Using available numeric columns.")
             X = product_df_numeric
             
+        # Clear product_df_numeric to free memory
+        del product_df_numeric
+        
         X_scaled = scaler_X.transform(X)
+        
+        # Clear X to free memory
+        del X
 
-        # Predict sales
-        y_pred_scaled = model.predict(X_scaled).flatten()
+        # Predict sales in batches to reduce memory usage
+        batch_size = 1000
+        y_pred_scaled = []
+        for i in range(0, len(X_scaled), batch_size):
+            batch = X_scaled[i:i+batch_size]
+            batch_pred = model.predict(batch, verbose=0)
+            y_pred_scaled.extend(batch_pred.flatten())
+        
+        y_pred_scaled = np.array(y_pred_scaled)
         y_pred = scaler_y.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
+        
+        # Clear intermediate arrays to free memory
+        del y_pred_scaled
+        del X_scaled
 
         # Get threshold
         threshold = float(session.get("threshold", 100))
