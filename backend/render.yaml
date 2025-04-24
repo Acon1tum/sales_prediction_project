@@ -6,7 +6,7 @@ services:
     startCommand: gunicorn routes:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.7
+        value: 3.10.13
       - key: SECRET_KEY
         fromService:
           name: sales-prediction-app
