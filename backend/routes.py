@@ -678,22 +678,48 @@ def upload_csv():
     if file.filename == "" or not allowed_file(file.filename):
         return jsonify({"error": "Invalid file type"}), 400
 
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(filepath)
+    try:
+        # Read the file content directly from memory
+        file_content = file.read()
+        
+        # Create a temporary file-like object
+        from io import BytesIO
+        file_obj = BytesIO(file_content)
+        
+        # Read CSV into pandas DataFrame
+        df = pd.read_csv(file_obj)
+        
+        # Convert to JSON for storage
+        data_json = df.to_json(orient='records')
+        
+        # Prepare insert data
+        insert_data = {
+            "file_name": secure_filename(file.filename),
+            "data": data_json,
+            "uploaded_at": "now()"
+        }
+        
+        # Add user_id if available
+        if session.get("user_id"):
+            insert_data["user_id"] = session["user_id"]
+        
+        # Insert into Supabase
+        response = supabase_client.table('uploaded_data').insert(insert_data).execute()
+        
+        if not response.data:
+            return jsonify({"error": "Failed to save upload data"}), 500
+            
+        # Store the Supabase upload ID in session
+        session["upload_id"] = response.data[0]['id']
+        
+        return jsonify({
+            "message": "File uploaded successfully!",
+            "upload_id": response.data[0]['id']
+        })
 
-    # Save to Supabase
-    upload_id = save_upload_to_supabase(filepath, session.get("user_id"))
-    if not upload_id:
-        return jsonify({"error": "Failed to save upload data"}), 500
-
-    session["uploaded_file"] = filepath
-    session["upload_id"] = upload_id  # Store the Supabase upload ID
-    
-    return jsonify({
-        "message": "File uploaded successfully!",
-        "upload_id": upload_id
-    })
+    except Exception as e:
+        logging.error(f"Error processing upload: {e}")
+        return jsonify({"error": "Failed to process upload"}), 500
 
 
 
@@ -704,17 +730,17 @@ def generate_forecast():
         if model is None or scaler_X is None or scaler_y is None:
             return jsonify({"error": "Model not loaded properly"}), 500
 
-        file_path = session.get("uploaded_file")
-        if not file_path or not os.path.exists(file_path):
-            return jsonify({"error": "No uploaded file"}), 400
+        upload_id = session.get("upload_id")
+        if not upload_id:
+            return jsonify({"error": "No uploaded data found"}), 400
 
-        # Load data in chunks to reduce memory usage
-        chunksize = 10000
-        df_chunks = []
-        for chunk in pd.read_csv(file_path, chunksize=chunksize):
-            df_chunks.append(chunk)
-        df = pd.concat(df_chunks, ignore_index=True)
-        del df_chunks  # Clear memory
+        # Get data from Supabase
+        response = supabase_client.table('uploaded_data').select('data').eq('id', upload_id).execute()
+        if not response.data:
+            return jsonify({"error": "Uploaded data not found"}), 404
+
+        # Convert JSON data back to DataFrame
+        df = pd.read_json(StringIO(response.data[0]['data']))
 
         if "Date" not in df.columns:
             return jsonify({"error": "Dataset must contain a 'Date' column"}), 400
@@ -931,9 +957,8 @@ def generate_forecast():
 
         # Save to Supabase if possible
         try:
-            upload_id = session.get("upload_id")
             user_id = session.get("user_id")
-            if upload_id and user_id:
+            if user_id:
                 save_forecast_to_supabase(user_id, upload_id, response_data, selected_product)
         except Exception as e:
             logging.error(f"Error saving forecast to Supabase: {e}")
