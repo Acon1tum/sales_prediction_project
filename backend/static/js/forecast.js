@@ -14,22 +14,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const guideModal = document.getElementById('guide-modal');
     const closeModal = document.querySelector('.close-modal');
 
-    guideIcon.addEventListener('click', () => {
-        guideModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    });
+    if (guideIcon && guideModal && closeModal) {
+        guideIcon.addEventListener('click', () => {
+            guideModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
 
-    closeModal.addEventListener('click', () => {
-        guideModal.classList.remove('active');
-        document.body.style.overflow = '';
-    });
-
-    guideModal.addEventListener('click', (e) => {
-        if (e.target === guideModal) {
+        closeModal.addEventListener('click', () => {
             guideModal.classList.remove('active');
             document.body.style.overflow = '';
-        }
-    });
+        });
+
+        guideModal.addEventListener('click', (e) => {
+            if (e.target === guideModal) {
+                guideModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
 
     // Global state variables to store application data
     let predictions = []; // Array to store sales predictions
@@ -38,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const itemsPerPage = 3; // Number of decisions to show per page
     let productList = ["all"]; // List of available products, initialized with "all" option
     let selectedProduct = "all"; // Currently selected product for filtering
+    let selectedForecastType = null; // Currently selected forecast type
     let forecastChart = null; // Chart.js instance for forecast visualization
     let predictionsChart = null; // Chart.js instance for predictions visualization
 
@@ -51,6 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const pageIndicator = document.getElementById("page-indicator"); // Page number indicator
     const exportBtn = document.getElementById("export-btn"); // Export report button
     const productSelector = document.getElementById('product-selector');
+    const forecastTypeSelect = document.getElementById('forecast-type-select'); // Forecast type selector
+
+    // Initialize forecast type selector if it exists
+    if (forecastTypeSelect) {
+        forecastTypeSelect.addEventListener('change', function() {
+            selectedForecastType = this.value;
+        });
+    }
 
     // Create export button if it doesn't exist in the DOM
     if (!exportBtn) {
@@ -217,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
                 body: JSON.stringify({
                     product: selectedProduct,
-                    forecast_type: selectedForecastType
+                    forecast_type: selectedForecastType || undefined // Only include if defined
                 })
             });
             
