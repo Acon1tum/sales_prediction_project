@@ -1,0 +1,44 @@
+# PALIWANAG: PAGKAKAIBA NG FORECAST SA KATEGORYA AT KABUUAN
+
+## Kabuuan vs. Suma ng mga Kategorya
+
+Ang suma ng mga indibidwal na forecast ng bawat kategorya ng produkto ay maaaring **mas mataas o mas mababa** kaysa sa forecast ng "All Products". Hindi ito error o problema sa system - ito ay normal na behavior sa mga forecasting model at nangyayari ito dahil sa ilang teknikal na dahilan:
+
+## Mga Pangunahing Dahilan
+
+### 1. Iba't ibang Paraan ng Pag-modelo
+Ang backend ay gumagamit ng parehong modelo ngunit iba-iba ang input data kapag hinuhulaan ang:
+- Lahat ng produkto nang sabay (all features combined)
+- Mga indibidwal na kategorya (specific features for each)
+
+### 2. Mga Epekto ng Interaksyon
+Kapag hinuhulaan ang "All Products":
+- Nakikita ng model ang mga **hidden patterns at relationships** sa pagitan ng mga kategorya
+- Halimbawa: Kapag mataas ang benta ng kape, maaaring tumataas din ang benta ng pastries
+- Ang mga ganitong interaksyon ay **hindi nakikita** kapag hinahulaan ang mga kategorya nang hiwalay
+
+### 3. Mga Pattern ng Data
+- Ang **aggregated data** ay madalas nagpapakita ng **mas stable na patterns**
+- Ang **individual data** ay maaaring mas **volatile at may unique characteristics**
+- Halimbawa: Sa summer, ang inuming malamig ay tumataas habang ang mainit na inumin ay bumababa
+
+### 4. Statistical Behavior at Aggregation Effects
+- **Kailan mas mataas ang suma ng mga kategorya?** Kapag ang mga individual trend ay positibo at hindi nagko-compete sa isa't isa
+- **Kailan mas mababa ang suma ng mga kategorya?** Kapag may cannibalization effect o substitution sa pagitan ng mga produkto
+
+## Alin ang Mas Tumpak?
+
+Ang dalawang uri ng forecast ay **parehas na mahalaga pero para sa magkaibang layunin**:
+
+| Forecast Type | Kailan Gamitin | Mga Kalamangan |
+|--------------|----------------|----------------|
+| **All Products** | Strategic business planning, budget allocation | Mas stable, nagpapakita ng overall business health |
+| **By Category** | Inventory planning, marketing decisions | Mas targeted, nakakapag-capture ng specific patterns |
+
+## Konklusyon
+
+Ang kasalukuyang pamamaraan ng system (hiwalay na forecast para sa bawat level) ay **industry standard practice** dahil nagbibigay ito ng pinaka-tumpak na resulta para sa iba't ibang uri ng business decision na kailangan mong gawin.
+
+Ang pagkakaiba sa pagitan ng "All Products" total at suma ng mga individual category ay **hindi error** kundi **natural result** ng kung paano gumagana ang statistical forecasting models.
+
+_Tandaan: Kung kailangan mo ng consistent na numerong maibibigay sa management, mas mainam na gamitin ang "All Products" forecast para sa high-level planning at ang individual category forecasts para sa detailed operational decisions._ 

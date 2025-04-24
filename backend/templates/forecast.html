@@ -11,6 +11,97 @@
 
 {% block content %}
 <section class="forecast-section">
+    <div class="guide-icon" id="guide-icon">
+        <span>📖</span>
+    </div>
+
+    <div class="guide-modal" id="guide-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>User Guide</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="guide-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Set Sales Threshold</h3>
+                            <p>Define a sales threshold to help identify significant changes in sales patterns:</p>
+                            <ul>
+                                <li>Click the "Set Threshold" button</li>
+                                <li>Enter your desired threshold value</li>
+                                <li>This will be used to highlight important sales variations</li>
+                            </ul>
+                        </div>
+                        
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Upload Your Data</h3>
+                            <p>Prepare your CSV file.</p>
+                            <p>Click the "Upload CSV" button to select your file.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Select Product</h3>
+                            <p>Choose which product to analyze:</p>
+                            <ul>
+                                <li>Select "All Products" for overall analysis</li>
+                                <li>Choose a specific product for detailed insights</li>
+                                <li>The selection will update all charts and recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Generate Forecast</h3>
+                            <p>Click the "Generate Forecast" button to:</p>
+                            <ul>
+                                <li>Process your data using advanced algorithms</li>
+                                <li>Generate sales predictions</li>
+                                <li>Create actionable recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h3>Review Results</h3>
+                            <p>Analyze the generated insights:</p>
+                            <ul>
+                                <li><strong>Sales Forecast Chart:</strong> View predicted sales trends</li>
+                                <li><strong>Predictions Analysis:</strong> See detailed sales predictions</li>
+                                <li><strong>Recommended Actions:</strong> Get actionable business insights</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <h3>Export Report (Optional)</h3>
+                            <p>Save your analysis for future reference:</p>
+                            <ul>
+                                <li>Export detailed forecast data</li>
+                                <li>Share insights with your team</li>
+                                <li>Track changes over time</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="actions">
         <button id="threshold-btn" class="action-btn">
             <span>📊</span> Set Threshold
@@ -23,7 +114,7 @@
             <input type="file" id="upload-btn" class="file-upload-input" accept=".csv">
         </div>
         
-        <div class="product-selector">
+        <div class="product-selector hidden" id="product-selector">
             <select id="product-select" disabled>
                 <option value="all">All Products</option>
             </select>

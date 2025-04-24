@@ -76,38 +76,4 @@ document.addEventListener("DOMContentLoaded", () => {
                 .catch(error => console.error(error));
         });
     }
-
-    // Forecast Generation Functionality
-    // Get reference to the generate forecast button element
-    const generateBtn = document.getElementById("generate-btn");
-    if (generateBtn) {
-        // Add click event listener to handle forecast generation
-        generateBtn.addEventListener("click", () => {
-            // Send POST request to backend endpoint to generate new forecast
-            fetch("/generate_forecast", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Check if there was an error in forecast generation
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-
-                // Update the forecast results section with new predictions
-                let forecastResults = document.getElementById("forecast-results");
-                forecastResults.innerHTML = `<h3>Predictions: ${data.predictions.join(", ")}</h3>`;
-
-                // Update the decision section with recommended actions
-                let decisionSection = document.getElementById("decision-section");
-                decisionSection.innerHTML = data.decisions.map(d => `<p>${d.icon} ${d.text}</p>`).join("");
-
-                // Show success message to user
-                alert("Forecast generated successfully!");
-            })
-            .catch(error => console.error(error));
-        });
-    }
 });

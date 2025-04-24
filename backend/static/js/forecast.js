@@ -1,4 +1,36 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Handle user guide toggle
+    const guideToggle = document.querySelector('.guide-toggle');
+    const guideContent = document.querySelector('.guide-content');
+    
+    if (guideToggle && guideContent) {
+        guideToggle.addEventListener('click', () => {
+            guideContent.classList.toggle('active');
+        });
+    }
+
+    // Handle user guide modal
+    const guideIcon = document.getElementById('guide-icon');
+    const guideModal = document.getElementById('guide-modal');
+    const closeModal = document.querySelector('.close-modal');
+
+    guideIcon.addEventListener('click', () => {
+        guideModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    });
+
+    closeModal.addEventListener('click', () => {
+        guideModal.classList.remove('active');
+        document.body.style.overflow = '';
+    });
+
+    guideModal.addEventListener('click', (e) => {
+        if (e.target === guideModal) {
+            guideModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+
     // Global state variables to store application data
     let predictions = []; // Array to store sales predictions
     let decisions = []; // Array to store business decisions/recommendations
@@ -18,6 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const nextBtn = document.getElementById("next-btn"); // Next page button for pagination
     const pageIndicator = document.getElementById("page-indicator"); // Page number indicator
     const exportBtn = document.getElementById("export-btn"); // Export report button
+    const productSelector = document.getElementById('product-selector');
 
     // Create export button if it doesn't exist in the DOM
     if (!exportBtn) {
@@ -69,7 +102,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Add event listener for file upload
     uploadBtn.addEventListener("change", function() {
         // Return if no file is selected
-        if (!this.files.length) return;
+        if (!this.files.length) {
+            generateBtn.disabled = true;
+            return;
+        }
 
         // Create FormData object for file upload
         const formData = new FormData();
@@ -88,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Handle error response
             if (data.error) {
                 showToast(data.error, 'error');
+                generateBtn.disabled = true;
                 return;
             }
             
@@ -104,6 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(error => {
             console.error(error);
             showToast("Failed to upload file", 'error');
+            generateBtn.disabled = true;
         })
         .finally(() => {
             hideLoading();
@@ -118,6 +156,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Add event listener for forecast generation
     generateBtn.addEventListener("click", () => {
+        // Prevent click if button is disabled
+        if (generateBtn.disabled) {
+            showToast("Please upload a CSV file first", 'warning');
+            return;
+        }
+
         // Validate that data is available
         if (!uploadBtn.files.length && productList.length <= 1) {
             showToast("Please upload a CSV file first", 'warning');
@@ -482,20 +526,31 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Shows loading state with message
     function showLoading(message) {
-        decisionSection.innerHTML = `
-            <div class="loading">
-                <div>⏳</div>
-                <p>${message}</p>
+        // Create loading overlay if it doesn't exist
+        let loadingOverlay = document.getElementById('loading-overlay');
+        if (!loadingOverlay) {
+            loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'loading-overlay';
+            loadingOverlay.className = 'loading-overlay';
+            document.body.appendChild(loadingOverlay);
+        }
+
+        // Create loading content
+        const loadingContent = `
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p class="loading-message">${message}</p>
             </div>
         `;
+        loadingOverlay.innerHTML = loadingContent;
+        loadingOverlay.style.display = 'flex';
     }
     
-    // Hides loading state and shows appropriate content
+    // Hides loading state
     function hideLoading() {
-        if (decisions.length > 0) {
-            updateDecisions();
-        } else {
-            showEmptyState();
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
         }
     }
     
@@ -768,4 +823,32 @@ document.addEventListener("DOMContentLoaded", () => {
             </html>
         `;
     }
+
+    // Function to handle file upload
+    function handleFileUpload(file) {
+        if (file) {
+            // Show product selector when file is uploaded
+            productSelector.classList.remove('hidden');
+            // ... existing code ...
+        } else {
+            // Hide product selector when file is removed
+            productSelector.classList.add('hidden');
+            // ... existing code ...
+        }
+    }
+
+    // Update file input event listener
+    uploadBtn.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        handleFileUpload(file);
+    });
+
+    // Update drag and drop handlers
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        handleFileUpload(file);
+    });
 });
