@@ -1505,5 +1505,41 @@ def reject_user(user_id):
         logging.error(f"Error rejecting user: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/get_historical_forecasts")
+def get_historical_forecasts():
+    """Retrieve historical forecast data for the current user"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        # Query forecasts for the current user
+        response = supabase_client.table("forecasts").select(
+            "id", 
+            "forecast_data", 
+            "product", 
+            "created_at",
+            "forecast_type"  # Add forecast_type to the selection
+        ).eq("user_id", session["user_id"]).order("created_at", desc=True).execute()
+
+        # Process the data to extract predictions and dates
+        historical_data = []
+        for forecast in response.data:
+            forecast_data = forecast.get("forecast_data", {})
+            predictions = forecast_data.get("predictions", [])
+            if predictions:
+                historical_data.append({
+                    "id": forecast["id"],
+                    "date": forecast["created_at"],
+                    "product": forecast["product"],
+                    "forecast_type": forecast["forecast_type"],  # Include forecast_type in the response
+                    "predictions": predictions
+                })
+
+        return jsonify({"historical_data": historical_data})
+
+    except Exception as e:
+        logging.error(f"Error fetching historical forecasts: {e}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True)

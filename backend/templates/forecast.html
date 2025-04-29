@@ -156,6 +156,40 @@
 
         <div class="bento-box full-width">
             <div class="chart-title">
+                <h3>Historical Sales</h3>
+            </div>
+            <div class="historical-filters">
+                <div class="filter-group">
+                    <label for="date-range">Date Range:</label>
+                    <select id="date-range">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="all">All time</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="historical-product">Product:</label>
+                    <select id="historical-product">
+                        <option value="all">All Products</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="forecast-type">Forecast Type:</label>
+                    <select id="forecast-type">
+                        <option value="all">All Types</option>
+                        <option value="short-term">Short Term</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                    </select>
+                </div>
+            </div>
+            <canvas id="historicalChart"></canvas>
+        </div>
+
+        <div class="bento-box full-width">
+            <div class="chart-title">
                 <h3>Recommended Actions</h3>
                 <span id="product-badge-3" class="product-badge">All Products</span>
             </div>

@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedProduct = "all"; // Currently selected product for filtering
     let forecastChart = null; // Chart.js instance for forecast visualization
     let predictionsChart = null; // Chart.js instance for predictions visualization
+    let historicalChart = null; // Chart.js instance for historical visualization
 
     // Get references to important DOM elements for manipulation
     const uploadBtn = document.getElementById("upload-btn"); // File upload button
@@ -65,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initialize the application with an empty state
     showEmptyState();
+    fetchHistoricalData(); // Fetch historical data on page load
 
     // Add event listener for threshold setting button
     document.getElementById("threshold-btn").addEventListener("click", () => {
@@ -152,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     productSelect.addEventListener("change", function() {
         selectedProduct = this.value; // Update selected product
         updateProductBadges(); // Update UI to reflect selection
+        updateHistoricalChart(); // Update historical chart with new product filter
     });
 
     // Add event listener for forecast generation
@@ -255,8 +258,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Clear charts
                 if (forecastChart) forecastChart.destroy();
                 if (predictionsChart) predictionsChart.destroy();
+                if (historicalChart) historicalChart.destroy();
                 forecastChart = null;
                 predictionsChart = null;
+                historicalChart = null;
                 
                 // Reset UI state
                 showEmptyState();
@@ -343,6 +348,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateCharts() {
         updateForecastChart();
         updatePredictionsChart();
+        updateHistoricalChart();
     }
 
     // Creates/updates the forecast line chart
@@ -477,6 +483,378 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Add historicalData to the global state
+    let historicalData = [];
+    let historicalProducts = new Set();
+    let historicalForecastTypes = new Set();
+
+    // Fetch historical data from server
+    function fetchHistoricalData() {
+        fetch("/get_historical_forecasts")
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error("Error fetching historical data:", data.error);
+                    return;
+                }
+                historicalData = data.historical_data;
+                
+                // Extract unique products and forecast types
+                historicalProducts.clear();
+                historicalForecastTypes.clear();
+                historicalData.forEach(item => {
+                    historicalProducts.add(item.product);
+                    if (item.forecast_type) {
+                        historicalForecastTypes.add(item.forecast_type);
+                    }
+                });
+                
+                // Update product dropdown
+                updateHistoricalProductDropdown();
+                updateHistoricalChart();
+            })
+            .catch(error => {
+                console.error("Error fetching historical data:", error);
+            });
+    }
+
+    // Update the historical product dropdown
+    function updateHistoricalProductDropdown() {
+        const productSelect = document.getElementById('historical-product');
+        productSelect.innerHTML = '<option value="all">All Products</option>';
+        
+        historicalProducts.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product;
+            option.textContent = product;
+            productSelect.appendChild(option);
+        });
+    }
+
+    // Filter historical data based on selected filters
+    function filterHistoricalData() {
+        const dateRange = document.getElementById('date-range').value;
+        const selectedProduct = document.getElementById('historical-product').value;
+        const selectedType = document.getElementById('forecast-type').value;
+        
+        const now = new Date();
+        const filteredData = historicalData.filter(item => {
+            // Filter by date range
+            if (dateRange !== 'all') {
+                const itemDate = new Date(item.date);
+                const daysDiff = Math.floor((now - itemDate) / (1000 * 60 * 60 * 24));
+                if (daysDiff > parseInt(dateRange)) {
+                    return false;
+                }
+            }
+            
+            // Filter by product
+            if (selectedProduct === 'all') {
+                // When "all" is selected, only show entries where product is "all"
+                if (item.product !== 'all') {
+                    return false;
+                }
+            } else if (item.product !== selectedProduct) {
+                return false;
+            }
+            
+            // Filter by forecast type
+            if (selectedType !== 'all' && item.forecast_type !== selectedType) {
+                return false;
+            }
+            
+            return true;
+        });
+        
+        return filteredData;
+    }
+
+    // Show empty state for historical chart
+    function showHistoricalEmptyState() {
+        const chartContainer = document.getElementById("historicalChart").parentNode;
+        const existingEmptyState = chartContainer.querySelector('.empty-state');
+        const existingChart = document.getElementById("historicalChart");
+        const existingSummary = chartContainer.querySelector('.chart-summary');
+
+        // Remove existing empty state if it exists
+        if (existingEmptyState) {
+            existingEmptyState.remove();
+        }
+
+        // Remove existing summary if it exists
+        if (existingSummary) {
+            existingSummary.remove();
+        }
+
+        // Hide the chart
+        if (existingChart) {
+            existingChart.style.display = 'none';
+        }
+
+        // Create new empty state
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+        emptyState.innerHTML = `
+            <div class="empty-state-icon">📊</div>
+            <p class="empty-state-text">No historical data available for the selected filters</p>
+        `;
+        chartContainer.appendChild(emptyState);
+    }
+
+    // Creates/updates the historical line chart
+    function updateHistoricalChart() {
+        const ctx = document.getElementById("historicalChart");
+        const chartContainer = ctx.parentNode;
+        
+        // Remove any existing empty state
+        const existingEmptyState = chartContainer.querySelector('.empty-state');
+        if (existingEmptyState) {
+            existingEmptyState.remove();
+        }
+
+        // Show the chart canvas
+        ctx.style.display = 'block';
+
+        // Get filtered data
+        const filteredData = filterHistoricalData();
+
+        // Return if no data available
+        if (!filteredData || filteredData.length === 0) {
+            if (historicalChart) {
+                historicalChart.destroy();
+                historicalChart = null;
+            }
+            showHistoricalEmptyState();
+            return;
+        }
+
+        // Prepare data for chart
+        const datasets = [];
+        const colors = [
+            '#6C5CE7', // Purple
+            '#00CEFF', // Cyan
+            '#00B894', // Green
+            '#FDCB6E', // Yellow
+            '#E17055', // Orange
+            '#0984E3', // Blue
+            '#E84393', // Pink
+            '#00D2D3', // Turquoise
+            '#FFA502', // Light Orange
+            '#FF4757', // Red
+            '#5352ED', // Royal Blue
+            '#2ED573', // Lime Green
+            '#FF5252', // Coral
+            '#BE2EDD', // Magenta
+            '#70A1FF', // Light Blue
+            '#FF6B81', // Salmon
+            '#A8E6CF', // Mint
+            '#FFB8B8', // Light Pink
+            '#4834D4', // Indigo
+            '#F97F51', // Mandarin
+            '#7158E2', // Royal Purple
+            '#3742FA', // Bright Blue
+            '#2F3542', // Dark Gray
+            '#8C7AE6', // Lavender
+            '#FF793F'  // Deep Orange
+        ];
+
+        // Sort data by date (newest first)
+        filteredData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Create a dataset for each forecast
+        filteredData.forEach((item, index) => {
+            const color = colors[index % colors.length];
+            const date = new Date(item.date);
+            const formattedDate = date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            // Calculate average prediction
+            const avgPrediction = item.predictions.reduce((a, b) => a + b, 0) / item.predictions.length;
+            
+            datasets.push({
+                label: `${item.product} (${formattedDate})`,
+                data: item.predictions,
+                borderColor: color,
+                backgroundColor: color + '20',
+                tension: 0.3,
+                fill: false,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: color,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                metadata: {
+                    average: avgPrediction,
+                    product: item.product,
+                    date: formattedDate,
+                    type: item.forecast_type
+                }
+            });
+        });
+
+        // If chart exists, update its data
+        if (historicalChart) {
+            historicalChart.data.datasets = datasets;
+            historicalChart.data.labels = Array.from({length: Math.max(...filteredData.map(d => d.predictions.length))}, (_, i) => `Day ${i + 1}`);
+            historicalChart.update();
+        } else {
+            // Create new line chart if it doesn't exist
+            historicalChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: Array.from({length: Math.max(...filteredData.map(d => d.predictions.length))}, (_, i) => `Day ${i + 1}`),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#2D3436',
+                            bodyColor: '#2D3436',
+                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const dataset = tooltipItems[0].dataset;
+                                    return `${dataset.metadata.product} (${dataset.metadata.date})`;
+                                },
+                                label: function(context) {
+                                    const dataset = context.dataset;
+                                    const value = context.parsed.y;
+                                    return `Day ${context.label}: ${value.toFixed(2)}`;
+                                },
+                                afterBody: function(tooltipItems) {
+                                    const dataset = tooltipItems[0].dataset;
+                                    return [
+                                        '',
+                                        `Average: ${dataset.metadata.average.toFixed(2)}`,
+                                        `Type: ${dataset.metadata.type || 'N/A'}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                padding: 10,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                padding: 10,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        line: {
+                            tension: 0.3
+                        }
+                    }
+                }
+            });
+        }
+
+        // Add chart summary
+        updateHistoricalChartSummary(filteredData);
+    }
+
+    // Update the historical chart summary
+    function updateHistoricalChartSummary(data) {
+        const summaryContainer = document.createElement('div');
+        summaryContainer.className = 'chart-summary';
+        
+        // Calculate overall statistics
+        const allPredictions = data.flatMap(item => item.predictions);
+        const totalPredictions = allPredictions.length;
+        const averagePrediction = allPredictions.reduce((a, b) => a + b, 0) / totalPredictions;
+        const maxPrediction = Math.max(...allPredictions);
+        const minPrediction = Math.min(...allPredictions);
+        
+        summaryContainer.innerHTML = `
+            <div class="summary-item">
+                <span class="summary-label">Total Forecasts:</span>
+                <span class="summary-value">${data.length}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Average Prediction:</span>
+                <span class="summary-value">${averagePrediction.toFixed(2)}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Highest Prediction:</span>
+                <span class="summary-value">${maxPrediction.toFixed(2)}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Lowest Prediction:</span>
+                <span class="summary-value">${minPrediction.toFixed(2)}</span>
+            </div>
+        `;
+        
+        // Remove existing summary if any
+        const existingSummary = document.querySelector('.chart-summary');
+        if (existingSummary) {
+            existingSummary.remove();
+        }
+        
+        // Add new summary
+        const chartContainer = document.getElementById('historicalChart').parentNode;
+        chartContainer.appendChild(summaryContainer);
+    }
+
+    // Add event listeners for filters
+    document.getElementById('date-range').addEventListener('change', updateHistoricalChart);
+    document.getElementById('historical-product').addEventListener('change', updateHistoricalChart);
+    document.getElementById('forecast-type').addEventListener('change', updateHistoricalChart);
+
+    // Helper function to generate random colors
+    function getRandomColor(index) {
+        const colors = [
+            '#6C5CE7', '#00CEFF', '#00B894', '#FDCB6E', '#E17055',
+            '#0984E3', '#6C5CE7', '#00B894', '#FDCB6E', '#E17055'
+        ];
+        return colors[index % colors.length];
+    }
+
     // Updates the decisions display with pagination
     function updateDecisions() {
         // Show empty state if no decisions
@@ -585,16 +963,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 highestSales: Math.max(...predictions).toFixed(2),
                 lowestSales: Math.min(...predictions).toFixed(2),
                 selectedProduct: selectedProduct === "all" ? "All Products" : selectedProduct
+            },
+            historicalSummary: {
+                dateRange: document.getElementById('date-range').value,
+                product: document.getElementById('historical-product').value,
+                forecastType: document.getElementById('forecast-type').value
             }
         };
         
         // Convert charts to images and generate report
         Promise.all([
             chartToImage(forecastChart),
-            chartToImage(predictionsChart)
-        ]).then(([forecastChartImg, predictionsChartImg]) => {
+            chartToImage(predictionsChart),
+            chartToImage(historicalChart)
+        ]).then(([forecastChartImg, predictionsChartImg, historicalChartImg]) => {
             // Generate HTML content
-            const content = generateReportContent(reportData, forecastChartImg, predictionsChartImg);
+            const content = generateReportContent(reportData, forecastChartImg, predictionsChartImg, historicalChartImg);
             
             // Create and trigger download
             const blob = new Blob([content], { type: 'text/html' });
@@ -617,7 +1001,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     // Generates HTML content for the report
-    function generateReportContent(data, forecastChartImg, predictionsChartImg) {
+    function generateReportContent(data, forecastChartImg, predictionsChartImg, historicalChartImg) {
         return `
             <!DOCTYPE html>
             <html lang="en">
@@ -727,6 +1111,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     .data-table tr:nth-child(even) {
                         background-color: #f9f9f9;
                     }
+                    .filter-summary {
+                        background-color: #f5f5f5;
+                        padding: 15px;
+                        border-radius: 8px;
+                        margin-bottom: 20px;
+                    }
+                    .filter-summary h3 {
+                        margin-top: 0;
+                        color: #666;
+                    }
+                    .filter-item {
+                        margin: 10px 0;
+                    }
+                    .filter-label {
+                        font-weight: bold;
+                        margin-right: 10px;
+                    }
                     @media print {
                         body {
                             padding: 0;
@@ -777,6 +1178,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="chart-container">
                         <h2>Predictions Analysis</h2>
                         <img src="${predictionsChartImg}" alt="Predictions Analysis Chart">
+                    </div>
+                    <div class="chart-container">
+                        <h2>Historical Sales</h2>
+                        <div class="filter-summary">
+                            <h3>Filter Settings</h3>
+                            <div class="filter-item">
+                                <span class="filter-label">Date Range:</span>
+                                <span>${data.historicalSummary.dateRange === 'all' ? 'All Time' : 
+                                       `Last ${data.historicalSummary.dateRange} days`}</span>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">Product:</span>
+                                <span>${data.historicalSummary.product === 'all' ? 'All Products' : 
+                                       data.historicalSummary.product}</span>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">Forecast Type:</span>
+                                <span>${data.historicalSummary.forecastType === 'all' ? 'All Types' : 
+                                       data.historicalSummary.forecastType}</span>
+                            </div>
+                        </div>
+                        <img src="${historicalChartImg}" alt="Historical Sales Chart">
                     </div>
                 </div>
                 
