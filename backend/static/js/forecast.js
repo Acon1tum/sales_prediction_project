@@ -712,33 +712,67 @@ document.addEventListener("DOMContentLoaded", () => {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 20,
+                            right: 20,
+                            bottom: 120,  // Increased bottom padding to accommodate legend
+                            left: 20
+                        }
+                    },
                     interaction: {
                         mode: 'index',
                         intersect: false
                     },
                     plugins: {
                         legend: {
-                            position: 'top',
+                            position: 'bottom',
+                            align: 'center',
+                            maxHeight: 100,
                             labels: {
                                 boxWidth: 12,
-                                padding: 20,
+                                padding: 10,
                                 font: {
-                                    size: 12
+                                    size: 12,
+                                    weight: '500'
                                 },
                                 usePointStyle: true,
-                                pointStyle: 'circle'
+                                pointStyle: 'circle',
+                                generateLabels: function(chart) {
+                                    const datasets = chart.data.datasets;
+                                    return datasets.map((dataset, i) => ({
+                                        text: dataset.label,
+                                        fillStyle: dataset.borderColor,
+                                        strokeStyle: dataset.borderColor,
+                                        lineWidth: 2,
+                                        hidden: !chart.isDatasetVisible(i),
+                                        index: i
+                                    }));
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Historical Forecasts',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                padding: {
+                                    bottom: 10
+                                }
                             }
                         },
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
                             titleColor: '#2D3436',
                             bodyColor: '#2D3436',
                             borderColor: 'rgba(0, 0, 0, 0.1)',
                             borderWidth: 1,
                             padding: 12,
                             displayColors: true,
+                            boxPadding: 6,
                             callbacks: {
                                 title: function(tooltipItems) {
                                     const dataset = tooltipItems[0].dataset;
@@ -788,7 +822,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     elements: {
                         line: {
-                            tension: 0.3
+                            tension: 0.3,
+                            borderWidth: 2
+                        },
+                        point: {
+                            radius: 3,
+                            hoverRadius: 5,
+                            borderWidth: 2
                         }
                     }
                 }
