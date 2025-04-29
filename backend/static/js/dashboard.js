@@ -1,19 +1,31 @@
 // Global variables to store Chart.js instances for the two main forecast graphs
 // These are used to properly manage chart updates and prevent memory leaks
-let chart1, chart2;
+let chart1, chart2, dailyForecastsChart, monthlyForecastsChart;
 
 // Event listener that triggers when the DOM is fully loaded
 // This ensures all HTML elements are available before running JavaScript code
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the dashboard by fetching data from the server
     fetchDashboardData();
+    
+    // Add event listener for the year filter
+    const yearFilter = document.getElementById('year-filter');
+    if (yearFilter) {
+        yearFilter.addEventListener('change', function() {
+            fetchDashboardData();
+        });
+    }
 });
 
 // Main function to fetch all dashboard data from the server
 // This is the entry point for populating the dashboard with data
 function fetchDashboardData() {
-    // Make an HTTP GET request to the /dashboard_data endpoint
-    fetch('/dashboard_data')
+    // Get the selected year from the filter
+    const yearFilter = document.getElementById('year-filter');
+    const year = yearFilter ? yearFilter.value : new Date().getFullYear().toString();
+    
+    // Make an HTTP GET request to the /dashboard_data endpoint with the year parameter
+    fetch(`/dashboard_data?year=${year}`)
         .then(response => response.json())
         .then(data => {
             // Get references to DOM elements for displaying total forecasts and change
@@ -23,15 +35,7 @@ function fetchDashboardData() {
             // Update the total number of forecasts display
             totalElement.textContent = data.total_forecasts;
             
-            // Calculate the percentage change from the previous month
-            // This is currently using a placeholder calculation (88% of current total)
-            // In a real implementation, this would come from the server
-            const prevMonthCount = Math.floor(data.total_forecasts * 0.88);
-            const percentageChange = data.total_forecasts > 0 ? 
-                Math.round(((data.total_forecasts - prevMonthCount) / prevMonthCount) * 100) : 0;
-            
             // Update the percentage change display with proper formatting
-            // Adds a '+' sign for positive changes
             changeElement.textContent = data.percentage_change >= 0 ?
                 `+${data.percentage_change}% from last month` :
                 `${data.percentage_change}% from last month`;
@@ -39,14 +43,37 @@ function fetchDashboardData() {
             // Update the recent forecasts section with the latest data
             updateRecentForecasts(data.recent_forecasts);
             
-            // Update the pinned forecasts section with user's pinned forecasts
-            updatePinnedForecasts(data.pinned_forecasts);
+            // Update the year filter options
+            updateYearFilter(data.available_years, year);
+            
+            // Update the monthly forecasts chart
+            updateMonthlyForecastsChart(data.monthly_forecasts);
         })
         .catch(error => {
             // Handle any errors during data fetching
             console.error('Error fetching dashboard data:', error);
             document.getElementById('forecast-change').textContent = 'Data unavailable';
         });
+}
+
+// Function to update the year filter options
+function updateYearFilter(availableYears, selectedYear) {
+    const yearFilter = document.getElementById('year-filter');
+    if (!yearFilter) return;
+    
+    // Clear existing options
+    yearFilter.innerHTML = '';
+    
+    // Add new options based on available years
+    availableYears.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        if (year.toString() === selectedYear) {
+            option.selected = true;
+        }
+        yearFilter.appendChild(option);
+    });
 }
 
 // Function to update the recent forecasts section
@@ -97,40 +124,106 @@ function updateForecastCard(forecast, cardNumber) {
     const newChart = new Chart(ctx, {
         type: 'line',
         data: {
-            // Create labels for each day of predictions
             labels: forecast.predictions.map((_, i) => `Day ${i+1}`),
             datasets: [{
-                // Main dataset showing predicted sales
                 label: 'Predicted Sales',
                 data: forecast.predictions,
                 borderColor: '#4CAF50',
-                tension: 0.1,
-                fill: false
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: '#4CAF50',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#4CAF50',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2
             }, {
-                // Secondary dataset showing the threshold line
                 label: 'Threshold',
                 data: Array(forecast.predictions.length).fill(forecast.threshold),
                 borderColor: '#9C27B0',
                 borderDash: [5, 5],
+                borderWidth: 2,
                 tension: 0,
-                fill: false
+                fill: false,
+                pointRadius: 0
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 title: {
                     display: true,
-                    text: `${forecast.product} (${forecast.type})`
+                    text: `${forecast.product} (${forecast.type})`,
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        top: 10,
+                        bottom: 20
+                    }
                 },
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 10,
+                    cornerRadius: 5,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`;
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        },
+                        padding: 10
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        },
+                        padding: 10
+                    }
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
             }
         }
     });
@@ -140,56 +233,146 @@ function updateForecastCard(forecast, cardNumber) {
     if (cardNumber === 2) chart2 = newChart;
 }
 
-// Function to update the pinned forecasts section
-// Creates mini-cards for each pinned forecast with a small preview chart
-function updatePinnedForecasts(forecasts) {
-    // Get the container for pinned forecasts
-    const container = document.getElementById('pinned-forecasts');
-    container.innerHTML = '';
+// Function to update the monthly forecasts chart
+function updateMonthlyForecastsChart(monthlyData) {
+    // Get the canvas context for the chart
+    const ctx = document.getElementById('monthly-forecasts-chart').getContext('2d');
     
-    // Create a card for each pinned forecast
-    forecasts.forEach(forecast => {
-        const card = document.createElement('div');
-        card.className = 'pinned-card';
-        card.innerHTML = `
-            <div class="mini-chart-container">
-                <canvas id="mini-chart-${forecast.id}"></canvas>
-            </div>
-            <p>${forecast.title}</p>
-            <a href="/forecast_details/${forecast.id}" class="view-details">View Details</a>
-        `;
-        container.appendChild(card);
-        
-        // Create a mini chart for the pinned forecast
-        // Using setTimeout to ensure the canvas is properly rendered
-        setTimeout(() => {
-            const ctx = document.getElementById(`mini-chart-${forecast.id}`).getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: forecast.predictions.map((_, i) => i+1),
-                    datasets: [{
-                        data: forecast.predictions,
-                        borderColor: '#4CAF50',
-                        borderWidth: 2,
-                        tension: 0.1,
-                        fill: false,
-                        pointRadius: 0
-                    }]
+    // Clean up existing chart to prevent memory leaks
+    if (monthlyForecastsChart) monthlyForecastsChart.destroy();
+    
+    // Create a new Chart.js instance with the monthly forecast data
+    monthlyForecastsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ],
+            datasets: [{
+                label: 'Forecasts Generated',
+                data: monthlyData,
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',  // January
+                    'rgba(255, 99, 132, 0.8)',  // February
+                    'rgba(75, 192, 192, 0.8)',  // March
+                    'rgba(255, 159, 64, 0.8)',   // April
+                    'rgba(153, 102, 255, 0.8)',  // May
+                    'rgba(255, 205, 86, 0.8)',   // June
+                    'rgba(54, 162, 235, 0.8)',  // July
+                    'rgba(255, 99, 132, 0.8)',  // August
+                    'rgba(75, 192, 192, 0.8)',  // September
+                    'rgba(255, 159, 64, 0.8)',  // October
+                    'rgba(153, 102, 255, 0.8)', // November
+                    'rgba(255, 205, 86, 0.8)'   // December
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 205, 86, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 205, 86, 1)'
+                ],
+                borderWidth: 1,
+                borderRadius: 8,
+                hoverBackgroundColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 205, 86, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 205, 86, 1)'
+                ],
+                hoverBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: false
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold',
+                        family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
                     },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false }
+                    bodyFont: {
+                        size: 13,
+                        family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                    },
+                    padding: 12,
+                    cornerRadius: 6,
+                    displayColors: false,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label;
+                        },
+                        label: function(context) {
+                            const count = context.parsed.y;
+                            return `${count} forecast${count === 1 ? '' : 's'}`;
+                        }
                     }
                 }
-            });
-        }, 100);
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12,
+                            family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                        },
+                        padding: 10,
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12,
+                            family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                        },
+                        padding: 10,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeOutQuart'
+            }
+        }
     });
 }

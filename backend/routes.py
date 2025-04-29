@@ -1134,6 +1134,13 @@ def dashboard_data():
     try:
         user_id = session["user_id"]
         
+        # Get the year from the request parameters
+        year = request.args.get('year', str(datetime.now().year))
+        try:
+            year = int(year)
+        except ValueError:
+            year = datetime.now().year  # Default to current year if invalid input
+        
         # Get total forecasts count
         forecast_count = supabase_client.table("forecasts") \
             .select("count", count="exact") \
@@ -1161,14 +1168,51 @@ def dashboard_data():
             .limit(2) \
             .execute().data
         
-        # Get pinned forecasts
-        pinned_forecasts = supabase_client.table("forecasts") \
-            .select("*") \
+        # Get all available years from forecasts
+        all_forecasts = supabase_client.table("forecasts") \
+            .select("created_at") \
             .eq("user_id", user_id) \
-            .order("created_at", desc=True) \
-            .limit(2) \
             .execute().data
         
+        # Extract unique years from the forecasts
+        available_years = set()
+        for forecast in all_forecasts:
+            try:
+                date = datetime.fromisoformat(forecast["created_at"].replace('Z', '+00:00'))
+                available_years.add(date.year)
+            except (ValueError, KeyError):
+                continue
+        
+        # Convert to sorted list of years
+        available_years = sorted(list(available_years), reverse=True)
+        
+        # If no years found, use current year
+        if not available_years:
+            available_years = [datetime.now().year]
+        
+        # Get monthly forecast counts for the selected year
+        start_date = datetime(year, 1, 1).isoformat()
+        end_date = datetime(year, 12, 31, 23, 59, 59).isoformat()
+        
+        monthly_forecasts = supabase_client.table("forecasts") \
+            .select("created_at") \
+            .eq("user_id", user_id) \
+            .gte("created_at", start_date) \
+            .lte("created_at", end_date) \
+            .execute().data
+        
+        # Initialize monthly counts array with zeros
+        monthly_counts = [0] * 12
+        
+        # Process monthly data
+        for forecast in monthly_forecasts:
+            try:
+                # Parse the date and get the month (0-11)
+                date = datetime.fromisoformat(forecast["created_at"].replace('Z', '+00:00'))
+                month = date.month - 1  # Convert to 0-based index
+                monthly_counts[month] += 1
+            except (ValueError, KeyError):
+                continue
         
         # Process recent forecasts data
         processed_recent = []
@@ -1187,23 +1231,12 @@ def dashboard_data():
                 "predictions": predictions[:7]  # Just show first week for preview
             })
         
-        # Process pinned forecasts
-        processed_pinned = []
-        for forecast in pinned_forecasts:
-            forecast_data = forecast.get("forecast_data", {})
-            predictions = forecast_data.get("predictions", [])
-            
-            processed_pinned.append({
-                "id": forecast["id"],
-                "title": f"{forecast['product']} - {forecast['forecast_type']} forecast",
-                "predictions": predictions[:5]  # Just show first few for preview
-            })
-        
         return jsonify({
             "total_forecasts": forecast_count,
             "percentage_change": percentage_change,
             "recent_forecasts": processed_recent,
-            "pinned_forecasts": processed_pinned
+            "monthly_forecasts": monthly_counts,
+            "available_years": available_years
         })
         
     except Exception as e:

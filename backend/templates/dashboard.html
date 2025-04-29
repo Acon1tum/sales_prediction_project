@@ -60,14 +60,21 @@
         </div>
     </div>
 
-    <div class="pinned-section">
+    <div style="text-align: right;">
+        <a href="{{ url_for('history') }}" class="view-all">View All</a>
+    </div>
+    <div class="daily-forecasts-section">
         <div class="section-header">
-            <h2>Recent Forecasts</h2>
-            <a href="{{ url_for('history') }}" class="view-all">View All</a>
+            <h2>Monthly Forecast Activity</h2>
+            <div class="filter-controls">
+                <select id="year-filter" class="year-filter">
+                    <option value="">Loading years...</option>
+                </select>
+            </div>
+           
         </div>
-        <div class="pinned-grid" id="pinned-forecasts">
-            <!-- Will be populated by JavaScript -->
-            <div class="loading">Loading forecasts...</div>
+        <div class="graph-container">
+            <canvas id="monthly-forecasts-chart"></canvas>
         </div>
     </div>
 </section>
