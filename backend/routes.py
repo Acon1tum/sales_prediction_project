@@ -1574,5 +1574,136 @@ def get_historical_forecasts():
         logging.error(f"Error fetching historical forecasts: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/statistics")
+def statistics():
+    """Renders the statistics page with business analytics"""
+    if "user_id" not in session:
+        flash("Please login first", "warning")
+        return redirect(url_for("login"))
+
+    try:
+        # Get user data including profile picture and first_name
+        response = supabase_client.table("users").select("profile_pic, first_name").eq("id", session["user_id"]).execute()
+        user_data = response.data[0] if response.data else {}
+        
+        return render_template("statistics.html", 
+            user={
+                "email": session["email"],
+                "profile_pic": user_data.get("profile_pic"),
+                "first_name": user_data.get("first_name")
+            },
+            active_page="statistics")
+    except Exception as e:
+        logging.error(f"Error fetching user data: {e}")
+        return render_template("statistics.html", user={"email": session["email"]}, active_page="statistics")
+
+@app.route("/statistics_data")
+def statistics_data():
+    """Provides statistical data for the statistics page"""
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        # Get all forecasts for the user
+        response = supabase_client.table("forecasts").select(
+            "forecast_data", "product", "created_at", "threshold"
+        ).eq("user_id", session["user_id"]).order("created_at", desc=True).execute()
+
+        if not response.data:
+            return jsonify({"error": "No forecast data found"}), 404
+
+        # Process the data for various statistics
+        statistics = {
+            "product_analysis": {},
+            "trend_analysis": {
+                "positive": 0,
+                "negative": 0,
+                "neutral": 0
+            },
+            "severity_analysis": {
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "none": 0
+            },
+            "monthly_forecasts": {},
+            "prediction_ranges": {
+                "0-500": 0,
+                "501-1000": 0,
+                "1001-2000": 0,
+                "2001+": 0
+            },
+            "forecast_types": {},
+            "average_predictions": {},
+            "threshold_comparison": {
+                "above": 0,
+                "below": 0
+            }
+        }
+
+        for forecast in response.data:
+            forecast_data = forecast.get("forecast_data", {})
+            product = forecast.get("product", "all")
+            threshold = forecast.get("threshold", 0)
+            created_at = forecast.get("created_at")
+            
+            # Extract month from created_at
+            if created_at:
+                month = datetime.fromisoformat(created_at.replace('Z', '+00:00')).strftime("%B %Y")
+                statistics["monthly_forecasts"][month] = statistics["monthly_forecasts"].get(month, 0) + 1
+
+            # Product analysis
+            if product not in statistics["product_analysis"]:
+                statistics["product_analysis"][product] = {
+                    "count": 0,
+                    "total_predictions": 0,
+                    "predictions": []
+                }
+            
+            statistics["product_analysis"][product]["count"] += 1
+            predictions = forecast_data.get("predictions", [])
+            statistics["product_analysis"][product]["predictions"].extend(predictions)
+            statistics["product_analysis"][product]["total_predictions"] += len(predictions)
+
+            # Trend analysis
+            decisions = forecast_data.get("decisions", [])
+            for decision in decisions:
+                trend = decision.get("trend", "neutral")
+                severity = decision.get("severity", "none")
+                statistics["trend_analysis"][trend] += 1
+                statistics["severity_analysis"][severity] += 1
+
+            # Prediction ranges
+            for pred in predictions:
+                if pred <= 500:
+                    statistics["prediction_ranges"]["0-500"] += 1
+                elif pred <= 1000:
+                    statistics["prediction_ranges"]["501-1000"] += 1
+                elif pred <= 2000:
+                    statistics["prediction_ranges"]["1001-2000"] += 1
+                else:
+                    statistics["prediction_ranges"]["2001+"] += 1
+
+                # Threshold comparison
+                if pred > threshold:
+                    statistics["threshold_comparison"]["above"] += 1
+                else:
+                    statistics["threshold_comparison"]["below"] += 1
+
+            # Forecast type analysis
+            forecast_type = forecast_data.get("forecast_type", "unknown")
+            statistics["forecast_types"][forecast_type] = statistics["forecast_types"].get(forecast_type, 0) + 1
+
+        # Calculate averages
+        for product, data in statistics["product_analysis"].items():
+            if data["predictions"]:
+                statistics["average_predictions"][product] = sum(data["predictions"]) / len(data["predictions"])
+
+        return jsonify(statistics)
+
+    except Exception as e:
+        logging.error(f"Error fetching statistics data: {e}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True)
