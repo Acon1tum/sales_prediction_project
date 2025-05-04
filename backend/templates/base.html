@@ -28,9 +28,15 @@
                             <span class="link-text">Dashboard</span>
                         </a>
                     </li>
+                    <li class="{% if active_page == 'statistics' %}active{% endif %}">
+                        <a href="{{ url_for('statistics') }}">
+                            <i class="fa-solid fa-chart-simple icon"></i> 
+                            <span class="link-text">statistics</span>
+                        </a>
+                    </li>
                     <li class="{% if active_page == 'forecast' %}active{% endif %}">
                         <a href="{{ url_for('forecast') }}">
-                            <i class="fa-solid fa-chart-simple icon"></i> 
+                            <i class="fa-solid fa-chart-line icon"></i> 
                             <span class="link-text">Forecast</span>
                         </a>
                     </li>
