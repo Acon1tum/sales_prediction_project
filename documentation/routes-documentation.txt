@@ -1,3 +1,207 @@
+# Sales Prediction Application Routes Documentation
+
+## Authentication Routes
+
+### Login and Registration
+- `/login` (GET, POST)
+  - Handles user authentication
+  - Validates credentials against Supabase
+  - Sets session data on successful login
+  - Redirects to dashboard after login
+
+- `/register` (GET, POST)
+  - Handles new user registration
+  - Validates form data and email format
+  - Creates pending user account in Supabase
+  - Requires admin approval for activation
+
+- `/forgot_password` (GET, POST)
+  - Handles password reset process
+  - Uses security questions for verification
+  - Generates and validates reset tokens
+  - Updates password in Supabase
+
+### User Management
+- `/manage_users` (GET)
+  - Admin-only route for user management
+  - Lists pending and active users
+  - Requires admin role access
+
+- `/approve_user/<user_id>` (POST)
+  - Approves pending user accounts
+  - Updates user status to active
+  - Admin-only endpoint
+
+- `/reject_user/<user_id>` (POST)
+  - Rejects and deletes pending users
+  - Admin-only endpoint
+
+## Main Application Routes
+
+### Dashboard
+- `/` (GET)
+  - Root route redirects to dashboard or login
+  - Checks user authentication status
+
+- `/dashboard` (GET)
+  - Displays main dashboard interface
+  - Shows user profile and recent forecasts
+  - Requires authentication
+
+- `/dashboard_data` (GET)
+  - Provides dashboard statistics and metrics
+  - Returns forecast counts and trends
+  - Includes monthly forecast data
+
+### Forecasting
+- `/forecast` (GET)
+  - Renders forecast interface
+  - Shows upload and prediction options
+  - Requires authentication
+
+- `/upload_csv` (POST)
+  - Handles CSV file uploads
+  - Validates file format and content
+  - Saves data to Supabase
+  - Returns upload ID
+
+- `/generate_forecast` (POST)
+  - Generates sales predictions
+  - Processes uploaded data
+  - Uses pre-loaded Keras model
+  - Returns predictions and decisions
+  - Saves results to Supabase
+
+- `/set_threshold` (POST)
+  - Updates prediction threshold
+  - Stores threshold in session
+  - Affects decision generation
+
+### History and Details
+- `/history` (GET)
+  - Shows forecast history
+  - Lists past predictions
+  - Requires authentication
+
+- `/get_forecast_history` (GET)
+  - Returns historical forecast data
+  - Includes upload file names
+  - Sorted by creation date
+
+- `/forecast_details/<forecast_id>` (GET)
+  - Shows detailed forecast view
+  - Displays predictions and decisions
+  - Includes upload data if available
+
+- `/forecast_details_data/<forecast_id>` (GET)
+  - Returns detailed forecast data
+  - Includes predictions and metrics
+  - Used for detailed analysis
+
+### Export and Statistics
+- `/export_forecast/<forecast_id>` (GET)
+  - Exports forecast as CSV
+  - Includes full decision text
+  - Provides data quality metrics
+
+- `/statistics` (GET)
+  - Renders statistics page
+  - Shows business analytics
+  - Requires authentication
+
+- `/statistics_data` (GET)
+  - Provides statistical analysis
+  - Includes product analysis
+  - Shows trend and severity metrics
+  - Returns prediction ranges
+
+### Profile Management
+- `/settings` (GET)
+  - Shows user settings page
+  - Displays profile information
+  - Requires authentication
+
+- `/update_profile_picture` (POST)
+  - Updates user profile picture
+  - Validates image format
+  - Stores in Supabase
+
+- `/update_profile` (POST)
+  - Updates user profile information
+  - Validates input data
+  - Updates Supabase records
+
+- `/change_password` (POST)
+  - Changes user password
+  - Requires current password
+  - Updates Supabase
+
+### Session Management
+- `/reset` (POST)
+  - Clears forecast-related session data
+  - Removes uploaded files
+  - Resets thresholds
+
+- `/logout` (GET)
+  - Ends user session
+  - Clears all session data
+  - Redirects to login
+
+## Helper Functions
+
+### Data Processing
+- `save_upload_to_supabase(file_path, user_id)`
+  - Saves uploaded CSV data
+  - Converts to JSON format
+  - Stores in Supabase
+
+- `save_forecast_to_supabase(user_id, upload_id, forecast_data, product)`
+  - Saves forecast results
+  - Stores predictions and decisions
+  - Links to user and upload
+
+### Authentication
+- `validate_user_session()`
+  - Verifies user authentication
+  - Checks Supabase records
+  - Returns boolean status
+
+- `generate_token(length=32)`
+  - Creates random tokens
+  - Used for password reset
+  - Uses secure generation
+
+- `store_reset_token(email, token)`
+  - Stores reset tokens
+  - Sets expiration time
+  - Manages token lifecycle
+
+- `validate_reset_token(token)`
+  - Verifies reset tokens
+  - Checks expiration
+  - Returns email if valid
+
+### Export
+- `export_as_csv(forecast, forecast_data)`
+  - Generates CSV export
+  - Includes full decision text
+  - Creates downloadable file
+
+## Security Features
+- Session-based authentication
+- Role-based access control
+- Secure password reset process
+- File upload validation
+- Input sanitization
+- Error handling and logging
+
+## Data Storage
+- Uses Supabase for data persistence
+- Stores user profiles
+- Manages forecast history
+- Handles file uploads
+- Tracks user sessions
+
 # Detailed Documentation: Flask Routes and APIs for Sales Prediction System
 
 ## Overview
