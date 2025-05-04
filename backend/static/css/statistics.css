@@ -2,40 +2,85 @@
     padding: 20px;
     max-width: 1400px;
     margin: 0 auto;
+    color: #333;
+    font-size: 16px; /* Base font size */
 }
 
+/* Introduction Section */
+.intro-section {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: linear-gradient(to right, #ffffff, #f8f9fa);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.intro-section h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.5rem; /* Reduced from 1.8rem */
+    font-weight: 600;
+}
+
+.intro-text {
+    color: #5a6c7d;
+    line-height: 1.6;
+    font-size: 1rem; /* Reduced from 1.1rem */
+}
+
+/* Filter Controls */
 .filter-controls {
-    margin-bottom: 20px;
-    padding: 15px;
+    margin-bottom: 30px;
+    padding: 20px;
     background: white;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
+.filter-header {
+    margin-bottom: 15px;
+}
+
+.filter-header h3 {
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 1.1rem; /* Reduced from 1.2rem */
+    font-weight: 600;
+}
+
+.filter-description {
+    color: #6c757d;
+    font-size: 0.9rem; /* Reduced from 0.95rem */
+}
+
 .filter-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
 }
 
 .filter-group label {
     font-weight: 600;
-    color: #333;
+    color: #2c3e50;
+    min-width: 100px;
+    font-size: 0.95rem; /* Added specific size */
 }
 
 .form-select {
-    padding: 8px 12px;
+    padding: 10px 15px;
     border: 1px solid #ddd;
     border-radius: 6px;
     background-color: white;
-    font-size: 14px;
+    font-size: 0.9rem; /* Reduced from 0.95rem */
     color: #333;
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
+    flex: 1;
+    max-width: 300px;
 }
 
 .form-select:hover {
-    border-color: #999;
+    border-color: #4a90e2;
 }
 
 .form-select:focus {
@@ -44,88 +89,50 @@
     box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
 }
 
+/* Statistics Grid */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 20px;
+    gap: 25px;
     margin-bottom: 30px;
 }
 
+/* Stat Cards */
 .stat-card {
     background: white;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    height: 100%;
-    min-height: 300px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     flex-direction: column;
+    gap: 15px;
 }
 
-.stat-card h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-    font-size: 1.2rem;
-    font-weight: 600;
-    cursor: help;
-    position: relative;
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.stat-card h3::after {
-    content: '?';
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    line-height: 18px;
-    text-align: center;
-    background: #4a90e2;
-    color: white;
-    border-radius: 50%;
-    font-size: 12px;
-    margin-left: 8px;
-    vertical-align: middle;
-}
-
-.stat-card h3:hover::before {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    width: 250px;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    text-align: center;
+.stat-header {
     margin-bottom: 10px;
 }
 
-.chart-tooltip {
-    position: fixed;
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    max-width: 300px;
-    z-index: 1000;
-    display: none;
-    pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.tooltip-title {
-    font-weight: bold;
+.stat-header h3 {
+    color: #2c3e50;
+    font-size: 1.1rem; /* Reduced from 1.2rem */
+    font-weight: 600;
     margin-bottom: 8px;
-    color: #fff;
+    cursor: help;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.tooltip-description {
-    color: #e0e0e0;
+.stat-description {
+    color: #6c757d;
+    font-size: 0.85rem; /* Reduced from 0.9rem */
+    display: block;
     line-height: 1.4;
 }
 
@@ -133,25 +140,115 @@
     flex: 1;
     min-height: 250px;
     position: relative;
+    margin: 10px 0;
 }
 
-/* Responsive adjustments */
+.stat-footer {
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.insight-text {
+    color: #6c757d;
+    font-size: 0.85rem; /* Reduced from 0.9rem */
+    line-height: 1.5;
+}
+
+/* Help Section */
+.help-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 30px;
+}
+
+.help-section h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 1.1rem; /* Reduced from 1.2rem */
+    font-weight: 600;
+}
+
+.help-section p {
+    color: #5a6c7d;
+    line-height: 1.6;
+    font-size: 0.9rem; /* Added specific size */
+}
+
+/* Tooltips */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]:hover::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(44, 62, 80, 0.95);
+    color: white;
+    padding: 12px 15px;
+    border-radius: 6px;
+    font-size: 0.85rem; /* Added specific size */
+    width: 280px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    font-weight: normal;
+}
+
+/* Responsive Design */
 @media (max-width: 1200px) {
     .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     }
 }
 
 @media (max-width: 768px) {
     .statistics {
-        padding: 10px;
+        padding: 15px;
+        font-size: 15px; /* Slightly reduced base size for mobile */
     }
     
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .intro-section h2 {
+        font-size: 1.3rem;
+    }
+    
+    .intro-text {
+        font-size: 0.95rem;
+    }
+    
+    .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .form-select {
+        max-width: none;
     }
     
     .stat-card {
-        min-height: 250px;
+        padding: 15px;
+    }
+
+    .stat-header h3 {
+        font-size: 1rem;
+    }
+
+    .stat-description {
+        font-size: 0.8rem;
+    }
+
+    .insight-text {
+        font-size: 0.8rem;
     }
 } 

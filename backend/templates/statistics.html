@@ -10,83 +10,151 @@
 
 {% block content %}
 <section class="statistics">
-    <!-- Add filter controls -->
+    <!-- Introduction Section -->
+    <div class="intro-section">
+        <h2>Sales Forecast Analytics Dashboard</h2>
+        <p class="intro-text">
+            Welcome to your comprehensive sales analytics dashboard. Here you'll find detailed insights about your forecasts,
+            helping you make data-driven decisions for your business. Use the filters below to customize your view.
+        </p>
+    </div>
+
+    <!-- Filter Controls with Enhanced Description -->
     <div class="filter-controls">
+        <div class="filter-header">
+            <h3>Data View Controls</h3>
+            <p class="filter-description">Adjust the time range of your analysis to focus on specific periods.</p>
+        </div>
         <div class="filter-group">
-            <label for="forecastLimit">Show:</label>
+            <label for="forecastLimit">Time Range:</label>
             <select id="forecastLimit" class="form-select">
-                <option value="10">10 Most Recent</option>
-                <option value="20">20 Most Recent</option>
-                <option value="50">50 Most Recent</option>
-                <option value="all" selected>All Forecasts</option>
+                <option value="10">10 Most Recent Forecasts</option>
+                <option value="20">20 Most Recent Forecasts</option>
+                <option value="50">50 Most Recent Forecasts</option>
+                <option value="all" selected>All Historical Data</option>
             </select>
         </div>
     </div>
 
+    <!-- Statistics Grid with Enhanced Information -->
     <div class="stats-grid">
         <!-- Product Performance -->
         <div class="stat-card">
-            <h3 data-tooltip="Shows the distribution of forecasts across different products, helping identify which products are being forecasted most frequently.">Product Performance</h3>
+            <div class="stat-header">
+                <h3 data-tooltip="Shows the distribution of forecasts across different products, helping identify which products are being forecasted most frequently.">Product Performance Analysis</h3>
+                <span class="stat-description">Track forecast distribution across your product portfolio</span>
+            </div>
             <div class="graph-container">
                 <canvas id="productChart"></canvas>
+            </div>
+            <div class="stat-footer">
+                <p class="insight-text">Understand which products receive the most attention in your forecasting activities.</p>
             </div>
         </div>
 
         <!-- Trend Analysis -->
         <div class="stat-card">
-            <h3 data-tooltip="Displays the proportion of positive, negative, and neutral trends in your forecasts, helping identify overall market direction.">Trend Analysis</h3>
+            <div class="stat-header">
+                <h3 data-tooltip="Displays the proportion of positive, negative, and neutral trends in your forecasts, helping identify overall market direction.">Market Trend Analysis</h3>
+                <span class="stat-description">Analyze market direction and momentum</span>
+            </div>
             <div class="graph-container">
                 <canvas id="trendChart"></canvas>
+            </div>
+            <div class="stat-footer">
+                <p class="insight-text">Visualize the distribution of positive, negative, and neutral market trends.</p>
             </div>
         </div>
 
         <!-- Severity Distribution -->
         <div class="stat-card">
-            <h3 data-tooltip="Shows the distribution of forecast severity levels, helping identify the frequency of high-impact predictions.">Severity Distribution</h3>
+            <div class="stat-header">
+                <h3 data-tooltip="Shows the distribution of forecast severity levels, helping identify the frequency of high-impact predictions.">Impact Analysis</h3>
+                <span class="stat-description">Evaluate forecast impact levels</span>
+            </div>
             <div class="graph-container">
                 <canvas id="severityChart"></canvas>
+            </div>
+            <div class="stat-footer">
+                <p class="insight-text">Understand the distribution of high, medium, and low-impact predictions.</p>
             </div>
         </div>
 
         <!-- Monthly Forecasts -->
         <div class="stat-card">
-            <h3 data-tooltip="Tracks the number of forecasts generated each month, helping identify patterns in forecasting activity over time.">Monthly Forecast Activity</h3>
+            <div class="stat-header">
+                <h3 data-tooltip="Tracks the number of forecasts generated each month, helping identify patterns in forecasting activity over time.">Temporal Analysis</h3>
+                <span class="stat-description">Monitor forecasting activity over time</span>
+            </div>
             <div class="graph-container">
                 <canvas id="monthlyChart"></canvas>
+            </div>
+            <div class="stat-footer">
+                <p class="insight-text">Track your forecasting frequency and identify seasonal patterns.</p>
             </div>
         </div>
 
         <!-- Prediction Ranges -->
         <div class="stat-card">
-            <h3 data-tooltip="Shows the distribution of predicted sales volumes across different ranges, helping identify typical sales patterns.">Prediction Ranges</h3>
+            <div class="stat-header">
+                <h3 data-tooltip="Shows the distribution of predicted sales volumes across different ranges, helping identify typical sales patterns.">Sales Volume Distribution</h3>
+                <span class="stat-description">Analyze predicted sales ranges</span>
+            </div>
             <div class="graph-container">
                 <canvas id="rangeChart"></canvas>
+            </div>
+            <div class="stat-footer">
+                <p class="insight-text">Understand the distribution of sales predictions across different volume ranges.</p>
             </div>
         </div>
 
         <!-- Forecast Types -->
         <div class="stat-card">
-            <h3 data-tooltip="Shows the distribution of different forecast types used, helping understand the variety of forecasting approaches employed.">Forecast Types</h3>
+            <div class="stat-header">
+                <h3 data-tooltip="Shows the distribution of different forecast types used, helping understand the variety of forecasting approaches employed.">Methodology Analysis</h3>
+                <span class="stat-description">Review forecasting approaches</span>
+            </div>
             <div class="graph-container">
                 <canvas id="typeChart"></canvas>
+            </div>
+            <div class="stat-footer">
+                <p class="insight-text">Examine the distribution of different forecasting methodologies used.</p>
             </div>
         </div>
 
         <!-- Threshold Comparison -->
         <div class="stat-card">
-            <h3 data-tooltip="Compares predictions against set thresholds, helping identify how often forecasts exceed or fall below target values.">Threshold Comparison</h3>
+            <div class="stat-header">
+                <h3 data-tooltip="Compares predictions against set thresholds, helping identify how often forecasts exceed or fall below target values.">Target Achievement Analysis</h3>
+                <span class="stat-description">Track performance against targets</span>
+            </div>
             <div class="graph-container">
                 <canvas id="thresholdChart"></canvas>
+            </div>
+            <div class="stat-footer">
+                <p class="insight-text">Monitor how often predictions exceed or fall below your set thresholds.</p>
             </div>
         </div>
 
         <!-- Average Predictions -->
         <div class="stat-card">
-            <h3 data-tooltip="Shows the average predicted sales for each product, helping identify which products typically have higher or lower sales forecasts.">Average Predictions by Product</h3>
+            <div class="stat-header">
+                <h3 data-tooltip="Shows the average predicted sales for each product, helping identify which products typically have higher or lower sales forecasts.">Product Sales Trends</h3>
+                <span class="stat-description">Compare average predictions by product</span>
+            </div>
             <div class="graph-container">
                 <canvas id="averageChart"></canvas>
             </div>
+            <div class="stat-footer">
+                <p class="insight-text">Compare average predicted sales across different products.</p>
+            </div>
         </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="help-section">
+        <h3>Need Help?</h3>
+        <p>Hover over any chart title for more information about what the data represents. Each visualization is interactive - click on legend items to show/hide data series.</p>
     </div>
 </section>
 {% endblock %}
