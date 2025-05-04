@@ -2,9 +2,9 @@
 
 ## Overview
 
-This script is designed to train a machine learning model for predicting store sales. It includes functionalities for:
+This script is designed to train a linear regression model for predicting store sales. It includes functionalities for:
 1. Data preparation and preprocessing.
-2. Neural network model creation and training using TensorFlow.
+2. Linear regression model creation and training using Keras.
 3. Model evaluation and visualization of performance metrics.
 4. Saving and loading the trained model for future use.
 5. Generating predictions for new data.
@@ -22,39 +22,35 @@ The script uses a combination of Python libraries for data manipulation, machine
 | `pandas as pd`                      | Used for data manipulation and analysis, particularly for reading and processing CSV files.     |
 | `numpy as np`                       | Provides support for numerical operations, including arrays and mathematical functions.         |
 | `matplotlib.pyplot as plt`          | Used for creating visualizations such as bar charts, radar charts, and scatter plots.          |
-| `tensorflow as tf`                  | Core library for building and training the neural network model.                               |
+| `tensorflow as tf`                  | Core library for building and training the linear regression model.                            |
 | `seaborn as sns`                    | Enhances the aesthetics of visualizations (not directly used in the script but imported).      |
 | `sklearn.model_selection.train_test_split` | Splits the dataset into training and testing subsets.                                          |
 | `sklearn.preprocessing.StandardScaler` | Scales numerical data to ensure consistent ranges for features.                                |
 | `sklearn.metrics`                   | Provides metrics like MAE, RMSE, and R² for evaluating model performance.                      |
-| `sklearn.base.BaseEstimator, RegressorMixin` | Used to create a custom scikit-learn-compatible wrapper for the TensorFlow model.             |
+| `sklearn.base.BaseEstimator, RegressorMixin` | Used to create a custom scikit-learn-compatible wrapper for the Keras model.                  |
 | `sklearn.inspection.permutation_importance` | Calculates feature importance by measuring the impact of shuffling feature values.            |
 | `joblib`                            | Saves and loads Python objects like scalers and other model-related data.                      |
 | `os`                                | Handles file system operations, such as creating directories and saving files.                |
 
 ---
 
-### 2. **How TensorFlow Is Used**
+### 2. **How Keras Is Used**
 
-TensorFlow (`tf`) is the core library used for building and training the neural network model. Here's how it is utilized:
-- **Model Creation**: The `create_model` method defines a sequential neural network with:
-  - Input layer: Accepts the feature data.
-  - Hidden layers: Two dense layers with 64 and 32 neurons, respectively, using ReLU activation. These layers include:
-    - **Batch Normalization**: Stabilizes learning by normalizing layer inputs.
-    - **Dropout**: Prevents overfitting by randomly ignoring some neurons during training.
-  - Output layer: A single neuron for predicting sales.
-- **Learning Rate Scheduler**: The `ExponentialDecay` schedule adjusts the learning rate dynamically during training.
+Keras is used to implement a linear regression model. Here's how it is utilized:
+- **Model Creation**: The `create_model` method defines a simple linear regression model with:
+  - Input layer: Accepts 19 sales-related features
+  - Single Dense layer: One neuron with linear activation (no activation function)
 - **Model Compilation**: The model is compiled with:
-  - **Adam Optimizer**: An adaptive learning rate optimization algorithm.
-  - **Mean Squared Error (MSE)**: Loss function to minimize during training.
-  - **Mean Absolute Error (MAE)**: A metric to monitor during training.
-- **Training**: The `fit` method trains the model using the training data, with early stopping to prevent overfitting.
+  - **Adam Optimizer**: Learning rate of 0.001
+  - **Mean Squared Error (MSE)**: Loss function to minimize during training
+  - **Mean Absolute Error (MAE)**: A metric to monitor during training
+- **Training**: The `fit` method trains the model using the training data
 
 ---
 
 ### 3. **Purpose of Key Metrics**
 
-- **TensorFlow**: TensorFlow is a powerful machine learning framework used to build and train the neural network model. It provides tools for defining the model architecture, optimizing weights, and managing the training process efficiently.
+- **Keras**: Keras is used to implement a simple linear regression model, providing a clean interface for model creation and training.
 
 - **Mean Squared Error (MSE)**: MSE is the loss function used during training. It calculates the average squared difference between the predicted and actual values. Squaring the errors penalizes larger errors more heavily, making it sensitive to outliers.
 
@@ -73,51 +69,52 @@ TensorFlow (`tf`) is the core library used for building and training the neural 
 
 #### **Step 2: Model Training**
 - The `train_model` method:
-  - Scales the data using `StandardScaler`.
-  - Splits the data into training and testing sets.
-  - Creates the neural network using `create_model`.
-  - Trains the model with early stopping to avoid overfitting.
+  - Scales the data using `StandardScaler` for input features
+  - Scales target values using `MinMaxScaler`
+  - Splits the data into training and testing sets
+  - Creates the linear regression model using `create_model`
+  - Trains the model
 
 #### **Step 3: Model Evaluation**
 - The `evaluate_model` method calculates:
-  - **MAE**: Average prediction error.
-  - **RMSE**: Penalizes larger errors more heavily.
-  - **R²**: Measures how well the model explains the variance in the data.
+  - **MAE**: Average prediction error
+  - **RMSE**: Penalizes larger errors more heavily
+  - **R²**: Measures how well the model explains the variance in the data
 
 #### **Step 4: Visualizations**
 - The script generates several visualizations:
-  - **Error Metrics Bar Chart**: Displays MAE and RMSE values.
-  - **Gauge Chart**: Shows the R² score.
-  - **Radar Chart**: Compares normalized metrics.
-  - **Training History**: Plots loss and error over epochs.
-  - **Prediction Accuracy**: Scatter plot of actual vs. predicted values.
-  - **Feature Importance**: Horizontal bar chart showing the impact of each feature.
+  - **Error Metrics Bar Chart**: Displays MAE and RMSE values
+  - **Gauge Chart**: Shows the R² score
+  - **Radar Chart**: Compares normalized metrics
+  - **Training History**: Plots loss and error over epochs
+  - **Prediction Accuracy**: Scatter plot of actual vs. predicted values
+  - **Feature Importance**: Horizontal bar chart showing the impact of each feature
 
 #### **Step 5: Model Saving and Loading**
-- The `save_model` method saves the trained model, scalers, and feature names to a directory.
-- The `load_model` method reloads the saved model and associated data.
+- The `save_model` method saves the trained model, scalers, and feature names to a directory
+- The `load_model` method reloads the saved model and associated data
 
 #### **Step 6: Prediction**
-- The `predict_sales` method accepts new input data, scales it, and generates predictions in the original units (e.g., pesos).
+- The `predict_sales` method accepts new input data, scales it, and generates predictions in the original units (e.g., pesos)
 
 ---
 
 ### 5. **Main Function**
 
 The `main` function demonstrates the complete workflow:
-1. Loads and prepares data from `new_blk8_cafe_sales_2024.csv`.
-2. Trains the model and evaluates its performance.
-3. Creates visualizations for metrics, training history, and predictions.
-4. Saves the trained model for future use.
-5. Demonstrates loading the saved model and making predictions with example input.
+1. Loads and prepares data from `new_blk8_cafe_sales_2024.csv`
+2. Trains the model and evaluates its performance
+3. Creates visualizations for metrics, training history, and predictions
+4. Saves the trained model for future use
+5. Demonstrates loading the saved model and making predictions with example input
 
 ---
 
 ### 6. **Outputs**
-- **Visualizations**: Saved in the `model_visualizations` folder.
-- **Trained Model**: Saved in the `sales_prediction_model` folder.
-- **Feature Importance**: A DataFrame showing the importance of each feature.
+- **Visualizations**: Saved in the `model_visualizations` folder
+- **Trained Model**: Saved in the `sales_prediction_model` folder
+- **Feature Importance**: A DataFrame showing the importance of each feature
 
 ---
 
-This script provides a complete pipeline for training, evaluating, and deploying a sales prediction model.
+This script provides a complete pipeline for training, evaluating, and deploying a linear regression model for sales prediction.
