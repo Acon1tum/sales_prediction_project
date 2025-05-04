@@ -1,87 +1,39 @@
 // Global variables to store Chart.js instances
 let productChart, trendChart, severityChart, monthlyChart, rangeChart, typeChart, thresholdChart, averageChart;
 
-// Tooltip data for each chart
-const chartTooltips = {
-    productChart: {
-        title: 'Product Performance',
-        description: 'Shows the distribution of forecasts across different products, helping identify which products are being forecasted most frequently.'
-    },
-    trendChart: {
-        title: 'Trend Analysis',
-        description: 'Displays the proportion of positive, negative, and neutral trends in your forecasts, helping identify overall market direction.'
-    },
-    severityChart: {
-        title: 'Severity Analysis',
-        description: 'Shows the distribution of forecast severity levels, helping identify the frequency of high-impact predictions.'
-    },
-    monthlyChart: {
-        title: 'Forecast Activity Timeline',
-        description: 'Tracks the number of forecasts generated each month, helping identify patterns in forecasting activity over time.'
-    },
-    rangeChart: {
-        title: 'Sales Volume Distribution',
-        description: 'Shows the distribution of predicted sales volumes across different ranges, helping identify typical sales patterns.'
-    },
-    typeChart: {
-        title: 'Forecast Methodology',
-        description: 'Shows the distribution of different forecast types used, helping understand the variety of forecasting approaches employed.'
-    },
-    thresholdChart: {
-        title: 'Performance Against Targets',
-        description: 'Compares predictions against set thresholds, helping identify how often forecasts exceed or fall below target values.'
-    },
-    averageChart: {
-        title: 'Product Performance Averages',
-        description: 'Shows the average predicted sales for each product, helping identify which products typically have higher or lower sales forecasts.'
-    }
-};
-
 // Initialize the page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Create tooltip element
-    const tooltip = document.createElement('div');
-    tooltip.className = 'chart-tooltip';
-    document.body.appendChild(tooltip);
+    // Add event listener for the filter dropdown
+    const forecastLimit = document.getElementById('forecastLimit');
+    if (forecastLimit) {
+        forecastLimit.addEventListener('change', function() {
+            fetchStatisticsData(this.value);
+        });
+    }
 
-    // Add event listeners for all chart titles
-    Object.keys(chartTooltips).forEach(chartId => {
-        const chartElement = document.getElementById(chartId);
-        if (chartElement) {
-            const titleElement = chartElement.closest('.stat-card').querySelector('h3');
-            
-            titleElement.addEventListener('mouseenter', function(e) {
-                const tooltipData = chartTooltips[chartId];
-                tooltip.innerHTML = `
-                    <div class="tooltip-title">${tooltipData.title}</div>
-                    <div class="tooltip-description">${tooltipData.description}</div>
-                `;
-                tooltip.style.display = 'block';
-            });
-
-            titleElement.addEventListener('mousemove', function(e) {
-                tooltip.style.left = (e.pageX + 10) + 'px';
-                tooltip.style.top = (e.pageY + 10) + 'px';
-            });
-
-            titleElement.addEventListener('mouseleave', function() {
-                tooltip.style.display = 'none';
-            });
-        }
-    });
-
-    fetchStatisticsData();
+    // Initial fetch with default value
+    fetchStatisticsData('all');
 });
 
 // Fetch statistics data from the server
-function fetchStatisticsData() {
-    fetch('/statistics_data')
+function fetchStatisticsData(limit = 'all') {
+    fetch(`/statistics_data?limit=${limit}`)
         .then(response => response.json())
         .then(data => {
             if (data.error) {
                 console.error('Error fetching statistics:', data.error);
                 return;
             }
+            
+            // Destroy existing charts if they exist
+            if (productChart) productChart.destroy();
+            if (trendChart) trendChart.destroy();
+            if (severityChart) severityChart.destroy();
+            if (monthlyChart) monthlyChart.destroy();
+            if (rangeChart) rangeChart.destroy();
+            if (typeChart) typeChart.destroy();
+            if (thresholdChart) thresholdChart.destroy();
+            if (averageChart) averageChart.destroy();
             
             // Create all charts
             createProductChart(data.product_analysis);
@@ -471,6 +423,17 @@ function createThresholdChart(thresholdData) {
                             }
                         }
                     }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
                 }
             }
         }
@@ -510,6 +473,15 @@ function createAverageChart(averageData) {
                             label: function() {
                                 return 'Shows the average predicted sales for each product, helping identify which products typically have higher or lower sales forecasts.';
                             }
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.raw || 0;
+                            return `${label}: ${value.toFixed(2)}`;
                         }
                     }
                 }

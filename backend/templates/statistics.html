@@ -10,10 +10,23 @@
 
 {% block content %}
 <section class="statistics">
+    <!-- Add filter controls -->
+    <div class="filter-controls">
+        <div class="filter-group">
+            <label for="forecastLimit">Show:</label>
+            <select id="forecastLimit" class="form-select">
+                <option value="10">10 Most Recent</option>
+                <option value="20">20 Most Recent</option>
+                <option value="50">50 Most Recent</option>
+                <option value="all" selected>All Forecasts</option>
+            </select>
+        </div>
+    </div>
+
     <div class="stats-grid">
         <!-- Product Performance -->
         <div class="stat-card">
-            <h3>Product Performance</h3>
+            <h3 data-tooltip="Shows the distribution of forecasts across different products, helping identify which products are being forecasted most frequently.">Product Performance</h3>
             <div class="graph-container">
                 <canvas id="productChart"></canvas>
             </div>
@@ -21,7 +34,7 @@
 
         <!-- Trend Analysis -->
         <div class="stat-card">
-            <h3>Trend Analysis</h3>
+            <h3 data-tooltip="Displays the proportion of positive, negative, and neutral trends in your forecasts, helping identify overall market direction.">Trend Analysis</h3>
             <div class="graph-container">
                 <canvas id="trendChart"></canvas>
             </div>
@@ -29,7 +42,7 @@
 
         <!-- Severity Distribution -->
         <div class="stat-card">
-            <h3>Severity Distribution</h3>
+            <h3 data-tooltip="Shows the distribution of forecast severity levels, helping identify the frequency of high-impact predictions.">Severity Distribution</h3>
             <div class="graph-container">
                 <canvas id="severityChart"></canvas>
             </div>
@@ -37,7 +50,7 @@
 
         <!-- Monthly Forecasts -->
         <div class="stat-card">
-            <h3>Monthly Forecast Activity</h3>
+            <h3 data-tooltip="Tracks the number of forecasts generated each month, helping identify patterns in forecasting activity over time.">Monthly Forecast Activity</h3>
             <div class="graph-container">
                 <canvas id="monthlyChart"></canvas>
             </div>
@@ -45,7 +58,7 @@
 
         <!-- Prediction Ranges -->
         <div class="stat-card">
-            <h3>Prediction Ranges</h3>
+            <h3 data-tooltip="Shows the distribution of predicted sales volumes across different ranges, helping identify typical sales patterns.">Prediction Ranges</h3>
             <div class="graph-container">
                 <canvas id="rangeChart"></canvas>
             </div>
@@ -53,7 +66,7 @@
 
         <!-- Forecast Types -->
         <div class="stat-card">
-            <h3>Forecast Types</h3>
+            <h3 data-tooltip="Shows the distribution of different forecast types used, helping understand the variety of forecasting approaches employed.">Forecast Types</h3>
             <div class="graph-container">
                 <canvas id="typeChart"></canvas>
             </div>
@@ -61,7 +74,7 @@
 
         <!-- Threshold Comparison -->
         <div class="stat-card">
-            <h3>Threshold Comparison</h3>
+            <h3 data-tooltip="Compares predictions against set thresholds, helping identify how often forecasts exceed or fall below target values.">Threshold Comparison</h3>
             <div class="graph-container">
                 <canvas id="thresholdChart"></canvas>
             </div>
@@ -69,7 +82,7 @@
 
         <!-- Average Predictions -->
         <div class="stat-card">
-            <h3>Average Predictions by Product</h3>
+            <h3 data-tooltip="Shows the average predicted sales for each product, helping identify which products typically have higher or lower sales forecasts.">Average Predictions by Product</h3>
             <div class="graph-container">
                 <canvas id="averageChart"></canvas>
             </div>

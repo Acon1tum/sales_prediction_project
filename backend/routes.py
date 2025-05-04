@@ -1604,10 +1604,23 @@ def statistics_data():
         return jsonify({"error": "Not authenticated"}), 401
 
     try:
-        # Get all forecasts for the user
-        response = supabase_client.table("forecasts").select(
+        # Get the limit parameter from the request
+        limit = request.args.get('limit', 'all')
+        
+        # Query forecasts with optional limit
+        query = supabase_client.table("forecasts").select(
             "forecast_data", "product", "created_at", "threshold"
-        ).eq("user_id", session["user_id"]).order("created_at", desc=True).execute()
+        ).eq("user_id", session["user_id"]).order("created_at", desc=True)
+        
+        # Apply limit if specified
+        if limit != 'all':
+            try:
+                limit = int(limit)
+                query = query.limit(limit)
+            except ValueError:
+                pass  # If limit is not a valid number, ignore it
+        
+        response = query.execute()
 
         if not response.data:
             return jsonify({"error": "No forecast data found"}), 404

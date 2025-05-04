@@ -4,6 +4,46 @@
     margin: 0 auto;
 }
 
+.filter-controls {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: #333;
+}
+
+.form-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: white;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.form-select:hover {
+    border-color: #999;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -29,6 +69,39 @@
     font-weight: 600;
     cursor: help;
     position: relative;
+}
+
+.stat-card h3::after {
+    content: '?';
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    background: #4a90e2;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.stat-card h3:hover::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 250px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    margin-bottom: 10px;
 }
 
 .chart-tooltip {
