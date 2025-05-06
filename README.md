@@ -481,47 +481,34 @@ The Sales Prediction System is a web-based application that helps businesses pre
    - User activity tracking
 
 
+## ✅ Panelist Feedback Implementation Checklist
 
-✅ Panelist Feedback Implementation Checklist
- Highlight Best & Worst Performing Products
+- [ ] **Highlight Best & Worst Performing Products**
+  - Display top and bottom performers.
+  - Include a simple decision support section (e.g., "Put on Promotion").
 
-Include a simple decision support section (e.g., recommend promotions for poor performers).
+- [ ] **Design UI to Be Simple and Non-Technical**
+  - Use clear, easy-to-understand visuals.
+  - Avoid relying on hover effects—important data should be visible at a glance.
 
- Make UI as Simple and Non-Technical as Possible
+- [ ] **Display Past and Predicted Sales Side-by-Side**
+  - Left: Past sales data (from CSV input).
+  - Right: Forecasted sales (predicted output).
 
-Avoid technical jargon; users should understand graphs at a glance.
+- [ ] **Use ₱ Symbol for Sales Values**
+  - Clearly indicate currency (Philippine Peso) in all charts and data displays.
 
-Avoid relying on hover-to-see details—make information visible directly.
+- [ ] **Visualize Quantity Sold in Graphs**
+  - Clearly show how many units are expected to sell (not just trends).
 
- Display Past Sales and Predicted Sales Side-by-Side
+- [ ] **Prioritize Visuals Over Text**
+  - Focus on charts/graphs for insight.
+  - Keep it simple even if only showing 5 products—visual clarity is key.
 
-Show past sales data (from CSV) on the left
-
-Show forecasted sales on the right for easy comparative analysis
-
- Use ₱ (Philippine Peso) for Sales Figures
-
-Clearly label monetary values with ₱
-
- Visualize Forecasted Quantity Sold
-
-Graphs should show how many units are expected to sell
-
- Focus on Clear Visualizations
-
-Prioritize visuals over text-based explanations
-
-Even with just 5 products, visuals should clearly tell the story
-
- Include Short, Effective Decision Summaries
-
-Show actual values like:
-
-Total sales (₱)
-
-Stock needed
-
-Product name
-
-Provide actionable recommendations
+- [ ] **Provide Concise, Actionable Decision Summaries**
+  - Include:
+    - Total sales in ₱
+    - Stock needed
+    - Product name
+    - Recommended action (e.g., "Restock", "Discount", etc.)
 
