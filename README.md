@@ -481,3 +481,47 @@ The Sales Prediction System is a web-based application that helps businesses pre
    - User activity tracking
 
 
+
+✅ Panelist Feedback Implementation Checklist
+ Highlight Best & Worst Performing Products
+
+Include a simple decision support section (e.g., recommend promotions for poor performers).
+
+ Make UI as Simple and Non-Technical as Possible
+
+Avoid technical jargon; users should understand graphs at a glance.
+
+Avoid relying on hover-to-see details—make information visible directly.
+
+ Display Past Sales and Predicted Sales Side-by-Side
+
+Show past sales data (from CSV) on the left
+
+Show forecasted sales on the right for easy comparative analysis
+
+ Use ₱ (Philippine Peso) for Sales Figures
+
+Clearly label monetary values with ₱
+
+ Visualize Forecasted Quantity Sold
+
+Graphs should show how many units are expected to sell
+
+ Focus on Clear Visualizations
+
+Prioritize visuals over text-based explanations
+
+Even with just 5 products, visuals should clearly tell the story
+
+ Include Short, Effective Decision Summaries
+
+Show actual values like:
+
+Total sales (₱)
+
+Stock needed
+
+Product name
+
+Provide actionable recommendations
+
