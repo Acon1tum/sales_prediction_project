@@ -4,17 +4,23 @@ let productChart, trendChart, severityChart, monthlyChart, rangeChart, typeChart
 // Initialize charts and data
 let charts = {};
 let forecastData = [];
+let currentFilters = {
+    limit: 'all',
+    graphType: 'all'
+};
 
 // DOM Elements
 const forecastLimitSelect = document.getElementById('forecastLimit');
 const graphFilterSelect = document.getElementById('graphFilter');
+const applyFiltersBtn = document.getElementById('applyFilters');
+const resetFiltersBtn = document.getElementById('resetFilters');
 const statCards = document.querySelectorAll('.stat-card');
 
 // Initialize the page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners
-    forecastLimitSelect.addEventListener('change', updateCharts);
-    graphFilterSelect.addEventListener('change', filterGraphs);
+    applyFiltersBtn.addEventListener('click', applyFilters);
+    resetFiltersBtn.addEventListener('click', resetFilters);
     
     // Initial data load
     loadData();
@@ -35,10 +41,51 @@ async function loadData() {
     }
 }
 
+// Apply filters
+function applyFilters() {
+    currentFilters.limit = forecastLimitSelect.value;
+    currentFilters.graphType = graphFilterSelect.value;
+    
+    // Update charts with new limit
+    updateCharts();
+    
+    // Update graph visibility
+    filterGraphs();
+}
+
+// Reset filters
+function resetFilters() {
+    forecastLimitSelect.value = 'all';
+    graphFilterSelect.value = 'all';
+    currentFilters.limit = 'all';
+    currentFilters.graphType = 'all';
+    
+    // Update charts with reset values
+    updateCharts();
+    
+    // Show all graphs
+    statCards.forEach(card => card.classList.remove('hidden'));
+}
+
 // Update all charts based on the selected forecast limit
 function updateCharts() {
-    const limit = forecastLimitSelect.value;
-    const data = forecastData;
+    const limit = currentFilters.limit;
+    let data = forecastData;
+    
+    // Apply limit if not 'all'
+    if (limit !== 'all') {
+        data = {
+            ...forecastData,
+            product_analysis: limitData(forecastData.product_analysis, limit),
+            trend_analysis: limitData(forecastData.trend_analysis, limit),
+            severity_analysis: limitData(forecastData.severity_analysis, limit),
+            monthly_forecasts: limitData(forecastData.monthly_forecasts, limit),
+            prediction_ranges: limitData(forecastData.prediction_ranges, limit),
+            forecast_types: limitData(forecastData.forecast_types, limit),
+            threshold_comparison: limitData(forecastData.threshold_comparison, limit),
+            average_predictions: limitData(forecastData.average_predictions, limit)
+        };
+    }
     
     // Update each chart
     updateProductChart(data.product_analysis);
@@ -51,9 +98,19 @@ function updateCharts() {
     updateAverageChart(data.average_predictions);
 }
 
+// Helper function to limit data
+function limitData(data, limit) {
+    if (typeof data === 'object' && !Array.isArray(data)) {
+        const entries = Object.entries(data);
+        const limitedEntries = entries.slice(-parseInt(limit));
+        return Object.fromEntries(limitedEntries);
+    }
+    return data;
+}
+
 // Filter graphs based on selection
 function filterGraphs() {
-    const selectedType = graphFilterSelect.value;
+    const selectedType = currentFilters.graphType;
     
     statCards.forEach(card => {
         const graphType = card.getAttribute('data-graph-type');

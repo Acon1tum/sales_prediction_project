@@ -40,7 +40,6 @@
     flex-wrap: wrap;
     gap: 1.5rem;
     align-items: center;
-    justify-content: space-between;
 }
 
 .filter-header {
@@ -94,6 +93,41 @@
     outline: none;
     border-color: #3498db;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-left: auto;
+}
+
+.btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-secondary {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.btn-secondary:hover {
+    background-color: #dee2e6;
 }
 
 /* Statistics Grid */
@@ -245,6 +279,16 @@
 
     .form-select {
         width: 100%;
+    }
+
+    .filter-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-left: 0;
+    }
+
+    .btn {
+        min-width: 120px;
     }
 
     .stats-grid {
