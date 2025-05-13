@@ -793,3 +793,66 @@ canvas {
         height: 300px;
     }
 }
+
+.download-template-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: #6C5CE7;
+    color: #fff;
+    border-radius: 6px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.download-template-btn:hover {
+    background: #5a4bc2;
+}
+
+.template-download-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 12px 0 8px 0;
+}
+
+.download-icon {
+    margin-right: 6px;
+    font-size: 1.2em;
+    vertical-align: middle;
+}
+
+.template-tip {
+    color: #636E72;
+    font-size: 0.95em;
+    font-style: italic;
+}
+
+.template-instructions {
+    margin: 0 0 10px 18px;
+    padding: 0;
+    color: #495057;
+    font-size: 0.98em;
+}
+
+.template-instructions li {
+    margin-bottom: 4px;
+}
+
+.upload-instruction {
+    display: flex;
+    align-items: center;
+    background: #f5f6fa;
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin-top: 8px;
+    font-size: 1em;
+    color: #2d3436;
+    gap: 8px;
+}
+
+.upload-icon {
+    font-size: 1.2em;
+    margin-right: 6px;
+}

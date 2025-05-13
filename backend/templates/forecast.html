@@ -41,8 +41,20 @@
                         <div class="step-number">2</div>
                         <div class="step-content">
                             <h3>Upload Your Data</h3>
-                            <p>Prepare your CSV file.</p>
-                            <p>Click the "Upload CSV" button to select your file.</p>
+                            <p>To get started, download the CSV template and fill it with your sales data. This ensures your file is in the correct format for analysis.</p>
+                            <div class="template-download-row">
+                                <a href="{{ url_for('static', filename='csv/csv template.csv') }}" class="download-template-btn" download>
+                                    <span class="download-icon">⬇️</span> Download CSV Template
+                                </a>
+                                <span class="template-tip">(Open in Excel, Google Sheets, or similar)</span>
+                            </div>
+                            <ul class="template-instructions">
+                                <li>Fill in your sales data following the template columns.</li>
+                                <li>Save your file as <strong>.csv</strong> before uploading.</li>
+                            </ul>
+                            <div class="upload-instruction">
+                                <span class="upload-icon">📁</span> <span>Click the <strong>Upload CSV</strong> button to select your file.</span>
+                            </div>
                         </div>
                     </div>
 
