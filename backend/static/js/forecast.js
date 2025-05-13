@@ -334,10 +334,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const salesSummary = document.getElementById("sales-summary");
         const totalSalesValue = document.getElementById("total-sales-value");
         
-        // Calculate and display total sales if predictions exist
         if (predictions && predictions.length > 0) {
             const totalSales = predictions.reduce((sum, value) => sum + value, 0);
-            totalSalesValue.textContent = totalSales.toFixed(2);
+            totalSalesValue.textContent = `₱${totalSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             salesSummary.style.display = "flex";
         } else {
             salesSummary.style.display = "none";
@@ -355,16 +354,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateForecastChart() {
         const ctx = document.getElementById("forecastChart").getContext("2d");
 
-        // Clean up existing chart
         if (forecastChart) forecastChart.destroy();
 
-        // Return if no data available
         if (predictions.length === 0) return;
 
-        // Get the threshold value from localStorage or default to 0
         const threshold = parseFloat(localStorage.getItem('forecastThreshold')) || 0;
 
-        // Create new line chart
         forecastChart = new Chart(ctx, {
             type: "line",
             data: {
@@ -384,11 +379,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     {
                         label: "Threshold",
-                        data: Array(predictions.length).fill(threshold), // Create a horizontal line
+                        data: Array(predictions.length).fill(threshold),
                         borderColor: "#FF6B6B",
                         borderWidth: 2,
-                        borderDash: [5, 5], // Dashed line
-                        pointRadius: 0, // No points
+                        borderDash: [5, 5],
+                        pointRadius: 0,
                     }
                 ]
             },
@@ -402,6 +397,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ₱${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -409,6 +409,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
                         }
                     },
                     x: {
@@ -425,16 +430,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function updatePredictionsChart() {
         const ctx = document.getElementById("predictionsChart").getContext("2d");
 
-        // Clean up existing chart
         if (predictionsChart) predictionsChart.destroy();
 
-        // Return if no data available
         if (predictions.length === 0) return;
 
-        // Get the threshold value from localStorage or default to 0
         const threshold = parseFloat(localStorage.getItem('forecastThreshold')) || 0;
 
-        // Create new bar chart
         predictionsChart = new Chart(ctx, {
             type: "bar",
             data: {
@@ -449,12 +450,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     {
                         label: "Threshold",
-                        data: Array(predictions.length).fill(threshold), // Create a horizontal line
-                        type: "line", // Add a line to the bar chart
+                        data: Array(predictions.length).fill(threshold),
+                        type: "line",
                         borderColor: "#FF6B6B",
                         borderWidth: 2,
-                        borderDash: [5, 5], // Dashed line
-                        pointRadius: 0, // No points
+                        borderDash: [5, 5],
+                        pointRadius: 0,
                     }
                 ]
             },
@@ -464,6 +465,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 plugins: {
                     legend: {
                         position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ₱${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -471,6 +479,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
                         }
                     },
                     x: {
@@ -844,7 +857,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const summaryContainer = document.createElement('div');
         summaryContainer.className = 'chart-summary';
         
-        // Calculate overall statistics
         const allPredictions = data.flatMap(item => item.predictions);
         const totalPredictions = allPredictions.length;
         const averagePrediction = allPredictions.reduce((a, b) => a + b, 0) / totalPredictions;
@@ -858,25 +870,23 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
             <div class="summary-item">
                 <span class="summary-label">Average Prediction:</span>
-                <span class="summary-value">${averagePrediction.toFixed(2)}</span>
+                <span class="summary-value">₱${averagePrediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Highest Prediction:</span>
-                <span class="summary-value">${maxPrediction.toFixed(2)}</span>
+                <span class="summary-value">₱${maxPrediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Lowest Prediction:</span>
-                <span class="summary-value">${minPrediction.toFixed(2)}</span>
+                <span class="summary-value">₱${minPrediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
             </div>
         `;
         
-        // Remove existing summary if any
         const existingSummary = document.querySelector('.chart-summary');
         if (existingSummary) {
             existingSummary.remove();
         }
         
-        // Add new summary
         const chartContainer = document.getElementById('historicalChart').parentNode;
         chartContainer.appendChild(summaryContainer);
     }
@@ -910,13 +920,58 @@ document.addEventListener("DOMContentLoaded", () => {
         const end = start + itemsPerPage;
         const paginatedDecisions = decisions.slice(start, end);
         
-        // Update decisions display
-        decisionSection.innerHTML = paginatedDecisions.map(d => `
-            <div class="decision-item">
-                <span class="decision-icon">${d.icon || '💡'}</span>
-                <div class="decision-text">${d.text}</div>
-            </div>
-        `).join("");
+        // Update decisions display with enhanced format
+        decisionSection.innerHTML = paginatedDecisions.map((d, index) => {
+            // Calculate total sales for this period
+            const dayStart = start + index;
+            const dayEnd = Math.min(dayStart + 7, predictions.length);
+            const periodSales = predictions.slice(dayStart, dayEnd).reduce((sum, val) => sum + val, 0);
+            
+            // Determine stock recommendation based on trend
+            const stockNeeded = d.trend === 'positive' ? 
+                Math.ceil(periodSales * 1.2) : // 20% buffer for positive trends
+                Math.ceil(periodSales * 0.8);  // 20% reduction for negative trends
+            
+            // Determine action type based on severity and trend
+            let actionType = '';
+            if (d.severity === 'high' && d.trend === 'positive') {
+                actionType = 'Urgent Restock';
+            } else if (d.severity === 'high' && d.trend === 'negative') {
+                actionType = 'Immediate Discount';
+            } else if (d.trend === 'positive') {
+                actionType = 'Monitor Stock';
+            } else if (d.trend === 'negative') {
+                actionType = 'Consider Promotion';
+            } else {
+                actionType = 'Maintain Current';
+            }
+
+            return `
+                <div class="decision-item ${d.trend}">
+                    <div class="decision-header">
+                        <span class="decision-icon">${d.icon || '💡'}</span>
+                        <span class="decision-action">${actionType}</span>
+                    </div>
+                    <div class="decision-details">
+                        <div class="decision-summary">
+                            <div class="summary-row">
+                                <span class="summary-label">Product:</span>
+                                <span class="summary-value">${selectedProduct === "all" ? "All Products" : selectedProduct}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Period Sales:</span>
+                                <span class="summary-value">₱${periodSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Stock Needed:</span>
+                                <span class="summary-value">${stockNeeded.toLocaleString()} units</span>
+                            </div>
+                        </div>
+                        <div class="decision-text">${d.text}</div>
+                    </div>
+                </div>
+            `;
+        }).join("");
         
         // Update pagination controls
         prevBtn.disabled = currentPage === 0;
@@ -1193,19 +1248,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div class="summary-item">
                             <h3>Total Forecasted Sales</h3>
-                            <div class="value">${data.summary.totalSales}</div>
+                            <div class="value">₱${data.summary.totalSales}</div>
                         </div>
                         <div class="summary-item">
                             <h3>Average Daily Sales</h3>
-                            <div class="value">${data.summary.averageSales}</div>
+                            <div class="value">₱${data.summary.averageSales}</div>
                         </div>
                         <div class="summary-item">
                             <h3>Highest Daily Sales</h3>
-                            <div class="value">${data.summary.highestSales}</div>
+                            <div class="value">₱${data.summary.highestSales}</div>
                         </div>
                         <div class="summary-item">
                             <h3>Lowest Daily Sales</h3>
-                            <div class="value">${data.summary.lowestSales}</div>
+                            <div class="value">₱${data.summary.lowestSales}</div>
                         </div>
                     </div>
                 </div>
@@ -1256,7 +1311,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             ${data.predictions.map(p => `
                                 <tr>
                                     <td>Day ${p.day}</td>
-                                    <td>${p.value}</td>
+                                    <td>₱${p.value}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
