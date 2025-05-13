@@ -188,10 +188,10 @@ function updateForecastCard(forecast, cardNumber) {
     const avgPredictionElement = document.getElementById(`avg-prediction-${cardNumber}`);
     
     if (thresholdElement) {
-        thresholdElement.textContent = forecast.threshold || 0;
+        thresholdElement.textContent = `₱${(forecast.threshold || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
     if (avgPredictionElement) {
-        avgPredictionElement.textContent = forecast.avg_prediction || 0;
+        avgPredictionElement.textContent = `₱${(forecast.avg_prediction || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
     
     // Get the canvas context for the chart
@@ -284,7 +284,7 @@ function updateForecastCard(forecast, cardNumber) {
                     displayColors: true,
                     callbacks: {
                         label: function(context) {
-                            return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`;
+                            return `${context.dataset.label}: ₱${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                         }
                     }
                 }
@@ -300,7 +300,10 @@ function updateForecastCard(forecast, cardNumber) {
                         font: {
                             size: 12
                         },
-                        padding: 10
+                        padding: 10,
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        }
                     }
                 },
                 x: {
@@ -525,7 +528,7 @@ function createProductElement(product, actionType) {
                            Math.abs(growthRate) > 10 ? 'moderate' : 'slight';
     
     productStats.innerHTML = `
-        <span><span class="indicator ${growthRate >= 0 ? 'up' : 'down'}"></span>Avg Sales: ${avgSales.toFixed(2)}</span>
+        <span><span class="indicator ${growthRate >= 0 ? 'up' : 'down'}"></span>Avg Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
         <span>Growth: ${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%</span>
         <span>Trend: ${salesTrend}</span>
         <span>Performance: ${performanceLevel}</span>
@@ -563,12 +566,12 @@ function createProductElement(product, actionType) {
         if (isHighGrowth && isHighSales) {
             suggestionText = `
                 <strong>Premium Promotion Opportunity:</strong> This product is showing exceptional performance with 
-                ${growthRate.toFixed(1)}% growth and strong average sales of ${avgSales.toFixed(2)}.
+                ${growthRate.toFixed(1)}% growth and strong average sales of ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}.
                 <div class="performance-metrics">
                     <strong>Key Performance Indicators:</strong>
                     <ul>
                         <li>Growth Rate: ${growthRate.toFixed(1)}% (Exceeds industry average)</li>
-                        <li>Average Sales: ${avgSales.toFixed(2)} (Top tier performance)</li>
+                        <li>Average Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Top tier performance)</li>
                         <li>Sales Trend: Strong upward momentum</li>
                     </ul>
                 </div>
@@ -608,13 +611,13 @@ function createProductElement(product, actionType) {
             `;
         } else if (isHighGrowth && (isModerateSales || isLowSales)) {
             suggestionText = `
-                <strong>Growth Acceleration Opportunity:</strong> Despite lower average sales of ${avgSales.toFixed(2)}, 
+                <strong>Growth Acceleration Opportunity:</strong> Despite lower average sales of ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}, 
                 the product shows strong growth potential at ${growthRate.toFixed(1)}%.
                 <div class="performance-metrics">
                     <strong>Key Performance Indicators:</strong>
                     <ul>
                         <li>Growth Rate: ${growthRate.toFixed(1)}% (Above average)</li>
-                        <li>Average Sales: ${avgSales.toFixed(2)} (Room for improvement)</li>
+                        <li>Average Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Room for improvement)</li>
                         <li>Sales Trend: Positive momentum</li>
                     </ul>
                 </div>
@@ -655,12 +658,12 @@ function createProductElement(product, actionType) {
         } else if (isModerateGrowth) {
             suggestionText = `
                 <strong>Steady Growth Opportunity:</strong> The product shows consistent growth of ${growthRate.toFixed(1)}% 
-                with average sales of ${avgSales.toFixed(2)}.
+                with average sales of ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}.
                 <div class="performance-metrics">
                     <strong>Key Performance Indicators:</strong>
                     <ul>
                         <li>Growth Rate: ${growthRate.toFixed(1)}% (Stable growth)</li>
-                        <li>Average Sales: ${avgSales.toFixed(2)} (Consistent performance)</li>
+                        <li>Average Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Consistent performance)</li>
                         <li>Sales Trend: Steady improvement</li>
                     </ul>
                 </div>
@@ -701,12 +704,12 @@ function createProductElement(product, actionType) {
         } else {
             suggestionText = `
                 <strong>Stable Performance Opportunity:</strong> With ${growthRate.toFixed(1)}% growth and 
-                average sales of ${avgSales.toFixed(2)}, this product shows potential for improvement.
+                average sales of ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}, this product shows potential for improvement.
                 <div class="performance-metrics">
                     <strong>Key Performance Indicators:</strong>
                     <ul>
                         <li>Growth Rate: ${growthRate.toFixed(1)}% (Needs improvement)</li>
-                        <li>Average Sales: ${avgSales.toFixed(2)} (Stable)</li>
+                        <li>Average Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Stable)</li>
                         <li>Sales Trend: Minimal growth</li>
                     </ul>
                 </div>
@@ -751,13 +754,13 @@ function createProductElement(product, actionType) {
         
         if (isDeclining && isHighSales) {
             suggestionText = `
-                <strong>Critical Performance Review Needed:</strong> Despite high average sales of ${avgSales.toFixed(2)}, 
+                <strong>Critical Performance Review Needed:</strong> Despite high average sales of ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}, 
                 the product is declining at ${Math.abs(growthRate).toFixed(1)}%.
                 <div class="performance-metrics">
                     <strong>Key Performance Indicators:</strong>
                     <ul>
                         <li>Growth Rate: ${growthRate.toFixed(1)}% (Critical decline)</li>
-                        <li>Average Sales: ${avgSales.toFixed(2)} (Historically strong)</li>
+                        <li>Average Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Historically strong)</li>
                         <li>Sales Trend: Significant downward trend</li>
                     </ul>
                 </div>
@@ -798,12 +801,12 @@ function createProductElement(product, actionType) {
         } else if (isDeclining && (isModerateSales || isLowSales)) {
             suggestionText = `
                 <strong>Urgent Strategy Review Required:</strong> The product shows concerning performance with 
-                ${Math.abs(growthRate).toFixed(1)}% decline and low average sales of ${avgSales.toFixed(2)}.
+                ${Math.abs(growthRate).toFixed(1)}% decline and low average sales of ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}.
                 <div class="performance-metrics">
                     <strong>Key Performance Indicators:</strong>
                     <ul>
                         <li>Growth Rate: ${growthRate.toFixed(1)}% (Severe decline)</li>
-                        <li>Average Sales: ${avgSales.toFixed(2)} (Below target)</li>
+                        <li>Average Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Below target)</li>
                         <li>Sales Trend: Critical downward trend</li>
                     </ul>
                 </div>
@@ -844,12 +847,12 @@ function createProductElement(product, actionType) {
         } else if (isLowGrowth) {
             suggestionText = `
                 <strong>Performance Optimization Needed:</strong> The product shows minimal growth of ${growthRate.toFixed(1)}% 
-                with average sales of ${avgSales.toFixed(2)}.
+                with average sales of ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}.
                 <div class="performance-metrics">
                     <strong>Key Performance Indicators:</strong>
                     <ul>
                         <li>Growth Rate: ${growthRate.toFixed(1)}% (Below target)</li>
-                        <li>Average Sales: ${avgSales.toFixed(2)} (Needs improvement)</li>
+                        <li>Average Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Needs improvement)</li>
                         <li>Sales Trend: Stagnant growth</li>
                     </ul>
                 </div>
@@ -890,12 +893,12 @@ function createProductElement(product, actionType) {
         } else {
             suggestionText = `
                 <strong>Strategy Enhancement Required:</strong> With ${growthRate.toFixed(1)}% growth and 
-                average sales of ${avgSales.toFixed(2)}, this product needs attention.
+                average sales of ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}, this product needs attention.
                 <div class="performance-metrics">
                     <strong>Key Performance Indicators:</strong>
                     <ul>
                         <li>Growth Rate: ${growthRate.toFixed(1)}% (Needs improvement)</li>
-                        <li>Average Sales: ${avgSales.toFixed(2)} (Below target)</li>
+                        <li>Average Sales: ₱${avgSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Below target)</li>
                         <li>Sales Trend: Requires attention</li>
                     </ul>
                 </div>
