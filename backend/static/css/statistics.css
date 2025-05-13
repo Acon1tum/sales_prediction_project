@@ -1,32 +1,37 @@
 .statistics {
     padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
+    position: relative;
+    overflow-x: hidden;
 }
 
 /* Introduction Section */
 .intro-section {
-    text-align: center;
-    margin-bottom: 3rem;
-    padding: 2rem;
+    text-align: left;
+    margin: -2rem -2rem 2rem -2rem;
+    padding: 1.5rem 2rem;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    width: calc(100% + 4rem);
 }
 
 .intro-section h2 {
     color: #2c3e50;
-    font-size: 2.2rem;
-    margin-bottom: 1rem;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
     font-weight: 600;
+    text-align: left;
 }
 
 .intro-text {
     color: #6c757d;
-    font-size: 1.1rem;
-    line-height: 1.6;
-    max-width: 800px;
-    margin: 0 auto;
+    font-size: 1rem;
+    line-height: 1.4;
+    max-width: 100%;
+    margin: 0;
+    text-align: left;
 }
 
 /* Filter Controls */
