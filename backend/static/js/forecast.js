@@ -920,58 +920,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const end = start + itemsPerPage;
         const paginatedDecisions = decisions.slice(start, end);
         
-        // Update decisions display with enhanced format
-        decisionSection.innerHTML = paginatedDecisions.map((d, index) => {
-            // Calculate total sales for this period
-            const dayStart = start + index;
-            const dayEnd = Math.min(dayStart + 7, predictions.length);
-            const periodSales = predictions.slice(dayStart, dayEnd).reduce((sum, val) => sum + val, 0);
-            
-            // Determine stock recommendation based on trend
-            const stockNeeded = d.trend === 'positive' ? 
-                Math.ceil(periodSales * 1.2) : // 20% buffer for positive trends
-                Math.ceil(periodSales * 0.8);  // 20% reduction for negative trends
-            
-            // Determine action type based on severity and trend
-            let actionType = '';
-            if (d.severity === 'high' && d.trend === 'positive') {
-                actionType = 'Urgent Restock';
-            } else if (d.severity === 'high' && d.trend === 'negative') {
-                actionType = 'Immediate Discount';
-            } else if (d.trend === 'positive') {
-                actionType = 'Monitor Stock';
-            } else if (d.trend === 'negative') {
-                actionType = 'Consider Promotion';
-            } else {
-                actionType = 'Maintain Current';
-            }
-
-            return `
-                <div class="decision-item ${d.trend}">
-                    <div class="decision-header">
-                        <span class="decision-icon">${d.icon || '💡'}</span>
-                        <span class="decision-action">${actionType}</span>
-                    </div>
-                    <div class="decision-details">
-                        <div class="decision-summary">
-                            <div class="summary-row">
-                                <span class="summary-label">Product:</span>
-                                <span class="summary-value">${selectedProduct === "all" ? "All Products" : selectedProduct}</span>
-                            </div>
-                            <div class="summary-row">
-                                <span class="summary-label">Period Sales:</span>
-                                <span class="summary-value">₱${periodSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                            </div>
-                            <div class="summary-row">
-                                <span class="summary-label">Stock Needed:</span>
-                                <span class="summary-value">${stockNeeded.toLocaleString()} units</span>
-                            </div>
-                        </div>
-                        <div class="decision-text">${d.text}</div>
-                    </div>
-                </div>
-            `;
-        }).join("");
+        // Update decisions display
+        decisionSection.innerHTML = paginatedDecisions.map(d => `
+            <div class="decision-item">
+                <span class="decision-icon">${d.icon || '💡'}</span>
+                <div class="decision-text">${d.text}</div>
+            </div>
+        `).join("");
         
         // Update pagination controls
         prevBtn.disabled = currentPage === 0;
