@@ -922,10 +922,9 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // Update decisions display with enhanced format
         decisionSection.innerHTML = paginatedDecisions.map((d, index) => {
-            // Calculate total sales for this period
-            const dayStart = start + index;
-            const dayEnd = Math.min(dayStart + 7, predictions.length);
-            const periodSales = predictions.slice(dayStart, dayEnd).reduce((sum, val) => sum + val, 0);
+            // Calculate total sales for this period (cumulative up to current day)
+            const currentDay = start + index + 1;
+            const periodSales = predictions.slice(0, currentDay).reduce((sum, val) => sum + val, 0);
             
             // Determine stock recommendation based on trend
             const stockNeeded = d.trend === 'positive' ? 
