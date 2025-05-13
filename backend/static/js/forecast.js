@@ -41,6 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let forecastChart = null; // Chart.js instance for forecast visualization
     let predictionsChart = null; // Chart.js instance for predictions visualization
     let historicalChart = null; // Chart.js instance for historical visualization
+    let pastSalesChart = null; // Chart.js instance for past sales visualization
+    let predictedSalesChart = null; // Chart.js instance for predicted sales visualization
 
     // Get references to important DOM elements for manipulation
     const uploadBtn = document.getElementById("upload-btn"); // File upload button
@@ -130,6 +132,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
             
+            // Store past sales data for comparison
+            window.pastSalesData = data.past_sales || [];
+            
             // Show success message and enable generate button
             showToast(data.message, 'success');
             generateBtn.disabled = false;
@@ -139,6 +144,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 productList = ["all", ...data.product_list];
                 updateProductDropdown();
             }
+
+            // Update comparison charts
+            updateComparisonCharts();
         })
         .catch(error => {
             console.error(error);
@@ -348,6 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateForecastChart();
         updatePredictionsChart();
         updateHistoricalChart();
+        updateComparisonCharts();
     }
 
     // Creates/updates the forecast line chart
@@ -1368,4 +1377,138 @@ document.addEventListener("DOMContentLoaded", () => {
         const file = e.dataTransfer.files[0];
         handleFileUpload(file);
     });
+
+    // Updates the comparison charts (past vs predicted sales)
+    function updateComparisonCharts() {
+        // Initialize charts if they don't exist
+        if (!pastSalesChart || !predictedSalesChart) {
+            const pastSalesCtx = document.getElementById('pastSalesChart').getContext('2d');
+            const predictedSalesCtx = document.getElementById('predictedSalesChart').getContext('2d');
+
+            const chartConfig = {
+                type: 'line',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `₱${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            pastSalesChart = new Chart(pastSalesCtx, {
+                ...chartConfig,
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Past Sales',
+                        data: [],
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                }
+            });
+
+            predictedSalesChart = new Chart(predictedSalesCtx, {
+                ...chartConfig,
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Predicted Sales',
+                        data: [],
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                }
+            });
+        }
+
+        // Get historical data
+        fetch("/get_historical_forecasts")
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error("Error fetching historical data:", data.error);
+                    return;
+                }
+
+                // Process historical data
+                const historicalData = data.historical_data || [];
+                const pastSales = [];
+                const predictedSales = [];
+
+                // Filter data based on selected product
+                const filteredData = selectedProduct === 'all' 
+                    ? historicalData 
+                    : historicalData.filter(item => item.product === selectedProduct);
+
+                // Sort data by date (newest first)
+                filteredData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // Get the most recent past forecast (excluding current forecast)
+                const mostRecentPastForecast = filteredData[1]; // Index 1 because index 0 is current forecast
+                
+                if (mostRecentPastForecast) {
+                    // Use all predictions from the most recent past forecast
+                    const predictionsArr = mostRecentPastForecast.predictions;
+                    const labels = predictionsArr.map((_, idx) => `Day ${idx + 1}`);
+                    pastSalesChart.data.labels = labels;
+                    pastSalesChart.data.datasets[0].data = predictionsArr;
+                } else {
+                    pastSalesChart.data.labels = [];
+                    pastSalesChart.data.datasets[0].data = [];
+                }
+                pastSalesChart.update();
+
+                // Process predicted sales (current forecast)
+                if (predictions && predictions.length > 0) {
+                    const labels = predictions.map((_, idx) => {
+                        const date = new Date();
+                        date.setDate(date.getDate() + idx);
+                        return date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                    });
+                    predictedSalesChart.data.labels = labels;
+                    predictedSalesChart.data.datasets[0].data = predictions;
+                } else {
+                    predictedSalesChart.data.labels = [];
+                    predictedSalesChart.data.datasets[0].data = [];
+                }
+                predictedSalesChart.update();
+            })
+            .catch(error => {
+                console.error("Error updating comparison charts:", error);
+            });
+    }
 });
