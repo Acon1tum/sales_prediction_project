@@ -1145,7 +1145,7 @@ def dashboard_data():
         forecast_count = supabase_client.table("forecasts") \
             .select("count", count="exact") \
             .eq("user_id", user_id) \
-            .execute().count
+            .execute().count or 0  # Default to 0 if None
         
         # Get count from previous period (e.g., last month)
         one_month_ago = (datetime.now() - timedelta(days=30)).isoformat()
@@ -1153,7 +1153,7 @@ def dashboard_data():
             .select("count", count="exact") \
             .eq("user_id", user_id) \
             .lt("created_at", one_month_ago) \
-            .execute().count or 0  # Use 0 if no previous forecasts
+            .execute().count or 0  # Default to 0 if None
         
         # Calculate percentage change
         percentage_change = 0
@@ -1166,13 +1166,13 @@ def dashboard_data():
             .eq("user_id", user_id) \
             .order("created_at", desc=True) \
             .limit(2) \
-            .execute().data
+            .execute().data or []  # Default to empty list if None
         
         # Get all available years from forecasts
         all_forecasts = supabase_client.table("forecasts") \
             .select("created_at") \
             .eq("user_id", user_id) \
-            .execute().data
+            .execute().data or []  # Default to empty list if None
         
         # Extract unique years from the forecasts
         available_years = set()
@@ -1199,7 +1199,7 @@ def dashboard_data():
             .eq("user_id", user_id) \
             .gte("created_at", start_date) \
             .lte("created_at", end_date) \
-            .execute().data
+            .execute().data or []  # Default to empty list if None
         
         # Initialize monthly counts array with zeros
         monthly_counts = [0] * 12
@@ -1213,36 +1213,136 @@ def dashboard_data():
                 monthly_counts[month] += 1
             except (ValueError, KeyError):
                 continue
-        
+
         # Process recent forecasts data
         processed_recent = []
         for forecast in recent_forecasts:
-            forecast_data = forecast.get("forecast_data", {})
-            predictions = forecast_data.get("predictions", [])
-            avg_prediction = sum(predictions) / len(predictions) if predictions else 0
-            
-            processed_recent.append({
-                "id": forecast["id"],
-                "date": forecast["created_at"],
-                "product": forecast["product"],
-                "type": forecast["forecast_type"],
-                "avg_prediction": round(avg_prediction, 2),
-                "threshold": forecast["threshold"],
-                "predictions": predictions[:7]  # Just show first week for preview
-            })
+            try:
+                forecast_data = forecast.get("forecast_data", {})
+                predictions = forecast_data.get("predictions", [])
+                avg_prediction = sum(predictions) / len(predictions) if predictions else 0
+                
+                processed_recent.append({
+                    "id": forecast.get("id", ""),
+                    "date": forecast.get("created_at", ""),
+                    "product": forecast.get("product", "Unknown"),
+                    "type": forecast.get("forecast_type", "Unknown"),
+                    "avg_prediction": round(avg_prediction, 2),
+                    "threshold": forecast.get("threshold", 0),
+                    "predictions": predictions[:7] if predictions else []  # Just show first week for preview
+                })
+            except Exception as e:
+                logging.error(f"Error processing forecast: {e}")
+                continue
+
+        # Get product performance data
+        product_performance = analyze_product_performance(user_id)
         
         return jsonify({
             "total_forecasts": forecast_count,
             "percentage_change": percentage_change,
             "recent_forecasts": processed_recent,
             "monthly_forecasts": monthly_counts,
-            "available_years": available_years
+            "available_years": available_years,
+            "product_performance": product_performance
         })
         
     except Exception as e:
         logging.error(f"Error fetching dashboard data: {e}")
-        return jsonify({"error": str(e)}), 500
-    
+        return jsonify({
+            "error": str(e),
+            "total_forecasts": 0,
+            "percentage_change": 0,
+            "recent_forecasts": [],
+            "monthly_forecasts": [0] * 12,
+            "available_years": [datetime.now().year],
+            "product_performance": {
+                "best_performers": [],
+                "worst_performers": []
+            }
+        }), 500
+
+def analyze_product_performance(user_id):
+    """Analyze product performance from forecast data"""
+    try:
+        # Get all forecasts for the user
+        response = supabase_client.table("forecasts") \
+            .select("forecast_data, product, created_at") \
+            .eq("user_id", user_id) \
+            .order("created_at", desc=True) \
+            .execute()
+
+        if not response.data:
+            return {
+                "best_performers": [],
+                "worst_performers": []
+            }
+
+        # Process forecasts to get product performance
+        product_stats = {}
+        
+        for forecast in response.data:
+            forecast_data = forecast.get("forecast_data", {})
+            product = forecast.get("product", "all")
+            predictions = forecast_data.get("predictions", [])
+            
+            if not predictions:
+                continue
+
+            if product not in product_stats:
+                product_stats[product] = {
+                    "total_sales": 0,
+                    "count": 0,
+                    "predictions": [],
+                    "growth": 0
+                }
+
+            # Calculate average sales for this forecast
+            avg_sales = sum(predictions) / len(predictions)
+            product_stats[product]["total_sales"] += avg_sales
+            product_stats[product]["count"] += 1
+            product_stats[product]["predictions"].extend(predictions)
+
+        # Calculate final statistics for each product
+        product_performance = []
+        for product, stats in product_stats.items():
+            if stats["count"] > 0:
+                avg_sales = stats["total_sales"] / stats["count"]
+                
+                # Calculate growth rate (comparing most recent predictions with older ones)
+                predictions = stats["predictions"]
+                if len(predictions) >= 2:
+                    recent_avg = sum(predictions[:len(predictions)//2]) / (len(predictions)//2)
+                    older_avg = sum(predictions[len(predictions)//2:]) / (len(predictions)//2)
+                    growth = ((recent_avg - older_avg) / older_avg * 100) if older_avg > 0 else 0
+                else:
+                    growth = 0
+
+                product_performance.append({
+                    "id": product,  # Using product name as ID for now
+                    "name": product,
+                    "avg_sales": avg_sales,
+                    "growth": growth
+                })
+
+        # Sort products by performance
+        product_performance.sort(key=lambda x: (x["avg_sales"], x["growth"]), reverse=True)
+
+        # Get top 3 best and worst performers
+        best_performers = product_performance[:3]
+        worst_performers = product_performance[-3:][::-1]  # Reverse to show worst first
+
+        return {
+            "best_performers": best_performers,
+            "worst_performers": worst_performers
+        }
+
+    except Exception as e:
+        logging.error(f"Error analyzing product performance: {e}")
+        return {
+            "best_performers": [],
+            "worst_performers": []
+        }
 
 @app.route("/forecast_details_data/<int:forecast_id>")
 def forecast_details_data(forecast_id):

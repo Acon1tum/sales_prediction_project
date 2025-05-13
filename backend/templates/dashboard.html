@@ -77,6 +77,36 @@
             <canvas id="monthly-forecasts-chart"></canvas>
         </div>
     </div>
+
+    <!-- Product Performance Section -->
+    <div class="product-performance-section">
+        <div class="section-header">
+            <h2>Product Performance Analysis</h2>
+        </div>
+        <div class="performance-grid">
+            <!-- Best Performers -->
+            <div class="performance-card best">
+                <div class="card-header">
+                    <h3>Top Performing Products</h3>
+                    <span class="badge success">Best</span>
+                </div>
+                <div class="product-list" id="best-performers">
+                    <div class="loading">Loading best performers...</div>
+                </div>
+            </div>
+
+            <!-- Worst Performers -->
+            <div class="performance-card worst">
+                <div class="card-header">
+                    <h3>Products Needing Attention</h3>
+                    <span class="badge warning">Needs Review</span>
+                </div>
+                <div class="product-list" id="worst-performers">
+                    <div class="loading">Loading products needing attention...</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 {% endblock %}
 
