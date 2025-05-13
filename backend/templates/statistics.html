@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/statistics.css') }}">
 {% endblock %}
 
@@ -34,12 +35,26 @@
                 <option value="all" selected>All Historical Data</option>
             </select>
         </div>
+        <div class="filter-group">
+            <label for="graphFilter">Graph Filter:</label>
+            <select id="graphFilter" class="form-select">
+                <option value="all" selected>Show All Graphs</option>
+                <option value="product">Product Performance Analysis</option>
+                <option value="trend">Market Trend Analysis</option>
+                <option value="severity">Impact Analysis</option>
+                <option value="monthly">Temporal Analysis</option>
+                <option value="range">Sales Volume Distribution</option>
+                <option value="type">Methodology Analysis</option>
+                <option value="threshold">Target Achievement Analysis</option>
+                <option value="average">Product Sales Trends</option>
+            </select>
+        </div>
     </div>
 
     <!-- Statistics Grid with Enhanced Information -->
     <div class="stats-grid">
         <!-- Product Performance -->
-        <div class="stat-card">
+        <div class="stat-card" data-graph-type="product">
             <div class="stat-header">
                 <h3 data-tooltip="Shows the distribution of forecasts across different products, helping identify which products are being forecasted most frequently.">Product Performance Analysis</h3>
                 <span class="stat-description">Track forecast distribution across your product portfolio</span>
@@ -53,7 +68,7 @@
         </div>
 
         <!-- Trend Analysis -->
-        <div class="stat-card">
+        <div class="stat-card" data-graph-type="trend">
             <div class="stat-header">
                 <h3 data-tooltip="Displays the proportion of positive, negative, and neutral trends in your forecasts, helping identify overall market direction.">Market Trend Analysis</h3>
                 <span class="stat-description">Analyze market direction and momentum</span>
@@ -67,7 +82,7 @@
         </div>
 
         <!-- Severity Distribution -->
-        <div class="stat-card">
+        <div class="stat-card" data-graph-type="severity">
             <div class="stat-header">
                 <h3 data-tooltip="Shows the distribution of forecast severity levels, helping identify the frequency of high-impact predictions.">Impact Analysis</h3>
                 <span class="stat-description">Evaluate forecast impact levels</span>
@@ -81,7 +96,7 @@
         </div>
 
         <!-- Monthly Forecasts -->
-        <div class="stat-card">
+        <div class="stat-card" data-graph-type="monthly">
             <div class="stat-header">
                 <h3 data-tooltip="Tracks the number of forecasts generated each month, helping identify patterns in forecasting activity over time.">Temporal Analysis</h3>
                 <span class="stat-description">Monitor forecasting activity over time</span>
@@ -95,7 +110,7 @@
         </div>
 
         <!-- Prediction Ranges -->
-        <div class="stat-card">
+        <div class="stat-card" data-graph-type="range">
             <div class="stat-header">
                 <h3 data-tooltip="Shows the distribution of predicted sales volumes across different ranges, helping identify typical sales patterns.">Sales Volume Distribution</h3>
                 <span class="stat-description">Analyze predicted sales ranges</span>
@@ -109,7 +124,7 @@
         </div>
 
         <!-- Forecast Types -->
-        <div class="stat-card">
+        <div class="stat-card" data-graph-type="type">
             <div class="stat-header">
                 <h3 data-tooltip="Shows the distribution of different forecast types used, helping understand the variety of forecasting approaches employed.">Methodology Analysis</h3>
                 <span class="stat-description">Review forecasting approaches</span>
@@ -123,7 +138,7 @@
         </div>
 
         <!-- Threshold Comparison -->
-        <div class="stat-card">
+        <div class="stat-card" data-graph-type="threshold">
             <div class="stat-header">
                 <h3 data-tooltip="Compares predictions against set thresholds, helping identify how often forecasts exceed or fall below target values.">Target Achievement Analysis</h3>
                 <span class="stat-description">Track performance against targets</span>
@@ -137,7 +152,7 @@
         </div>
 
         <!-- Average Predictions -->
-        <div class="stat-card">
+        <div class="stat-card" data-graph-type="average">
             <div class="stat-header">
                 <h3 data-tooltip="Shows the average predicted sales for each product, helping identify which products typically have higher or lower sales forecasts.">Product Sales Trends</h3>
                 <span class="stat-description">Compare average predictions by product</span>

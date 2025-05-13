@@ -1,183 +1,204 @@
 .statistics {
-    padding: 20px;
+    padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
-    color: #333;
-    font-size: 16px; /* Base font size */
 }
 
 /* Introduction Section */
 .intro-section {
-    margin-bottom: 30px;
-    padding: 25px;
-    background: linear-gradient(to right, #ffffff, #f8f9fa);
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .intro-section h2 {
     color: #2c3e50;
-    margin-bottom: 15px;
-    font-size: 1.5rem; /* Reduced from 1.8rem */
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
     font-weight: 600;
 }
 
 .intro-text {
-    color: #5a6c7d;
+    color: #6c757d;
+    font-size: 1.1rem;
     line-height: 1.6;
-    font-size: 1rem; /* Reduced from 1.1rem */
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 /* Filter Controls */
 .filter-controls {
-    margin-bottom: 30px;
-    padding: 20px;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .filter-header {
-    margin-bottom: 15px;
+    flex: 1;
+    min-width: 300px;
 }
 
 .filter-header h3 {
     color: #2c3e50;
-    margin-bottom: 8px;
-    font-size: 1.1rem; /* Reduced from 1.2rem */
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
     font-weight: 600;
 }
 
 .filter-description {
     color: #6c757d;
-    font-size: 0.9rem; /* Reduced from 0.95rem */
+    font-size: 0.95rem;
+    margin: 0;
 }
 
 .filter-group {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 1rem;
+    min-width: 250px;
 }
 
 .filter-group label {
-    font-weight: 600;
-    color: #2c3e50;
-    min-width: 100px;
-    font-size: 0.95rem; /* Added specific size */
+    color: #495057;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
 .form-select {
-    padding: 10px 15px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
     background-color: white;
-    font-size: 0.9rem; /* Reduced from 0.95rem */
-    color: #333;
+    color: #495057;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
     cursor: pointer;
-    transition: all 0.2s ease;
-    flex: 1;
-    max-width: 300px;
+    min-width: 200px;
 }
 
 .form-select:hover {
-    border-color: #4a90e2;
+    border-color: #3498db;
 }
 
 .form-select:focus {
     outline: none;
-    border-color: #4a90e2;
-    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
 /* Statistics Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 25px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
 }
 
-/* Stat Cards */
 .stat-card {
     background: white;
     border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    height: 100%;
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .stat-header {
-    margin-bottom: 10px;
+    margin-bottom: 1.5rem;
 }
 
 .stat-header h3 {
     color: #2c3e50;
-    font-size: 1.1rem; /* Reduced from 1.2rem */
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
     font-weight: 600;
-    margin-bottom: 8px;
-    cursor: help;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.stat-header h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+    border-radius: 2px;
 }
 
 .stat-description {
     color: #6c757d;
-    font-size: 0.85rem; /* Reduced from 0.9rem */
+    font-size: 0.9rem;
     display: block;
-    line-height: 1.4;
+    margin-top: 0.5rem;
 }
 
 .graph-container {
     flex: 1;
-    min-height: 250px;
+    min-height: 300px;
     position: relative;
-    margin: 10px 0;
+    margin: 1rem 0;
 }
 
 .stat-footer {
-    padding-top: 10px;
-    border-top: 1px solid #eee;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
 }
 
 .insight-text {
     color: #6c757d;
-    font-size: 0.85rem; /* Reduced from 0.9rem */
+    font-size: 0.95rem;
     line-height: 1.5;
+    margin: 0;
 }
 
 /* Help Section */
 .help-section {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 30px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 3rem;
 }
 
 .help-section h3 {
     color: #2c3e50;
-    margin-bottom: 10px;
-    font-size: 1.1rem; /* Reduced from 1.2rem */
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
     font-weight: 600;
 }
 
 .help-section p {
-    color: #5a6c7d;
+    color: #6c757d;
+    font-size: 1rem;
     line-height: 1.6;
-    font-size: 0.9rem; /* Added specific size */
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-/* Tooltips */
+/* Tooltip Styles */
 [data-tooltip] {
     position: relative;
+    cursor: help;
 }
 
 [data-tooltip]:hover::before {
@@ -186,69 +207,82 @@
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
+    padding: 0.8rem 1rem;
     background: rgba(44, 62, 80, 0.95);
     color: white;
-    padding: 12px 15px;
+    font-size: 0.9rem;
     border-radius: 6px;
-    font-size: 0.85rem; /* Added specific size */
-    width: 280px;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    text-align: center;
-    margin-bottom: 10px;
-    line-height: 1.4;
-    font-weight: normal;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+[data-tooltip]:hover::after {
+    content: '';
+    position: absolute;
+    bottom: calc(100% - 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(44, 62, 80, 0.95) transparent transparent transparent;
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
+    .statistics {
+        padding: 1rem;
+    }
+
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .form-select {
+        width: 100%;
+    }
+
     .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        grid-template-columns: 1fr;
+    }
+
+    .intro-section h2 {
+        font-size: 1.8rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
     }
 }
 
-@media (max-width: 768px) {
-    .statistics {
-        padding: 15px;
-        font-size: 15px; /* Slightly reduced base size for mobile */
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .intro-section h2 {
-        font-size: 1.3rem;
-    }
-    
-    .intro-text {
-        font-size: 0.95rem;
-    }
-    
-    .filter-group {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-    
-    .form-select {
-        max-width: none;
-    }
-    
-    .stat-card {
-        padding: 15px;
-    }
+/* Animation for cards */
+.stat-card {
+    animation: fadeInUp 0.5s ease-out;
+}
 
-    .stat-header h3 {
-        font-size: 1rem;
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-    .stat-description {
-        font-size: 0.8rem;
-    }
+/* Chart customization */
+canvas {
+    max-width: 100%;
+    height: auto !important;
+}
 
-    .insight-text {
-        font-size: 0.8rem;
-    }
+/* Hidden state for filtered cards */
+.stat-card.hidden {
+    display: none;
 } 

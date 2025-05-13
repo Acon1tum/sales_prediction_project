@@ -506,6 +506,9 @@ function createProductElement(product, actionType) {
     const productDiv = document.createElement('div');
     productDiv.className = 'product-item';
 
+    const productHeader = document.createElement('div');
+    productHeader.className = 'product-header';
+
     const productInfo = document.createElement('div');
     productInfo.className = 'product-info';
 
@@ -513,7 +516,6 @@ function createProductElement(product, actionType) {
     productName.className = 'product-name';
     productName.textContent = product.name;
 
-    // Enhanced product stats with more metrics
     const productStats = document.createElement('div');
     productStats.className = 'product-stats';
     const avgSales = product.avg_sales;
@@ -523,11 +525,22 @@ function createProductElement(product, actionType) {
                            Math.abs(growthRate) > 10 ? 'moderate' : 'slight';
     
     productStats.innerHTML = `
-        <span>Avg Sales: ${avgSales.toFixed(2)}</span>
+        <span><span class="indicator ${growthRate >= 0 ? 'up' : 'down'}"></span>Avg Sales: ${avgSales.toFixed(2)}</span>
         <span>Growth: ${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%</span>
         <span>Trend: ${salesTrend}</span>
         <span>Performance: ${performanceLevel}</span>
     `;
+
+    const toggleIcon = document.createElement('div');
+    toggleIcon.className = 'toggle-icon';
+
+    productInfo.appendChild(productName);
+    productInfo.appendChild(productStats);
+    productHeader.appendChild(productInfo);
+    productHeader.appendChild(toggleIcon);
+
+    const productDetails = document.createElement('div');
+    productDetails.className = 'product-details';
 
     const suggestionDiv = document.createElement('div');
     suggestionDiv.className = `product-suggestion ${actionType}`;
@@ -924,10 +937,15 @@ function createProductElement(product, actionType) {
         suggestionDiv.innerHTML = suggestionText;
     }
 
-    productInfo.appendChild(productName);
-    productInfo.appendChild(productStats);
-    productDiv.appendChild(productInfo);
-    productDiv.appendChild(suggestionDiv);
+    productDetails.appendChild(suggestionDiv);
+    productDiv.appendChild(productHeader);
+    productDiv.appendChild(productDetails);
+
+    // Add click event listener for toggle functionality
+    productHeader.addEventListener('click', () => {
+        productHeader.classList.toggle('active');
+        productDetails.classList.toggle('active');
+    });
 
     return productDiv;
 }

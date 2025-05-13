@@ -1,70 +1,95 @@
 // Global variables to store Chart.js instances
 let productChart, trendChart, severityChart, monthlyChart, rangeChart, typeChart, thresholdChart, averageChart;
 
+// Initialize charts and data
+let charts = {};
+let forecastData = [];
+
+// DOM Elements
+const forecastLimitSelect = document.getElementById('forecastLimit');
+const graphFilterSelect = document.getElementById('graphFilter');
+const statCards = document.querySelectorAll('.stat-card');
+
 // Initialize the page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Add event listener for the filter dropdown
-    const forecastLimit = document.getElementById('forecastLimit');
-    if (forecastLimit) {
-        forecastLimit.addEventListener('change', function() {
-            fetchStatisticsData(this.value);
-        });
-    }
-
-    // Initial fetch with default value
-    fetchStatisticsData('all');
+    // Add event listeners
+    forecastLimitSelect.addEventListener('change', updateCharts);
+    graphFilterSelect.addEventListener('change', filterGraphs);
+    
+    // Initial data load
+    loadData();
 });
 
-// Fetch statistics data from the server
-function fetchStatisticsData(limit = 'all') {
-    fetch(`/statistics_data?limit=${limit}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error('Error fetching statistics:', data.error);
-                return;
-            }
-            
-            // Destroy existing charts if they exist
-            if (productChart) productChart.destroy();
-            if (trendChart) trendChart.destroy();
-            if (severityChart) severityChart.destroy();
-            if (monthlyChart) monthlyChart.destroy();
-            if (rangeChart) rangeChart.destroy();
-            if (typeChart) typeChart.destroy();
-            if (thresholdChart) thresholdChart.destroy();
-            if (averageChart) averageChart.destroy();
-            
-            // Create all charts
-            createProductChart(data.product_analysis);
-            createTrendChart(data.trend_analysis);
-            createSeverityChart(data.severity_analysis);
-            createMonthlyChart(data.monthly_forecasts);
-            createRangeChart(data.prediction_ranges);
-            createTypeChart(data.forecast_types);
-            createThresholdChart(data.threshold_comparison);
-            createAverageChart(data.average_predictions);
-        })
-        .catch(error => {
-            console.error('Error fetching statistics data:', error);
-        });
+// Load data from the server
+async function loadData() {
+    try {
+        const response = await fetch('/statistics_data');
+        if (!response.ok) {
+            throw new Error('Failed to fetch statistics data');
+        }
+        forecastData = await response.json();
+        updateCharts();
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+        showError('Failed to load statistics data. Please try again later.');
+    }
 }
 
-// Create product performance chart
-function createProductChart(productData) {
-    const ctx = document.getElementById('productChart').getContext('2d');
-    const products = Object.keys(productData);
-    const counts = products.map(product => productData[product].count);
+// Update all charts based on the selected forecast limit
+function updateCharts() {
+    const limit = forecastLimitSelect.value;
+    const data = forecastData;
     
-    productChart = new Chart(ctx, {
+    // Update each chart
+    updateProductChart(data.product_analysis);
+    updateTrendChart(data.trend_analysis);
+    updateSeverityChart(data.severity_analysis);
+    updateMonthlyChart(data.monthly_forecasts);
+    updateRangeChart(data.prediction_ranges);
+    updateTypeChart(data.forecast_types);
+    updateThresholdChart(data.threshold_comparison);
+    updateAverageChart(data.average_predictions);
+}
+
+// Filter graphs based on selection
+function filterGraphs() {
+    const selectedType = graphFilterSelect.value;
+    
+    statCards.forEach(card => {
+        const graphType = card.getAttribute('data-graph-type');
+        if (selectedType === 'all' || graphType === selectedType) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+}
+
+// Show error message
+function showError(message) {
+    // You can implement a more sophisticated error display if needed
+    alert(message);
+}
+
+// Chart update functions
+function updateProductChart(data) {
+    const ctx = document.getElementById('productChart').getContext('2d');
+    const labels = Object.keys(data);
+    const counts = labels.map(product => data[product].count);
+    
+    if (charts.product) {
+        charts.product.destroy();
+    }
+    
+    charts.product = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: products,
+            labels: labels,
             datasets: [{
                 label: 'Number of Forecasts',
                 data: counts,
-                backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                borderColor: 'rgba(52, 152, 219, 1)',
                 borderWidth: 1
             }]
         },
@@ -72,19 +97,8 @@ function createProductChart(productData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Forecasts by Product',
-                    tooltip: {
-                        callbacks: {
-                            title: function() {
-                                return 'Product Performance';
-                            },
-                            label: function() {
-                                return 'Shows the distribution of forecasts across different products, helping identify which products are being forecasted most frequently.';
-                            }
-                        }
-                    }
+                legend: {
+                    display: false
                 }
             },
             scales: {
@@ -99,25 +113,28 @@ function createProductChart(productData) {
     });
 }
 
-// Create trend analysis chart
-function createTrendChart(trendData) {
+function updateTrendChart(data) {
     const ctx = document.getElementById('trendChart').getContext('2d');
     
-    trendChart = new Chart(ctx, {
-        type: 'doughnut',
+    if (charts.trend) {
+        charts.trend.destroy();
+    }
+    
+    charts.trend = new Chart(ctx, {
+        type: 'pie',
         data: {
             labels: ['Positive', 'Negative', 'Neutral'],
             datasets: [{
-                data: [trendData.positive, trendData.negative, trendData.neutral],
+                data: [data.positive, data.negative, data.neutral],
                 backgroundColor: [
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(255, 206, 86, 0.8)'
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(231, 76, 60, 0.7)',
+                    'rgba(149, 165, 166, 0.7)'
                 ],
                 borderColor: [
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(255, 206, 86, 1)'
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(231, 76, 60, 1)',
+                    'rgba(149, 165, 166, 1)'
                 ],
                 borderWidth: 1
             }]
@@ -126,46 +143,54 @@ function createTrendChart(trendData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Trend Distribution',
-                    tooltip: {
-                        callbacks: {
-                            title: function() {
-                                return 'Trend Analysis';
-                            },
-                            label: function() {
-                                return 'Displays the proportion of positive, negative, and neutral trends in your forecasts, helping identify overall market direction.';
-                            }
-                        }
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    enabled: true
+                },
+                datalabels: {
+                    color: '#fff',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    formatter: function(value, context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return `${value}\n(${percentage}%)`;
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
-// Create severity distribution chart
-function createSeverityChart(severityData) {
+function updateSeverityChart(data) {
     const ctx = document.getElementById('severityChart').getContext('2d');
     
-    severityChart = new Chart(ctx, {
-        type: 'pie',
+    if (charts.severity) {
+        charts.severity.destroy();
+    }
+    
+    charts.severity = new Chart(ctx, {
+        type: 'doughnut',
         data: {
             labels: ['High', 'Medium', 'Low', 'None'],
             datasets: [{
-                data: [severityData.high, severityData.medium, severityData.low, severityData.none],
+                data: [data.high, data.medium, data.low, data.none],
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(255, 159, 64, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)'
+                    'rgba(231, 76, 60, 0.7)',
+                    'rgba(241, 196, 15, 0.7)',
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(149, 165, 166, 0.7)'
                 ],
                 borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(255, 159, 64, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)'
+                    'rgba(231, 76, 60, 1)',
+                    'rgba(241, 196, 15, 1)',
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(149, 165, 166, 1)'
                 ],
                 borderWidth: 1
             }]
@@ -174,91 +199,57 @@ function createSeverityChart(severityData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Severity Distribution',
-                    tooltip: {
-                        callbacks: {
-                            title: function() {
-                                return 'Severity Analysis';
-                            },
-                            label: function() {
-                                return 'Shows the distribution of forecast severity levels, helping identify the frequency of high-impact predictions.';
-                            }
-                        }
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    enabled: true
+                },
+                datalabels: {
+                    color: '#fff',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    formatter: function(value, context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return `${value}\n(${percentage}%)`;
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
-// Create monthly forecasts chart
-function createMonthlyChart(monthlyData) {
+function updateMonthlyChart(data) {
     const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const labels = Object.keys(data).sort();
+    const counts = labels.map(month => data[month]);
     
-    // Convert monthly data to array of objects for sorting
-    const monthlyArray = Object.entries(monthlyData).map(([month, count]) => ({
-        month,
-        count,
-        // Create a date object for sorting (using first day of each month)
-        date: new Date(month)
-    }));
+    if (charts.monthly) {
+        charts.monthly.destroy();
+    }
     
-    // Sort by date
-    monthlyArray.sort((a, b) => a.date - b.date);
-    
-    // Extract sorted months and counts
-    const months = monthlyArray.map(item => item.month);
-    const counts = monthlyArray.map(item => item.count);
-    
-    monthlyChart = new Chart(ctx, {
+    charts.monthly = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: months,
+            labels: labels,
             datasets: [{
                 label: 'Number of Forecasts',
                 data: counts,
                 fill: false,
-                borderColor: 'rgba(153, 102, 255, 0.8)',
-                tension: 0.1,
-                backgroundColor: 'rgba(153, 102, 255, 0.1)',
-                pointBackgroundColor: 'rgba(153, 102, 255, 0.8)',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
+                borderColor: 'rgba(52, 152, 219, 1)',
+                tension: 0.1
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Monthly Forecast Activity',
-                    tooltip: {
-                        callbacks: {
-                            title: function() {
-                                return 'Forecast Activity Timeline';
-                            },
-                            label: function() {
-                                return 'Tracks the number of forecasts generated each month, helping identify patterns in forecasting activity over time.';
-                            }
-                        }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleFont: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    bodyFont: {
-                        size: 13
-                    },
-                    padding: 10,
-                    cornerRadius: 5
+                legend: {
+                    display: false
                 }
             },
             scales: {
@@ -266,14 +257,6 @@ function createMonthlyChart(monthlyData) {
                     beginAtZero: true,
                     ticks: {
                         stepSize: 1
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
                     }
                 }
             }
@@ -281,24 +264,22 @@ function createMonthlyChart(monthlyData) {
     });
 }
 
-// Create prediction ranges chart
-function createRangeChart(rangeData) {
+function updateRangeChart(data) {
     const ctx = document.getElementById('rangeChart').getContext('2d');
     
-    rangeChart = new Chart(ctx, {
+    if (charts.range) {
+        charts.range.destroy();
+    }
+    
+    charts.range = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['0-500', '501-1000', '1001-2000', '2001+'],
+            labels: Object.keys(data),
             datasets: [{
-                label: 'Number of Predictions',
-                data: [
-                    rangeData['0-500'],
-                    rangeData['501-1000'],
-                    rangeData['1001-2000'],
-                    rangeData['2001+']
-                ],
-                backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                borderColor: 'rgba(54, 162, 235, 1)',
+                label: 'Number of Forecasts',
+                data: Object.values(data),
+                backgroundColor: 'rgba(155, 89, 182, 0.7)',
+                borderColor: 'rgba(155, 89, 182, 1)',
                 borderWidth: 1
             }]
         },
@@ -306,19 +287,8 @@ function createRangeChart(rangeData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Prediction Ranges',
-                    tooltip: {
-                        callbacks: {
-                            title: function() {
-                                return 'Sales Volume Distribution';
-                            },
-                            label: function() {
-                                return 'Shows the distribution of predicted sales volumes across different ranges, helping identify typical sales patterns.';
-                            }
-                        }
-                    }
+                legend: {
+                    display: false
                 }
             },
             scales: {
@@ -333,31 +303,30 @@ function createRangeChart(rangeData) {
     });
 }
 
-// Create forecast types chart
-function createTypeChart(typeData) {
+function updateTypeChart(data) {
     const ctx = document.getElementById('typeChart').getContext('2d');
-    const types = Object.keys(typeData);
-    const counts = Object.values(typeData);
     
-    typeChart = new Chart(ctx, {
-        type: 'doughnut',
+    if (charts.type) {
+        charts.type.destroy();
+    }
+    
+    charts.type = new Chart(ctx, {
+        type: 'pie',
         data: {
-            labels: types,
+            labels: Object.keys(data),
             datasets: [{
-                data: counts,
+                data: Object.values(data),
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)'
+                    'rgba(52, 152, 219, 0.7)',
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(155, 89, 182, 0.7)',
+                    'rgba(241, 196, 15, 0.7)'
                 ],
                 borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)'
+                    'rgba(52, 152, 219, 1)',
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(155, 89, 182, 1)',
+                    'rgba(241, 196, 15, 1)'
                 ],
                 borderWidth: 1
             }]
@@ -366,42 +335,50 @@ function createTypeChart(typeData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Forecast Types Distribution',
-                    tooltip: {
-                        callbacks: {
-                            title: function() {
-                                return 'Forecast Methodology';
-                            },
-                            label: function() {
-                                return 'Shows the distribution of different forecast types used, helping understand the variety of forecasting approaches employed.';
-                            }
-                        }
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    enabled: true
+                },
+                datalabels: {
+                    color: '#fff',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    formatter: function(value, context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return `${value}\n(${percentage}%)`;
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
-// Create threshold comparison chart
-function createThresholdChart(thresholdData) {
+function updateThresholdChart(data) {
     const ctx = document.getElementById('thresholdChart').getContext('2d');
     
-    thresholdChart = new Chart(ctx, {
-        type: 'pie',
+    if (charts.threshold) {
+        charts.threshold.destroy();
+    }
+    
+    charts.threshold = new Chart(ctx, {
+        type: 'doughnut',
         data: {
             labels: ['Above Threshold', 'Below Threshold'],
             datasets: [{
-                data: [thresholdData.above, thresholdData.below],
+                data: [data.above, data.below],
                 backgroundColor: [
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(255, 99, 132, 0.8)'
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(231, 76, 60, 0.7)'
                 ],
                 borderColor: [
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(255, 99, 132, 1)'
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(231, 76, 60, 1)'
                 ],
                 borderWidth: 1
             }]
@@ -410,51 +387,46 @@ function createThresholdChart(thresholdData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Threshold Comparison',
-                    tooltip: {
-                        callbacks: {
-                            title: function() {
-                                return 'Performance Against Targets';
-                            },
-                            label: function() {
-                                return 'Compares predictions against set thresholds, helping identify how often forecasts exceed or fall below target values.';
-                            }
-                        }
-                    }
+                legend: {
+                    position: 'bottom'
                 },
                 tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = Math.round((value / total) * 100);
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
+                    enabled: true
+                },
+                datalabels: {
+                    color: '#fff',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    formatter: function(value, context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return `${value}\n(${percentage}%)`;
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
-// Create average predictions chart
-function createAverageChart(averageData) {
+function updateAverageChart(data) {
     const ctx = document.getElementById('averageChart').getContext('2d');
-    const products = Object.keys(averageData);
-    const averages = Object.values(averageData);
     
-    averageChart = new Chart(ctx, {
+    if (charts.average) {
+        charts.average.destroy();
+    }
+    
+    charts.average = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: products,
+            labels: Object.keys(data),
             datasets: [{
                 label: 'Average Prediction',
-                data: averages,
-                backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                data: Object.values(data),
+                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                borderColor: 'rgba(52, 152, 219, 1)',
                 borderWidth: 1
             }]
         },
@@ -462,28 +434,8 @@ function createAverageChart(averageData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Average Predictions by Product',
-                    tooltip: {
-                        callbacks: {
-                            title: function() {
-                                return 'Product Performance Averages';
-                            },
-                            label: function() {
-                                return 'Shows the average predicted sales for each product, helping identify which products typically have higher or lower sales forecasts.';
-                            }
-                        }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.dataset.label || '';
-                            const value = context.raw || 0;
-                            return `${label}: ${value.toFixed(2)}`;
-                        }
-                    }
+                legend: {
+                    display: false
                 }
             },
             scales: {
