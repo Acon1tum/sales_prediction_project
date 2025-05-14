@@ -681,20 +681,78 @@ def upload_csv():
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
 
-    # Save to Supabase
-    upload_id = save_upload_to_supabase(filepath, session.get("user_id"))
-    if not upload_id:
-        return jsonify({"error": "Failed to save upload data"}), 500
+    # Save to Supabase (optional, proceed even if this fails for local functionality)
+    upload_id = None
+    try:
+        upload_id = save_upload_to_supabase(filepath, session.get("user_id"))
+        if upload_id:
+            session["upload_id"] = upload_id
+    except Exception as e:
+        logging.warning(f"Failed to save upload to Supabase, proceeding without it: {e}")
 
     session["uploaded_file"] = filepath
-    session["upload_id"] = upload_id  # Store the Supabase upload ID
     
-    return jsonify({
-        "message": "File uploaded successfully!",
-        "upload_id": upload_id
-    })
+    past_sales_data = []
+    product_list = []
+    try:
+        df = pd.read_csv(filepath)
 
+        if df.empty:
+            return jsonify({"error": "Uploaded CSV file is empty."}), 400
 
+        # Ensure required columns exist
+        if "Date" not in df.columns or "Product Name" not in df.columns:
+            return jsonify({"error": "CSV must contain 'Date' and 'Product Name' columns."}), 400
+
+        # Identify sales column
+        sales_col_name = "Sales" # Default assumption
+        if "Sales" not in df.columns:
+            potential_sales_cols = [col for col in df.columns if any(keyword in col.lower() for keyword in ['sales', 'quantity', 'revenue', 'amount', 'value'])]
+            if not potential_sales_cols:
+                 return jsonify({"error": f"CSV must contain a sales value column (e.g., 'Sales', 'Revenue', 'Quantity'). Found columns: {df.columns.tolist()}"}), 400
+            sales_col_name = potential_sales_cols[0]
+        
+        # Convert 'Date' to datetime objects for sorting, then to 'YYYY-MM-DD' string
+        try:
+            df["Date"] = pd.to_datetime(df["Date"], format="%d/%m/%Y", dayfirst=True, errors="raise")
+        except ValueError as e:
+            # Try inferring if specific format fails
+            try:
+                df["Date"] = pd.to_datetime(df["Date"], errors="raise")
+                logging.warning(f"Date format dd/mm/yyyy failed, inferred format. Original error: {e}")
+            except ValueError as ve_infer:
+                 return jsonify({"error": f"Error parsing 'Date' column: {ve_infer}. Please use 'dd/mm/yyyy' format or a standard parsable date format."}), 400
+        
+        df.dropna(subset=["Date"], inplace=True)
+        df.sort_values(by="Date", inplace=True)
+        df["Date"] = df["Date"].dt.strftime('%Y-%m-%d') # Standardize to YYYY-MM-DD for JSON
+
+        # Ensure the sales column is numeric
+        if not pd.api.types.is_numeric_dtype(df[sales_col_name]):
+            try:
+                df[sales_col_name] = pd.to_numeric(df[sales_col_name].replace({',': ''}, regex=True), errors='raise')
+            except ValueError:
+                return jsonify({"error": f"Sales column '{sales_col_name}' contains non-numeric data that could not be converted."}), 400
+        
+        # Prepare past_sales data
+        df_for_export = df[["Date", "Product Name", sales_col_name]].copy()
+        df_for_export.rename(columns={sales_col_name: "Sales"}, inplace=True) # Standardize to "Sales"
+        past_sales_data = df_for_export.to_dict(orient="records")
+        
+        product_list = df["Product Name"].unique().tolist()
+        
+        return jsonify({
+            "message": "File uploaded successfully!",
+            "upload_id": upload_id, # Might be None if Supabase failed
+            "past_sales": past_sales_data,
+            "product_list": product_list
+        })
+
+    except pd.errors.EmptyDataError:
+        return jsonify({"error": "Uploaded CSV file is empty."}), 400
+    except Exception as e:
+        logging.error(f"Error processing uploaded CSV: {e}", exc_info=True)
+        return jsonify({"error": f"Failed to process CSV: {str(e)}"}), 500
 
 @app.route("/generate_forecast", methods=["POST"])
 def generate_forecast():

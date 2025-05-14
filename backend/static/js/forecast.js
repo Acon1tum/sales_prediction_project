@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Register the datalabels plugin globally
+    Chart.register(ChartDataLabels);
+
+    let areDataLabelsGloballyVisible = true; // State for global datalabel visibility
+
     // Handle user guide toggle
     const guideToggle = document.querySelector('.guide-toggle');
     const guideContent = document.querySelector('.guide-content');
@@ -54,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const pageIndicator = document.getElementById("page-indicator"); // Page number indicator
     const exportBtn = document.getElementById("export-btn"); // Export report button
     const productSelector = document.getElementById('product-selector');
+    const toggleDataLabelsBtn = document.getElementById('toggle-datalabels-btn'); // Get the new button
 
     // Create export button if it doesn't exist in the DOM
     if (!exportBtn) {
@@ -64,6 +70,24 @@ document.addEventListener("DOMContentLoaded", () => {
         exportButton.id = 'export-btn'; // Set unique identifier
         exportButton.disabled = true; // Initially disabled until forecast is generated
         actionsDiv.appendChild(exportButton); // Add button to the DOM
+    }
+
+    // Add event listener for the datalabel toggle button
+    if (toggleDataLabelsBtn) {
+        toggleDataLabelsBtn.addEventListener('click', () => {
+            areDataLabelsGloballyVisible = !areDataLabelsGloballyVisible;
+            if (areDataLabelsGloballyVisible) {
+                toggleDataLabelsBtn.innerHTML = '<span>👁️</span> Hide Values on Graph';
+            } else {
+                toggleDataLabelsBtn.innerHTML = '<span>✏️</span> Show Values on Graph';
+            }
+            // Refresh all charts to apply the new visibility state
+            if (forecastChart) forecastChart.update();
+            if (predictionsChart) predictionsChart.update();
+            if (historicalChart) historicalChart.update();
+            if (pastSalesChart) pastSalesChart.update();
+            if (predictedSalesChart) predictedSalesChart.update();
+        });
     }
 
     // Initialize the application with an empty state
@@ -163,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedProduct = this.value; // Update selected product
         updateProductBadges(); // Update UI to reflect selection
         updateHistoricalChart(); // Update historical chart with new product filter
+        updateComparisonCharts(); // Add this call to update comparison charts on product change
     });
 
     // Add event listener for forecast generation
@@ -393,6 +418,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         borderWidth: 2,
                         borderDash: [5, 5],
                         pointRadius: 0,
+                        datalabels: { // Hide datalabels for threshold line
+                            display: false
+                        }
                     }
                 ]
             },
@@ -406,10 +434,34 @@ document.addEventListener("DOMContentLoaded", () => {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
+                        titleFont: { size: 16 },
+                        bodyFont: { size: 14 },
+                        padding: 12,
                         callbacks: {
                             label: function(context) {
                                 return `${context.dataset.label}: ₱${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                             }
+                        }
+                    },
+                    datalabels: {
+                        display: function(context) {
+                            if (!areDataLabelsGloballyVisible) return false; // Global toggle
+                            // Display labels only for the main dataset and not for the threshold line
+                            return context.datasetIndex === 0;
+                        },
+                        align: 'top',
+                        anchor: 'end',
+                        rotation: -90,
+                        offset: 8,
+                        backgroundColor: 'transparent',
+                        borderColor: 'transparent',
+                        color: '#2D3436',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        },
+                        formatter: function(value, context) {
+                            return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                         }
                     }
                 },
@@ -465,6 +517,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         borderWidth: 2,
                         borderDash: [5, 5],
                         pointRadius: 0,
+                        datalabels: { // Hide datalabels for threshold line
+                            display: false
+                        }
                     }
                 ]
             },
@@ -476,10 +531,34 @@ document.addEventListener("DOMContentLoaded", () => {
                         position: 'top',
                     },
                     tooltip: {
+                        titleFont: { size: 16 },
+                        bodyFont: { size: 14 },
+                        padding: 12,
                         callbacks: {
                             label: function(context) {
                                 return `${context.dataset.label}: ₱${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                             }
+                        }
+                    },
+                    datalabels: {
+                        display: function(context) {
+                            if (!areDataLabelsGloballyVisible) return false; // Global toggle
+                            // Display labels only for the bar dataset
+                            return context.datasetIndex === 0 && context.dataset.type !== 'line';
+                        },
+                        anchor: 'end',
+                        align: 'top',
+                        rotation: -90,
+                        offset: 6,
+                        backgroundColor: 'transparent',
+                        borderColor: 'transparent',
+                        color: '#2D3436',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        },
+                        formatter: function(value, context) {
+                            return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                         }
                     }
                 },
@@ -736,7 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            top: 20,
+                            top: 30, // Increased top padding for datalabels
                             right: 20,
                             bottom: 120,  // Increased bottom padding to accommodate legend
                             left: 20
@@ -790,9 +869,12 @@ document.addEventListener("DOMContentLoaded", () => {
                             backgroundColor: 'rgba(255, 255, 255, 0.95)',
                             titleColor: '#2D3436',
                             bodyColor: '#2D3436',
+                            titleFont: { size: 16, weight: 'bold' },
+                            bodyFont: { size: 14 },
+                            footerFont: { size: 13 },
                             borderColor: 'rgba(0, 0, 0, 0.1)',
                             borderWidth: 1,
-                            padding: 12,
+                            padding: 15,
                             displayColors: true,
                             boxPadding: 6,
                             callbacks: {
@@ -813,6 +895,29 @@ document.addEventListener("DOMContentLoaded", () => {
                                         `Type: ${dataset.metadata.type || 'N/A'}`
                                     ];
                                 }
+                            }
+                        },
+                        datalabels: {
+                            display: function(context) {
+                                if (!areDataLabelsGloballyVisible) return false; // Global toggle
+                                // Show labels if there are not too many datasets or points to avoid clutter
+                                const datasetCount = context.chart.data.datasets.length;
+                                const pointCount = context.dataset.data.length;
+                                return datasetCount <= 5 && pointCount <= 15; // Adjust these thresholds as needed
+                            },
+                            align: 'top',
+                            anchor: 'end',
+                            rotation: -90,
+                            offset: 8,
+                            backgroundColor: 'transparent',
+                            borderColor: 'transparent',
+                            color: '#2D3436',
+                            font: {
+                                weight: 'bold',
+                                size: 13
+                            },
+                            formatter: function(value, context) {
+                                return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                             }
                         }
                     },
@@ -1385,30 +1490,52 @@ document.addEventListener("DOMContentLoaded", () => {
             const pastSalesCtx = document.getElementById('pastSalesChart').getContext('2d');
             const predictedSalesCtx = document.getElementById('predictedSalesChart').getContext('2d');
 
-            const chartConfig = {
-                type: 'line',
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `₱${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                                }
+            const commonChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true, 
+                        position: 'top',
+                    },
+                    tooltip: {
+                        titleFont: { size: 16 },
+                        bodyFont: { size: 14 },
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ₱${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                             }
                         }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                                }
+                    datalabels: {
+                        display: function(context) {
+                            if (!areDataLabelsGloballyVisible) return false; // Global toggle
+                            // Display labels if there aren't too many points
+                            return context.dataset.data.length <= 30; // Adjust threshold as needed
+                        },
+                        align: 'top',
+                        anchor: 'end',
+                        rotation: -90,
+                        offset: 8,
+                        backgroundColor: 'transparent',
+                        borderColor: 'transparent',
+                        color: '#2D3436',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        },
+                        formatter: function(value, context) {
+                            return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                             }
                         }
                     }
@@ -1416,11 +1543,12 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             pastSalesChart = new Chart(pastSalesCtx, {
-                ...chartConfig,
+                type: 'line',
+                options: commonChartOptions, // Use common options
                 data: {
                     labels: [],
                     datasets: [{
-                        label: 'Past Sales',
+                        label: 'Past Sales History',
                         data: [],
                         borderColor: '#4CAF50',
                         backgroundColor: 'rgba(76, 175, 80, 0.1)',
@@ -1434,7 +1562,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             predictedSalesChart = new Chart(predictedSalesCtx, {
-                ...chartConfig,
+                type: 'line',
+                options: commonChartOptions, // Use common options
                 data: {
                     labels: [],
                     datasets: [{
@@ -1452,63 +1581,75 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // Get historical data
-        fetch("/get_historical_forecasts")
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.error("Error fetching historical data:", data.error);
-                    return;
-                }
+        // --- Update Past Sales Chart using window.pastSalesData ---
+        if (window.pastSalesData && window.pastSalesData.length > 0) {
+            let salesToDisplay = [];
+            // Deep copy and parse dates, then sort
+            const rawSales = JSON.parse(JSON.stringify(window.pastSalesData)).map(item => ({
+                ...item,
+                Date: new Date(item.Date) // Assuming YYYY-MM-DD from backend
+            })).sort((a, b) => a.Date - b.Date);
 
-                // Process historical data
-                const historicalData = data.historical_data || [];
-                const pastSales = [];
-                const predictedSales = [];
+            if (selectedProduct === "all") {
+                const aggregatedSales = {};
+                rawSales.forEach(item => {
+                    const dateStr = item.Date.toISOString().split('T')[0];
+                    if (!aggregatedSales[dateStr]) {
+                        aggregatedSales[dateStr] = { date: new Date(item.Date), sales: 0 };
+                    }
+                    aggregatedSales[dateStr].sales += parseFloat(item.Sales) || 0;
+                });
+                salesToDisplay = Object.values(aggregatedSales).sort((a,b) => a.date - b.date);
+            } else {
+                salesToDisplay = rawSales.filter(item => item["Product Name"] === selectedProduct);
+                // Already sorted by Date
+            }
 
-                // Filter data based on selected product
-                const filteredData = selectedProduct === 'all' 
-                    ? historicalData 
-                    : historicalData.filter(item => item.product === selectedProduct);
+            const last90Sales = salesToDisplay.slice(-90);
 
-                // Sort data by date (newest first)
-                filteredData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (last90Sales.length > 0) {
+                const labels = last90Sales.map(item => {
+                    const dateObj = item.date || item.Date; // 'date' from aggregation, 'Date' from direct filter
+                    return dateObj instanceof Date && !isNaN(dateObj) 
+                           ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                           : 'Invalid Date';
+                });
+                const dataPoints = last90Sales.map(item => parseFloat(item.sales || item.Sales) || 0);
 
-                // Get the most recent past forecast (excluding current forecast)
-                const mostRecentPastForecast = filteredData[1]; // Index 1 because index 0 is current forecast
-                
-                if (mostRecentPastForecast) {
-                    // Use all predictions from the most recent past forecast
-                    const predictionsArr = mostRecentPastForecast.predictions;
-                    const labels = predictionsArr.map((_, idx) => `Day ${idx + 1}`);
-                    pastSalesChart.data.labels = labels;
-                    pastSalesChart.data.datasets[0].data = predictionsArr;
-                } else {
-                    pastSalesChart.data.labels = [];
-                    pastSalesChart.data.datasets[0].data = [];
-                }
-                pastSalesChart.update();
+                pastSalesChart.data.labels = labels;
+                pastSalesChart.data.datasets[0].data = dataPoints;
+                pastSalesChart.data.datasets[0].label = selectedProduct === "all" ? "All Products - Past Sales History" : `${selectedProduct} - Past Sales History`;
+            } else {
+                pastSalesChart.data.labels = [];
+                pastSalesChart.data.datasets[0].data = [];
+                pastSalesChart.data.datasets[0].label = selectedProduct === "all" ? "All Products - No Past Sales Data" : `${selectedProduct} - No Past Sales Data`;
+            }
+        } else {
+            pastSalesChart.data.labels = [];
+            pastSalesChart.data.datasets[0].data = [];
+            pastSalesChart.data.datasets[0].label = "Past Sales - Upload CSV";
+        }
+        pastSalesChart.update();
 
-                // Process predicted sales (current forecast)
-                if (predictions && predictions.length > 0) {
-                    const labels = predictions.map((_, idx) => {
-                        const date = new Date();
-                        date.setDate(date.getDate() + idx);
-                        return date.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric'
-                        });
-                    });
-                    predictedSalesChart.data.labels = labels;
-                    predictedSalesChart.data.datasets[0].data = predictions;
-                } else {
-                    predictedSalesChart.data.labels = [];
-                    predictedSalesChart.data.datasets[0].data = [];
-                }
-                predictedSalesChart.update();
-            })
-            .catch(error => {
-                console.error("Error updating comparison charts:", error);
+        // --- Update Predicted Sales Chart using global 'predictions' variable ---
+        if (predictions && predictions.length > 0) {
+            const labels = predictions.map((_, idx) => {
+                const forecastStartDate = new Date(); 
+                forecastStartDate.setDate(forecastStartDate.getDate() + idx);
+                 return forecastStartDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
             });
+            predictedSalesChart.data.labels = labels;
+            predictedSalesChart.data.datasets[0].data = predictions;
+            predictedSalesChart.data.datasets[0].label = selectedProduct === "all" ? "All Products - Predicted Sales" : `${selectedProduct} - Predicted Sales`;
+
+        } else {
+            predictedSalesChart.data.labels = [];
+            predictedSalesChart.data.datasets[0].data = [];
+            predictedSalesChart.data.datasets[0].label = "Predicted Sales - Generate Forecast";
+        }
+        predictedSalesChart.update();
     }
 });
