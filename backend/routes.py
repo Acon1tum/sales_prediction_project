@@ -722,7 +722,9 @@ def upload_csv():
                         sales_col_name = prev_df.columns[-1] # fallback to last column
                     else:
                         sales_col_name = potential_sales_cols[0]
-                df_for_export = prev_df[["Date", "Product Name", sales_col_name]].copy()
+                # Always include Unit Price if it exists
+                columns_to_export = [col for col in ["Date", "Product Name", sales_col_name, "Unit Price"] if col in prev_df.columns]
+                df_for_export = prev_df[columns_to_export].copy()
                 df_for_export.rename(columns={sales_col_name: "Sales"}, inplace=True)
                 past_sales_data = df_for_export.to_dict(orient="records")
                 product_list = prev_df["Product Name"].unique().tolist()
