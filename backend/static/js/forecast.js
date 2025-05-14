@@ -239,6 +239,8 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // Enable export functionality
             document.getElementById('export-btn').disabled = false;
+            // Show the toggle datalabels button
+            if (toggleDataLabelsBtn) toggleDataLabelsBtn.classList.remove('hidden');
             
             showToast("Forecast generated successfully!", 'success');
         })
@@ -306,6 +308,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 nextBtn.disabled = true;
                 updatePageIndicator();
                 
+                // Hide the toggle datalabels button
+                if (toggleDataLabelsBtn) toggleDataLabelsBtn.classList.add('hidden');
                 showToast(data.message, 'success');
             })
             .catch(error => {
