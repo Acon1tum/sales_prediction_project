@@ -754,7 +754,8 @@ canvas {
     display: flex;
     gap: 2rem;
     padding: 1rem;
-    height: 400px;
+    min-height: 400px;
+    margin-bottom: 2.5rem;
     margin-top: 1rem;
 }
 
@@ -766,6 +767,9 @@ canvas {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+    min-height: 0;
 }
 
 .comparison-chart h4 {
@@ -777,9 +781,12 @@ canvas {
 }
 
 .comparison-chart canvas {
-    flex: 1;
+    flex: 0 0 auto;
     width: 100% !important;
     height: 100% !important;
+    max-height: 300px;
+    min-height: 250px;
+    margin-bottom: 0.5rem;
 }
 
 @media (max-width: 768px) {
@@ -859,4 +866,70 @@ canvas {
 
 .hidden {
     display: none !important;
+}
+
+.chart-value-legend {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 16px;
+    font-size: 1.08rem;
+    color: #5f4bb6;
+    justify-items: stretch;
+    align-items: center;
+    padding: 8px 0 0 0;
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 1100px) {
+    .chart-value-legend {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 700px) {
+    .chart-value-legend {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chart-value-legend .legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background: linear-gradient(90deg, #f5f6fa 60%, #e9e6fa 100%);
+    border-radius: 999px;
+    padding: 7px 18px;
+    font-weight: 600;
+    color: #4b3ca7;
+    font-size: 1.08rem;
+    box-shadow: 0 2px 8px rgba(108,92,231,0.10);
+    border: 1px solid #ece9fa;
+    transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+    margin-bottom: 4px;
+    letter-spacing: 0.01em;
+}
+
+.chart-value-legend .legend-item:hover {
+    background: linear-gradient(90deg, #e0e7ff 60%, #d1c4e9 100%);
+    color: #2d3436;
+    box-shadow: 0 4px 16px rgba(108,92,231,0.18);
+    cursor: pointer;
+}
+
+.legend-label {
+    min-width: 70px;
+    text-align: right;
+    margin-right: 6px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #4b3ca7;
+    opacity: 0.95;
+}
+
+.legend-value {
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #2d3436;
+    letter-spacing: 0.01em;
 }

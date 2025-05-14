@@ -72,21 +72,27 @@ document.addEventListener("DOMContentLoaded", () => {
         actionsDiv.appendChild(exportButton); // Add button to the DOM
     }
 
-    // Add event listener for the datalabel toggle button
+    // Add event listener for the legend toggle button
     if (toggleDataLabelsBtn) {
         toggleDataLabelsBtn.addEventListener('click', () => {
-            areDataLabelsGloballyVisible = !areDataLabelsGloballyVisible;
-            if (areDataLabelsGloballyVisible) {
-                toggleDataLabelsBtn.innerHTML = '<span>👁️</span> Hide Values on Graph';
+            const forecastLegend = document.getElementById('forecastChart-legend');
+            const predictionsLegend = document.getElementById('predictionsChart-legend');
+            const pastSalesLegend = document.getElementById('pastSalesChart-legend');
+            const predictedSalesLegend = document.getElementById('predictedSalesChart-legend');
+            const isHidden = forecastLegend.classList.contains('hidden');
+            if (isHidden) {
+                forecastLegend.classList.remove('hidden');
+                predictionsLegend.classList.remove('hidden');
+                if (pastSalesLegend) pastSalesLegend.classList.remove('hidden');
+                if (predictedSalesLegend) predictedSalesLegend.classList.remove('hidden');
+                toggleDataLabelsBtn.innerHTML = '<span>👁️</span> Hide Values List';
             } else {
-                toggleDataLabelsBtn.innerHTML = '<span>✏️</span> Show Values on Graph';
+                forecastLegend.classList.add('hidden');
+                predictionsLegend.classList.add('hidden');
+                if (pastSalesLegend) pastSalesLegend.classList.add('hidden');
+                if (predictedSalesLegend) predictedSalesLegend.classList.add('hidden');
+                toggleDataLabelsBtn.innerHTML = '<span>✏️</span> Show Values List';
             }
-            // Refresh all charts to apply the new visibility state
-            if (forecastChart) forecastChart.update();
-            if (predictionsChart) predictionsChart.update();
-            if (historicalChart) historicalChart.update();
-            if (pastSalesChart) pastSalesChart.update();
-            if (predictedSalesChart) predictedSalesChart.update();
         });
     }
 
@@ -171,6 +177,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Update comparison charts
             updateComparisonCharts();
+
+            document.getElementById('forecastChart-legend').classList.remove('hidden');
+            document.getElementById('predictionsChart-legend').classList.remove('hidden');
+            toggleDataLabelsBtn.innerHTML = '<span>👁️</span> Hide Values List';
         })
         .catch(error => {
             console.error(error);
@@ -243,6 +253,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (toggleDataLabelsBtn) toggleDataLabelsBtn.classList.remove('hidden');
             
             showToast("Forecast generated successfully!", 'success');
+
+            document.getElementById('forecastChart-legend').classList.remove('hidden');
+            document.getElementById('predictionsChart-legend').classList.remove('hidden');
+            toggleDataLabelsBtn.innerHTML = '<span>👁️</span> Hide Values List';
         })
         .catch(error => {
             console.error(error);
@@ -311,6 +325,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Hide the toggle datalabels button
                 if (toggleDataLabelsBtn) toggleDataLabelsBtn.classList.add('hidden');
                 showToast(data.message, 'success');
+
+                document.getElementById('forecastChart-legend').classList.add('hidden');
+                document.getElementById('predictionsChart-legend').classList.add('hidden');
+                toggleDataLabelsBtn.innerHTML = '<span>✏️</span> Show Values List';
             })
             .catch(error => {
                 console.error(error);
@@ -449,9 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     datalabels: {
                         display: function(context) {
-                            if (!areDataLabelsGloballyVisible) return false; // Global toggle
-                            // Display labels only for the main dataset and not for the threshold line
-                            return context.datasetIndex === 0;
+                            return false; // Always hide datalabels on the chart
                         },
                         align: 'top',
                         anchor: 'end',
@@ -489,6 +505,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
+
+        updateForecastChartLegend();
+    }
+
+    function updateForecastChartLegend() {
+        const legendDiv = document.getElementById('forecastChart-legend');
+        if (!legendDiv) return;
+        if (!predictions || predictions.length === 0) {
+            legendDiv.innerHTML = '';
+            return;
+        }
+        legendDiv.innerHTML = predictions.map((value, idx) =>
+            `<span class="legend-item">Day ${idx + 1}: ₱${value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>`
+        ).join('');
     }
 
     // Creates/updates the predictions bar chart
@@ -546,9 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     datalabels: {
                         display: function(context) {
-                            if (!areDataLabelsGloballyVisible) return false; // Global toggle
-                            // Display labels only for the bar dataset
-                            return context.datasetIndex === 0 && context.dataset.type !== 'line';
+                            return false; // Always hide datalabels on the chart
                         },
                         anchor: 'end',
                         align: 'top',
@@ -586,6 +614,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
+
+        updatePredictionsChartLegend();
+    }
+
+    function updatePredictionsChartLegend() {
+        const legendDiv = document.getElementById('predictionsChart-legend');
+        if (!legendDiv) return;
+        if (!predictions || predictions.length === 0) {
+            legendDiv.innerHTML = '';
+            return;
+        }
+        legendDiv.innerHTML = predictions.map((value, idx) =>
+            `<span class="legend-item">Day ${idx + 1}: ₱${value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>`
+        ).join('');
     }
 
     // Add historicalData to the global state
@@ -903,11 +945,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         },
                         datalabels: {
                             display: function(context) {
-                                if (!areDataLabelsGloballyVisible) return false; // Global toggle
-                                // Show labels if there are not too many datasets or points to avoid clutter
-                                const datasetCount = context.chart.data.datasets.length;
-                                const pointCount = context.dataset.data.length;
-                                return datasetCount <= 5 && pointCount <= 15; // Adjust these thresholds as needed
+                                return false; // Always hide datalabels on the chart
                             },
                             align: 'top',
                             anchor: 'end',
@@ -1514,9 +1552,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     datalabels: {
                         display: function(context) {
-                            if (!areDataLabelsGloballyVisible) return false; // Global toggle
-                            // Display labels if there aren't too many points
-                            return context.dataset.data.length <= 30; // Adjust threshold as needed
+                            return false; // Always hide datalabels on the chart
                         },
                         align: 'top',
                         anchor: 'end',
@@ -1655,5 +1691,31 @@ document.addEventListener("DOMContentLoaded", () => {
             predictedSalesChart.data.datasets[0].label = "Predicted Sales - Generate Forecast";
         }
         predictedSalesChart.update();
+        updatePastSalesChartLegend();
+        updatePredictedSalesChartLegend();
+    }
+
+    function updatePastSalesChartLegend() {
+        const legendDiv = document.getElementById('pastSalesChart-legend');
+        if (!legendDiv) return;
+        if (!pastSalesChart || !pastSalesChart.data || !pastSalesChart.data.datasets[0].data.length) {
+            legendDiv.innerHTML = '';
+            return;
+        }
+        legendDiv.innerHTML = pastSalesChart.data.datasets[0].data.map((value, idx) =>
+            `<span class="legend-item">Day ${idx + 1}: ₱${value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>`
+        ).join('');
+    }
+
+    function updatePredictedSalesChartLegend() {
+        const legendDiv = document.getElementById('predictedSalesChart-legend');
+        if (!legendDiv) return;
+        if (!predictedSalesChart || !predictedSalesChart.data || !predictedSalesChart.data.datasets[0].data.length) {
+            legendDiv.innerHTML = '';
+            return;
+        }
+        legendDiv.innerHTML = predictedSalesChart.data.datasets[0].data.map((value, idx) =>
+            `<span class="legend-item">Day ${idx + 1}: ₱${value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>`
+        ).join('');
     }
 });

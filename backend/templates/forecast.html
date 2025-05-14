@@ -8,6 +8,25 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/forecast.css') }}">
+<style>
+.chart-value-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #6C5CE7;
+    justify-content: center;
+    align-items: center;
+}
+.chart-value-legend .legend-item {
+    background: #f5f6fa;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(108,92,231,0.07);
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -153,6 +172,7 @@
                 <span id="product-badge-1" class="product-badge">All Products</span>
             </div>
             <canvas id="forecastChart"></canvas>
+            <div id="forecastChart-legend" class="chart-value-legend"></div>
             <div id="sales-summary" class="sales-summary" style="display: none;">
                 <div class="total-sales">
                     Total Forecasted Sales: <span id="total-sales-value" class="total-sales-value">0</span>
@@ -169,6 +189,7 @@
                 <span id="product-badge-2" class="product-badge">All Products</span>
             </div>
             <canvas id="predictionsChart"></canvas>
+            <div id="predictionsChart-legend" class="chart-value-legend"></div>
         </div>
 
         <div class="bento-box full-width">
@@ -180,10 +201,12 @@
                 <div class="comparison-chart">
                     <h4>Past Sales</h4>
                     <canvas id="pastSalesChart"></canvas>
+                    <div id="pastSalesChart-legend" class="chart-value-legend"></div>
                 </div>
                 <div class="comparison-chart">
                     <h4>Predicted Sales</h4>
                     <canvas id="predictedSalesChart"></canvas>
+                    <div id="predictedSalesChart-legend" class="chart-value-legend"></div>
                 </div>
             </div>
         </div>
