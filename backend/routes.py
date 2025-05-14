@@ -692,55 +692,49 @@ def upload_csv():
 
     session["uploaded_file"] = filepath
     
+    # Fetch the most recent previous upload for this user (excluding the current upload)
     past_sales_data = []
     product_list = []
     try:
-        df = pd.read_csv(filepath)
+        user_id = session.get("user_id")
+        previous_upload = None
+        if user_id and upload_id:
+            prev_upload_resp = supabase_client.table('uploaded_data') \
+                .select('*') \
+                .eq('user_id', user_id) \
+                .neq('id', upload_id) \
+                .order('uploaded_at', desc=True) \
+                .limit(1) \
+                .execute()
+            if prev_upload_resp.data:
+                previous_upload = prev_upload_resp.data[0]
+        
+        if previous_upload:
+            import json
+            prev_data_json = previous_upload['data']
+            prev_df = pd.read_json(prev_data_json)
+            # Try to standardize columns as before
+            if 'Date' in prev_df.columns and 'Product Name' in prev_df.columns:
+                sales_col_name = 'Sales'
+                if 'Sales' not in prev_df.columns:
+                    potential_sales_cols = [col for col in prev_df.columns if any(keyword in col.lower() for keyword in ['sales', 'quantity', 'revenue', 'amount', 'value'])]
+                    if not potential_sales_cols:
+                        sales_col_name = prev_df.columns[-1] # fallback to last column
+                    else:
+                        sales_col_name = potential_sales_cols[0]
+                df_for_export = prev_df[["Date", "Product Name", sales_col_name]].copy()
+                df_for_export.rename(columns={sales_col_name: "Sales"}, inplace=True)
+                past_sales_data = df_for_export.to_dict(orient="records")
+                product_list = prev_df["Product Name"].unique().tolist()
+            else:
+                # If columns are not as expected, just send all data
+                past_sales_data = prev_df.to_dict(orient="records")
+                product_list = prev_df.columns.tolist()
+        else:
+            # No previous upload found
+            past_sales_data = []
+            product_list = []
 
-        if df.empty:
-            return jsonify({"error": "Uploaded CSV file is empty."}), 400
-
-        # Ensure required columns exist
-        if "Date" not in df.columns or "Product Name" not in df.columns:
-            return jsonify({"error": "CSV must contain 'Date' and 'Product Name' columns."}), 400
-
-        # Identify sales column
-        sales_col_name = "Sales" # Default assumption
-        if "Sales" not in df.columns:
-            potential_sales_cols = [col for col in df.columns if any(keyword in col.lower() for keyword in ['sales', 'quantity', 'revenue', 'amount', 'value'])]
-            if not potential_sales_cols:
-                 return jsonify({"error": f"CSV must contain a sales value column (e.g., 'Sales', 'Revenue', 'Quantity'). Found columns: {df.columns.tolist()}"}), 400
-            sales_col_name = potential_sales_cols[0]
-        
-        # Convert 'Date' to datetime objects for sorting, then to 'YYYY-MM-DD' string
-        try:
-            df["Date"] = pd.to_datetime(df["Date"], format="%d/%m/%Y", dayfirst=True, errors="raise")
-        except ValueError as e:
-            # Try inferring if specific format fails
-            try:
-                df["Date"] = pd.to_datetime(df["Date"], errors="raise")
-                logging.warning(f"Date format dd/mm/yyyy failed, inferred format. Original error: {e}")
-            except ValueError as ve_infer:
-                 return jsonify({"error": f"Error parsing 'Date' column: {ve_infer}. Please use 'dd/mm/yyyy' format or a standard parsable date format."}), 400
-        
-        df.dropna(subset=["Date"], inplace=True)
-        df.sort_values(by="Date", inplace=True)
-        df["Date"] = df["Date"].dt.strftime('%Y-%m-%d') # Standardize to YYYY-MM-DD for JSON
-
-        # Ensure the sales column is numeric
-        if not pd.api.types.is_numeric_dtype(df[sales_col_name]):
-            try:
-                df[sales_col_name] = pd.to_numeric(df[sales_col_name].replace({',': ''}, regex=True), errors='raise')
-            except ValueError:
-                return jsonify({"error": f"Sales column '{sales_col_name}' contains non-numeric data that could not be converted."}), 400
-        
-        # Prepare past_sales data
-        df_for_export = df[["Date", "Product Name", sales_col_name]].copy()
-        df_for_export.rename(columns={sales_col_name: "Sales"}, inplace=True) # Standardize to "Sales"
-        past_sales_data = df_for_export.to_dict(orient="records")
-        
-        product_list = df["Product Name"].unique().tolist()
-        
         return jsonify({
             "message": "File uploaded successfully!",
             "upload_id": upload_id, # Might be None if Supabase failed
