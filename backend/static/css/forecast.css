@@ -233,7 +233,9 @@
 
 canvas {
     width: 100% !important;
-    height: 250px !important;
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 300px !important;
     margin: 15px 0;
 }
 
@@ -709,7 +711,9 @@ canvas {
 
 #historicalChart {
     width: 100% !important;
-    height: 400px !important;
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 300px !important;
     margin-top: 1rem;
 }
 
@@ -783,9 +787,9 @@ canvas {
 .comparison-chart canvas {
     flex: 0 0 auto;
     width: 100% !important;
-    height: 100% !important;
-    max-height: 300px;
-    min-height: 250px;
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 300px !important;
     margin-bottom: 0.5rem;
 }
 
@@ -879,6 +883,7 @@ canvas {
     align-items: center;
     padding: 8px 0 0 0;
     margin-bottom: 0.5rem;
+    min-height: 60px;
 }
 
 @media (max-width: 1100px) {
@@ -932,4 +937,13 @@ canvas {
     font-weight: 700;
     color: #2d3436;
     letter-spacing: 0.01em;
+}
+
+#forecastChart,
+#predictionsChart,
+#pastSalesChart,
+#predictedSalesChart {
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 300px !important;
 }
