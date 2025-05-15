@@ -1063,6 +1063,93 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Updates the decisions display with pagination
     function updateDecisions() {
+        // Hardcoded product unit prices from the menu
+        const productUnitPrices = {
+            "Blueberry Cheesecake": 160,
+            "Strawberry Cheesecake": 160,
+            "Butter Croissant": 110,
+            "Kouign Amman Cinnamon": 120,
+            "Chocolate Croissant": 120,
+            "Choco Moist": 100,
+            "Cookies": 65,
+            "BLK.8 Burger": 280,
+            "French Fries": 130,
+            "Nachos": 170,
+            "Ham & Cheese Panini": 100,
+            "Tuna Sandwich": 100,
+            "Clubhouse": 180,
+            "Cheesy Bacon Fries": 180,
+            "Potato Wedges": 180,
+            "Barkada Combo": 300,
+            "Chicken Parmesan": 280,
+            "Buffalo Wings": 280,
+            "Lechon Kawali": 170,
+            "Grilled Liempo": 170,
+            "Bangsilog": 180,
+            "Bulaksilog": 170,
+            "Baconsilog": 170,
+            "Spamsilog": 170,
+            "Tapsilog": 170,
+            "Longsilog": 170,
+            "Tocilog": 150,
+            "Hamsilog": 140,
+            "Creamy Chicken Alfredo": 170,
+            "Carbonara": 170,
+            "Classic Spaghetti": 160,
+            "Ramyeon (Mild or Spicy)": 120,
+            "Egg": 30,
+            "Kimchi": 50,
+            "Cheese": 30,
+            "V60 Pour-Over": 150,
+            "Piccolo": 90,
+            "Cortado": 120,
+            "Americano": 120,
+            "Latte": 130,
+            "Cappuccino": 130,
+            "Flat White": 130,
+            "BLK. 8 Latte": 180,
+            "Vanilla Ice Cream Latte": 180,
+            "Iced Latte": 140,
+            "Caramel Macchiato (Iced)": 150,
+            "French Vanilla": 140,
+            "Hazelnut": 140,
+            "Matcha Coffee": 150,
+            "Mocha (Iced)": 150,
+            "Spanish Latte": 140,
+            "Strawberry Matcha (Iced)": 160,
+            "Chocolate Matcha (Iced)": 160,
+            "Orange Coffee": 150,
+            "Iced Americano": 130,
+            "Lychee": 80,
+            "Green Apple": 80,
+            "Passion Fruit": 80,
+            "Blueberry (Fruit Soda)": 80,
+            "Strawberry (Fruit Soda)": 80,
+            "Caramel Macchiato": 130,
+            "Cream Brulee": 130,
+            "Hazelnut Mocha": 130,
+            "Matcha": 130,
+            "Mocha": 130,
+            "Peppermint Mocha": 130,
+            "Campfire Latte": 150,
+            "Matcha Frappe": 180,
+            "Mocha Frappe": 180,
+            "Salted Caramel Frappe": 180,
+            "Iced | Hot Choco": 130,
+            "Strawberry Milk": 130,
+            "Blueberry Milk": 130,
+            "Strawberry Yogurt": 130,
+            "Blueberry Yogurt": 130,
+            "Matcha Latte": 140,
+            "Chocolate Matcha": 150,
+            "Strawberry Matcha": 150,
+            "Cranberry Juice Blend": 120,
+            "Cherry Berry Juice Blend": 120,
+            "Affogato": 120,
+            "Matchagato": 120
+          }
+          ;
+
         // Show empty state if no decisions
         if (decisions.length === 0) {
             showEmptyState();
@@ -1075,18 +1162,45 @@ document.addEventListener("DOMContentLoaded", () => {
         const start = currentPage * itemsPerPage;
         const end = start + itemsPerPage;
         const paginatedDecisions = decisions.slice(start, end);
-        
+
+        // Helper to get unit price for a product
+        function getUnitPrice(product) {
+            return productUnitPrices[product] || null;
+        }
+
         // Update decisions display with enhanced format
         decisionSection.innerHTML = paginatedDecisions.map((d, index) => {
-            // Calculate total sales for this period (cumulative up to current day)
             const currentDay = start + index + 1;
-            const periodSales = predictions.slice(0, currentDay).reduce((sum, val) => sum + val, 0);
-            
-            // Determine stock recommendation based on trend
-            const stockNeeded = d.trend === 'positive' ? 
-                Math.ceil(periodSales * 1.2) : // 20% buffer for positive trends
-                Math.ceil(periodSales * 0.8);  // 20% reduction for negative trends
-            
+            const dailySales = predictions[currentDay - 1] || 0;
+            let stockNeeded = 'N/A';
+
+            if (selectedProduct === "all") {
+                // For 'all', try to get per-product breakdown for this day
+                // Assume predictions is an array of total sales per day for all products
+                // If you have per-product predictions, you can sum (sales for product / price)
+                // Here, we will just divide total sales by average price for a rough estimate
+                // --- ADVANCED: If you have per-product breakdown, use it here ---
+                // Otherwise, use the sum of (total sales / each product price)
+                // We'll estimate by distributing sales equally among all products with a price
+                const productNames = Object.keys(productUnitPrices);
+                if (productNames.length > 0) {
+                    // Distribute dailySales equally among all products
+                    let totalUnits = 0;
+                    productNames.forEach(product => {
+                        const price = productUnitPrices[product];
+                        if (price && price > 0) {
+                            totalUnits += dailySales / price;
+                        }
+                    });
+                    stockNeeded = Math.ceil(totalUnits).toLocaleString() + ' units';
+                }
+            } else {
+                const unitPrice = getUnitPrice(selectedProduct);
+                if (unitPrice && unitPrice > 0) {
+                    stockNeeded = Math.ceil(dailySales / unitPrice).toLocaleString() + ' units';
+                }
+            }
+
             // Determine action type based on severity and trend
             let actionType = '';
             if (d.severity === 'high' && d.trend === 'positive') {
@@ -1114,12 +1228,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span class="summary-value">${selectedProduct === "all" ? "All Products" : selectedProduct}</span>
                             </div>
                             <div class="summary-row">
-                                <span class="summary-label">Period Sales:</span>
-                                <span class="summary-value">₱${periodSales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                <span class="summary-label">Daily Sales:</span>
+                                <span class="summary-value">₱${dailySales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                             </div>
                             <div class="summary-row">
                                 <span class="summary-label">Stock Needed:</span>
-                                <span class="summary-value">${stockNeeded.toLocaleString()} units</span>
+                                <span class="summary-value">${stockNeeded}</span>
                             </div>
                         </div>
                         <div class="decision-text">${d.text}</div>
