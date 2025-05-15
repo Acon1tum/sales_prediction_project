@@ -257,6 +257,16 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('forecastChart-legend').classList.remove('hidden');
             document.getElementById('predictionsChart-legend').classList.remove('hidden');
             toggleDataLabelsBtn.innerHTML = '<span>👁️</span> Hide Values List';
+
+            // Disable and hide threshold and upload buttons after forecast is generated
+            document.getElementById('threshold-btn').disabled = true;
+            // Hide upload button wrapper
+            const uploadWrapper = uploadBtn.closest('.file-upload-wrapper');
+            if (uploadWrapper) {
+                uploadBtn.disabled = true;
+                uploadWrapper.classList.add('disabled');
+                uploadWrapper.style.display = 'none';
+            }
         })
         .catch(error => {
             console.error(error);
@@ -329,6 +339,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('forecastChart-legend').classList.add('hidden');
                 document.getElementById('predictionsChart-legend').classList.add('hidden');
                 toggleDataLabelsBtn.innerHTML = '<span>✏️</span> Show Values List';
+
+                // Re-enable and show threshold and upload buttons after reset
+                document.getElementById('threshold-btn').disabled = false;
+                const uploadWrapper = uploadBtn.closest('.file-upload-wrapper');
+                if (uploadWrapper) {
+                    uploadBtn.disabled = false;
+                    uploadWrapper.classList.remove('disabled');
+                    uploadWrapper.style.display = '';
+                }
             })
             .catch(error => {
                 console.error(error);
