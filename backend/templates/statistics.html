@@ -42,9 +42,7 @@
                 <option value="product">Product Performance Analysis</option>
                 <option value="trend">Market Trend Analysis</option>
                 <option value="severity">Impact Analysis</option>
-                <option value="monthly">Temporal Analysis</option>
                 <option value="range">Sales Volume Distribution</option>
-                <option value="type">Methodology Analysis</option>
                 <option value="threshold">Target Achievement Analysis</option>
                 <option value="average">Product Sales Trends</option>
             </select>
@@ -99,20 +97,6 @@
             </div>
         </div>
 
-        <!-- Monthly Forecasts -->
-        <div class="stat-card" data-graph-type="monthly">
-            <div class="stat-header">
-                <h3 data-tooltip="Tracks the number of forecasts generated each month, helping identify patterns in forecasting activity over time.">Temporal Analysis</h3>
-                <span class="stat-description">Monitor forecasting activity over time</span>
-            </div>
-            <div class="graph-container">
-                <canvas id="monthlyChart"></canvas>
-            </div>
-            <div class="stat-footer">
-                <p class="insight-text">Track your forecasting frequency and identify seasonal patterns.</p>
-            </div>
-        </div>
-
         <!-- Prediction Ranges -->
         <div class="stat-card" data-graph-type="range">
             <div class="stat-header">
@@ -124,20 +108,6 @@
             </div>
             <div class="stat-footer">
                 <p class="insight-text">Understand the distribution of sales predictions across different volume ranges.</p>
-            </div>
-        </div>
-
-        <!-- Forecast Types -->
-        <div class="stat-card" data-graph-type="type">
-            <div class="stat-header">
-                <h3 data-tooltip="Shows the distribution of different forecast types used, helping understand the variety of forecasting approaches employed.">Methodology Analysis</h3>
-                <span class="stat-description">Review forecasting approaches</span>
-            </div>
-            <div class="graph-container">
-                <canvas id="typeChart"></canvas>
-            </div>
-            <div class="stat-footer">
-                <p class="insight-text">Examine the distribution of different forecasting methodologies used.</p>
             </div>
         </div>
 
