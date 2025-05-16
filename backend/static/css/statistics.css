@@ -160,7 +160,12 @@
 }
 
 .stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .stat-header h3 {
@@ -307,6 +312,19 @@
     .stat-card {
         padding: 1rem;
     }
+
+    .stat-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .range-filter {
+        width: 100%;
+    }
+
+    .range-filter select {
+        width: 100%;
+    }
 }
 
 /* Animation for cards */
@@ -334,4 +352,106 @@ canvas {
 /* Hidden state for filtered cards */
 .stat-card.hidden {
     display: none;
+}
+
+/* Product Range Legend Styles */
+.product-range-legend {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.product-range-legend:last-child {
+    margin-bottom: 0;
+}
+
+.product-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.range-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.8rem;
+}
+
+.range-items .legend-item {
+    width: 100%;
+    text-align: center;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.range-items .legend-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Range Filter Styles */
+.range-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.range-filter select {
+    padding: 6px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    background-color: white;
+    color: #495057;
+    font-size: 0.9rem;
+    min-width: 150px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.range-filter select:hover {
+    border-color: #6C5CE7;
+}
+
+.range-filter select:focus {
+    outline: none;
+    border-color: #6C5CE7;
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+/* Make Sales Volume Distribution full width */
+.stat-card[data-graph-type="range"] {
+    grid-column: 1 / -1;  /* Make it span all columns */
+}
+
+.stat-card[data-graph-type="range"] .graph-container {
+    min-height: 400px;  /* Increase height for better visibility */
+}
+
+.stat-card[data-graph-type="range"] canvas {
+    min-height: 400px !important;
+    max-height: 400px !important;
+    height: 400px !important;
+}
+
+/* Adjust chart title layout */
+.stat-card[data-graph-type="range"] .chart-title {
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .stat-card[data-graph-type="range"] .graph-container {
+        min-height: 350px;
+    }
+    
+    .stat-card[data-graph-type="range"] canvas {
+        min-height: 350px !important;
+        max-height: 350px !important;
+        height: 350px !important;
+    }
 } 

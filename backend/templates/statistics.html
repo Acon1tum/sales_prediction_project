@@ -36,6 +36,12 @@
             </select>
         </div>
         <div class="filter-group">
+            <label for="productFilter">Product:</label>
+            <select id="productFilter" class="form-select">
+                <option value="all" selected>All Products</option>
+            </select>
+        </div>
+        <div class="filter-group">
             <label for="graphFilter">Graph Filter:</label>
             <select id="graphFilter" class="form-select">
                 <option value="all" selected>Show All Graphs</option>
@@ -101,7 +107,6 @@
         <div class="stat-card" data-graph-type="range">
             <div class="stat-header">
                 <h3 data-tooltip="Shows the distribution of predicted sales volumes across different ranges, helping identify typical sales patterns.">Sales Volume Distribution</h3>
-                <span class="stat-description">Analyze predicted sales ranges</span>
             </div>
             <div class="graph-container">
                 <canvas id="rangeChart"></canvas>
