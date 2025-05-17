@@ -403,13 +403,13 @@ canvas {
 }
 
 .range-filter select {
-    padding: 6px 12px;
+    padding: 8px 16px;
     border: 2px solid #e9ecef;
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: white;
     color: #495057;
-    font-size: 0.9rem;
-    min-width: 150px;
+    font-size: 0.95rem;
+    min-width: 180px;
     cursor: pointer;
     transition: all 0.3s ease;
 }

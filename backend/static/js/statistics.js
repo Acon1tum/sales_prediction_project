@@ -7,13 +7,15 @@ let forecastData = [];
 let currentFilters = {
     limit: 'all',
     graphType: 'all',
-    product: 'all'
+    product: 'all',
+    volumeRange: 'all'  // Add volume range filter
 };
 
 // DOM Elements
 const forecastLimitSelect = document.getElementById('forecastLimit');
 const graphFilterSelect = document.getElementById('graphFilter');
 const productFilterSelect = document.getElementById('productFilter');
+const volumeRangeFilterSelect = document.getElementById('volumeRangeFilter');  // Add volume range filter select
 const applyFiltersBtn = document.getElementById('applyFilters');
 const resetFiltersBtn = document.getElementById('resetFilters');
 const statCards = document.querySelectorAll('.stat-card');
@@ -23,6 +25,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners
     applyFiltersBtn.addEventListener('click', applyFilters);
     resetFiltersBtn.addEventListener('click', resetFilters);
+    
+    // Add event listener for volume range filter
+    if (volumeRangeFilterSelect) {
+        volumeRangeFilterSelect.addEventListener('change', function() {
+            currentFilters.volumeRange = this.value;
+            updateRangeChart(forecastData.prediction_ranges);
+        });
+    }
     
     // Initial data load
     loadData();
@@ -92,9 +102,13 @@ function resetFilters() {
     forecastLimitSelect.value = 'all';
     graphFilterSelect.value = 'all';
     productFilterSelect.value = 'all';
+    if (volumeRangeFilterSelect) {
+        volumeRangeFilterSelect.value = 'all';
+    }
     currentFilters.limit = 'all';
     currentFilters.graphType = 'all';
     currentFilters.product = 'all';
+    currentFilters.volumeRange = 'all';
     
     // Update charts with reset values
     updateCharts();
@@ -380,18 +394,26 @@ function updateRangeChart(data) {
     }
 
     const labels = ['0-500', '501-1000', '1001-2000', '2001+'];
+    
+    // Filter labels based on selected volume range
+    const selectedRange = currentFilters.volumeRange;
+    const filteredLabels = selectedRange === 'all' ? labels : [selectedRange];
+    
     const datasets = Object.entries(productData).map(([product, ranges], index) => ({
         label: product,
-        data: labels.map(range => ranges[range]),
+        data: filteredLabels.map(range => ranges[range]),
         backgroundColor: getProductColor(index, 0.7),
         borderColor: getProductColor(index, 1),
-        borderWidth: 1
+        borderWidth: 1,
+        borderRadius: 5,
+        barPercentage: 1.0,
+        categoryPercentage: selectedRange === 'all' ? 0.85 : 1.0  // Add gaps between groups when showing all ranges
     }));
 
     charts.range = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: filteredLabels,
             datasets: datasets
         },
         options: {
@@ -429,18 +451,32 @@ function updateRangeChart(data) {
             },
             scales: {
                 x: {
-                    stacked: true,
+                    grid: {
+                        display: false
+                    },
                     title: {
                         display: true,
                         text: 'Sales Range (₱)',
                         font: {
                             weight: 'bold'
                         }
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    },
+                    afterFit: function(scale) {
+                        if (selectedRange === 'all') {
+                            scale.paddingRight = 30;  // Add padding between range groups
+                        }
                     }
                 },
                 y: {
-                    stacked: true,
                     beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
                     title: {
                         display: true,
                         text: 'Number of Forecasts',
@@ -449,15 +485,23 @@ function updateRangeChart(data) {
                         }
                     },
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        font: {
+                            size: 11
+                        }
                     }
                 }
             },
             layout: {
                 padding: {
-                    bottom: 10
+                    top: 20,
+                    right: 20,
+                    bottom: 10,
+                    left: 10
                 }
-            }
+            },
+            barThickness: 'flex',
+            maxBarThickness: 50
         },
         plugins: [ChartDataLabels]
     });
