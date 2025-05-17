@@ -446,7 +446,19 @@ function updateRangeChart(data) {
                     }
                 },
                 datalabels: {
-                    display: false
+                    display: selectedRange !== 'all', // Only show data labels when a specific range is selected
+                    color: '#2c3e50',
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 4,
+                    font: {
+                        weight: 'bold',
+                        size: 12
+                    },
+                    formatter: function(value, context) {
+                        if (value === 0) return '';
+                        return value;
+                    }
                 }
             },
             scales: {
